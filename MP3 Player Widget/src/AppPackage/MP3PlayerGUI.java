@@ -6,6 +6,8 @@ import java.awt.Toolkit;
 
 public class MP3PlayerGUI extends javax.swing.JDialog 
 {
+    MainClass MC = new MainClass(); // can access all the methods MainClass has
+    
     int xMouse;
     int yMouse;
     
@@ -46,6 +48,11 @@ public class MP3PlayerGUI extends javax.swing.JDialog
         getContentPane().add(Pause, new org.netbeans.lib.awtextra.AbsoluteConstraints(245, 50, 60, 60));
 
         Stop.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Stop.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                StopMouseReleased(evt);
+            }
+        });
         getContentPane().add(Stop, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 50, 70, 60));
 
         Loop.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -78,6 +85,10 @@ public class MP3PlayerGUI extends javax.swing.JDialog
         xMouse = evt.getX();
         yMouse = evt.getY();
     }//GEN-LAST:event_BackgroundMousePressed
+
+    private void StopMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_StopMouseReleased
+        MC.stop();
+    }//GEN-LAST:event_StopMouseReleased
 
     public static void main(String args[]) 
     {
