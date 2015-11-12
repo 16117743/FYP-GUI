@@ -19,16 +19,17 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Title of Window");
         button = new Button();
-        button.setText("Hey baby");
+        button.setText("button");
 
         //This class will handle the button events
 
-        button.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                    System.out.println("Hey Charlie!");
-            }
-        });
+        //Lambda expression
+        //  e represents the event
+        // execute code goes on right
+        button.setOnAction(e -> {
+                    System.out.println("hey");
+
+                });
 
         StackPane layout = new StackPane();
         layout.getChildren().add(button);
