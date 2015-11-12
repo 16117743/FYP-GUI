@@ -50,6 +50,11 @@ public class MP3PlayerGUI extends javax.swing.JDialog
         getContentPane().add(SelectFile, new org.netbeans.lib.awtextra.AbsoluteConstraints(319, 60, 40, 40));
 
         Pause.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Pause.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                PauseMouseReleased(evt);
+            }
+        });
         getContentPane().add(Pause, new org.netbeans.lib.awtextra.AbsoluteConstraints(245, 50, 60, 60));
 
         Stop.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -61,17 +66,22 @@ public class MP3PlayerGUI extends javax.swing.JDialog
         getContentPane().add(Stop, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 50, 70, 60));
 
         Loop.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Loop.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                LoopMouseReleased(evt);
+            }
+        });
         getContentPane().add(Loop, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 40, 40));
 
         Background.setIcon(new javax.swing.ImageIcon(getClass().getResource("/AppPackage/Background.png"))); // NOI18N
-        Background.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseDragged(java.awt.event.MouseEvent evt) {
-                BackgroundMouseDragged(evt);
-            }
-        });
         Background.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 BackgroundMousePressed(evt);
+            }
+        });
+        Background.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                BackgroundMouseDragged(evt);
             }
         });
         getContentPane().add(Background, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 370, 130));
@@ -96,8 +106,16 @@ public class MP3PlayerGUI extends javax.swing.JDialog
     }//GEN-LAST:event_StopMouseReleased
 
     private void PlayMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PlayMouseReleased
-       MC.Play("C:\\the set\\A.mp3");
+        MC.Play("C:\\the set\\A.mp3");
     }//GEN-LAST:event_PlayMouseReleased
+
+    private void PauseMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PauseMouseReleased
+        MC.Pause();
+    }//GEN-LAST:event_PauseMouseReleased
+
+    private void LoopMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LoopMouseReleased
+        MC.Resume();
+    }//GEN-LAST:event_LoopMouseReleased
 
     public static void main(String args[]) 
     {
