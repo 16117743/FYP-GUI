@@ -39,6 +39,11 @@ public class MP3PlayerGUI extends javax.swing.JDialog
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         Play.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Play.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                PlayMouseReleased(evt);
+            }
+        });
         getContentPane().add(Play, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 40, 90, 83));
 
         SelectFile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -89,6 +94,10 @@ public class MP3PlayerGUI extends javax.swing.JDialog
     private void StopMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_StopMouseReleased
         MC.stop();
     }//GEN-LAST:event_StopMouseReleased
+
+    private void PlayMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PlayMouseReleased
+       MC.Play("C:\\the set\\A.mp3");
+    }//GEN-LAST:event_PlayMouseReleased
 
     public static void main(String args[]) 
     {
