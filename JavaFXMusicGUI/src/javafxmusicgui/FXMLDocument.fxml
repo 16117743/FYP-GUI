@@ -1,14 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.media.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="200" prefWidth="320" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="javafxmusicgui.FXMLDocumentController">
-    <children>
-        <Button fx:id="helloButton" layoutX="126" layoutY="90" onAction="#handleButtonAction" text="Hello" textFill="#b20707" />
-        <Label fx:id="label" layoutX="126" layoutY="120" minHeight="16" minWidth="69" />
-    </children>
-</AnchorPane>
+<TitledPane animated="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" text="Muzik Host" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="javafxmusicgui.FXMLDocumentController">
+  <content>
+    <AnchorPane fx:id="bassText" minHeight="0.0" minWidth="0.0" prefHeight="423.0" prefWidth="613.0">
+         <children>
+            <TextArea fx:id="requestArea" layoutX="2.0" layoutY="55.0" prefHeight="94.0" prefWidth="144.0" />
+            <Button fx:id="blueToothButton" layoutX="2.0" layoutY="149.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="145.0" text="Enable Bluetooth" />
+            <ToolBar layoutY="-3.0" prefHeight="35.0" prefWidth="600.0">
+              <items>
+                  <SplitMenuButton fx:id="responseMenu" mnemonicParsing="false" prefHeight="25.0" prefWidth="139.0" text="Select Response">
+                     <items>
+                        <MenuItem mnemonicParsing="false" text="Action 1" />
+                        <MenuItem mnemonicParsing="false" text="Action 2" />
+                     </items>
+                  </SplitMenuButton>
+                  <SplitMenuButton fx:id="soundCardMenu" mnemonicParsing="false" prefHeight="25.0" prefWidth="132.0" text="Select output">
+                    <items>
+                      <MenuItem mnemonicParsing="false" text="Action 1" />
+                      <MenuItem mnemonicParsing="false" text="Action 2" />
+                    </items>
+                  </SplitMenuButton>
+              </items>
+            </ToolBar>
+            <Text fx:id="requestText" layoutX="6.0" layoutY="51.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Requests" wrappingWidth="131.13671875">
+               <effect>
+                  <InnerShadow />
+               </effect>
+            </Text>
+            <ScrollBar id="queueListSlider" layoutX="576.0" layoutY="90.0" orientation="VERTICAL" prefHeight="114.0" prefWidth="14.0" />
+            <ChoiceBox fx:id="libMenu" layoutX="481.0" layoutY="34.0" onMouseClicked="#handleSongLibButtonAction" prefHeight="17.0" prefWidth="114.0" />
+            <ListView id="queueList" fx:id="songQueueArea" layoutX="402.0" layoutY="90.0" prefHeight="114.0" prefWidth="174.0" />
+            <Text fx:id="queueText" layoutX="402.0" layoutY="86.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="129.13671875" />
+            <Button fx:id="removeSongButton" layoutX="402.0" layoutY="205.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Remove Song" />
+            <Text fx:id="libText" layoutX="402.0" layoutY="51.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Library" wrappingWidth="77.13671875" />
+            <Text fx:id="volText" layoutX="406.0" layoutY="310.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Volume" wrappingWidth="56.13671875" />
+            <CheckBox fx:id="fadeButton" layoutX="402.0" layoutY="230.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="65.0" text="Fade" />
+            <Slider fx:id="volSlider" layoutX="460.0" layoutY="277.0" orientation="VERTICAL" prefHeight="57.0" prefWidth="14.0" />
+            <Slider fx:id="trebSlider" layoutX="517.0" layoutY="277.0" orientation="VERTICAL" prefHeight="58.0" prefWidth="14.0" />
+            <Text fx:id="trebText" layoutX="473.0" layoutY="311.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Treble" />
+            <Text layoutX="538.0" layoutY="310.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Bass" wrappingWidth="43.13671875" />
+            <Slider fx:id="BassSlider" layoutX="577.0" layoutY="277.0" orientation="VERTICAL" prefHeight="58.0" prefWidth="14.0" />
+          <Button fx:id="skipButton" layoutX="521.0" layoutY="348.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="77.0" text="Skip" />
+            <ToggleButton fx:id="playButton" layoutX="404.0" layoutY="348.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="74.0" text="Play" />
+         </children></AnchorPane>
+  </content>
+</TitledPane>
