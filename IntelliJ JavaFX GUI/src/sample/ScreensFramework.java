@@ -29,11 +29,11 @@ public class ScreensFramework extends Application {
         Group root = new Group();
         root.getChildren().addAll(mainContainer);
         Scene scene = new Scene(root);
-        scene.getStylesheets().addAll(this.getClass().getResource("style.css").toExternalForm());
-        String image = ScreensFramework.class.getResource("background_image.jpg").toExternalForm();
-        root.setStyle("-fx-background-image: url('" + image + "'); " +
-                "-fx-background-position: center center; " +
-                "-fx-background-repeat: stretch;");
+        //scene.getStylesheets().addAll(this.getClass().getResource("style.css").toExternalForm());
+//        String image = ScreensFramework.class.getResource("background_image.jpg").toExternalForm();
+//        root.setStyle("-fx-background-image: url('" + image + "'); " +
+//                "-fx-background-position: center center; " +
+//                "-fx-background-repeat: stretch;");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

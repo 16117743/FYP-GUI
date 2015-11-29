@@ -70,18 +70,28 @@
                   <Font size="64.0" />
                </font>
             </Text>
+        <Label id="loginTextID" prefHeight="44.0" prefWidth="90.0" text="Login">
+          <font>
+            <Font size="36.0" />
+          </font>
+               <effect>
+                  <Glow />
+               </effect>
+        </Label>
         <HBox alignment="CENTER" prefHeight="57.0" prefWidth="281.0" spacing="20.0">
           <children>
-              <Label id="loginTextID" prefHeight="44.0" prefWidth="90.0" text="Login">
-                <font>
-                  <Font size="36.0" />
-                </font>
-                     <effect>
-                        <Glow />
-                     </effect>
-              </Label>
-                  <TextField promptText="Pasword" />
-                  <PasswordField fx:id="passwordField" promptText="Password" />
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Username:" wrappingWidth="102.13671875">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+                  <TextField />
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Password:" wrappingWidth="92.13671875">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+                  <PasswordField fx:id="passwordField" />
             <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
           </children>
                <effect>

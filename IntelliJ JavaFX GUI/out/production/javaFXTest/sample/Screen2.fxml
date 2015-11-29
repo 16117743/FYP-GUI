@@ -1,47 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- 
-/*-
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.-
- *-
- * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.-
- *-
- * The contents of this file are subject to the terms of either the GNU-
- * General Public License Version 2 only ("GPL") or the Common Development-
- * and Distribution License("CDDL") (collectively, the "License"). You-
- * may not use this file except in compliance with the License. You can-
- * obtain a copy of the License at-
- * https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html-
- * or packager/legal/LICENSE.txt.  See the License for the specific-
- * language governing permissions and limitations under the License.-
- *-
- * When distributing the software, include this License Header Notice in each-
- * file and include the License file at packager/legal/LICENSE.txt.-
- *-
- * GPL Classpath Exception:-
- * Oracle designates this particular file as subject to the "Classpath"-
- * exception as provided by Oracle in the GPL Version 2 section of the License-
- * file that accompanied this code.-
- *-
- * Modifications:-
- * If applicable, add the following below the License Header, with the fields-
- * enclosed by brackets [] replaced by your own identifying information:-
- * "Portions Copyright [year] [name of copyright owner]"-
- *-
- * Contributor(s):-
- * If you wish your version of this file to be governed by only the CDDL or-
- * only the GPL Version 2, indicate your decision by adding "[Contributor]-
- * elects to include this software in this distribution under the [CDDL or GPL-
- * Version 2] license."  If you don't indicate a single choice of license, a-
- * recipient has the option to distribute your version of this file under-
- * either the CDDL, the GPL Version 2 or to extend the choice of license to-
- * its licensees as provided above.  However, if you add GPL Version 2 code-
- * and therefore, elected the GPL Version 2 license, then the option applies-
- * only if the new code is made subject to such option by the copyright-
- * holder.-
- */ -
--->
-
+<?import javafx.scene.media.*?>
 <?import javafx.scene.image.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
@@ -50,7 +9,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="sample.Screen2Controller">
+<AnchorPane id="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Screen2Controller">
   <children>
       <AnchorPane prefHeight="509.0" prefWidth="638.0">
          <children>
@@ -59,18 +18,48 @@
                   <Image url="@background2.jpg" />
                </image>
             </ImageView>
+            <MenuBar prefHeight="20.0" prefWidth="638.0">
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
          </children>
       </AnchorPane>
-    <VBox alignment="CENTER" layoutX="512.0" prefHeight="132.0" prefWidth="126.0" spacing="20.0" AnchorPane.bottomAnchor="377.0" AnchorPane.leftAnchor="512.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-      <children>
-        <Label text="Screen 2">
-          <font>
-            <Font size="18.0" />
-          </font>
-        </Label>
-        <Button mnemonicParsing="false" onAction="#goToScreen1" text="Log out" />
-        <Button mnemonicParsing="false" onAction="#goToScreen3" text="Bluetooth Chat" />
-      </children>
-    </VBox>
+      <Pane fx:id="loadButton" prefHeight="483.0" prefWidth="630.0">
+         <children>
+            <Button fx:id="skipButton" layoutX="118.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" prefHeight="49.0" prefWidth="98.0" text="Skip" />
+            <SplitMenuButton layoutX="4.0" layoutY="26.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="119.0" text="Select Song">
+              <items>
+                <MenuItem mnemonicParsing="false" text="Action 1" />
+                <MenuItem mnemonicParsing="false" text="Action 2" />
+              </items>
+            </SplitMenuButton>
+            <ListView layoutX="145.0" layoutY="51.0" prefHeight="163.0" prefWidth="119.0" />
+            <Text fill="#ccff00" layoutX="145.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
+          <VBox alignment="CENTER" layoutX="481.0" layoutY="39.0" prefHeight="132.0" prefWidth="126.0" spacing="20.0">
+            <children>
+              <Button mnemonicParsing="false" onAction="#goToScreen1" prefHeight="15.0" prefWidth="98.0" text="Log out" />
+              <Button mnemonicParsing="false" onAction="#goToScreen3" prefHeight="28.0" prefWidth="104.0" text="Bluetooth Chat" />
+                  <MediaView fx:id="mediaView" fitHeight="50.0" fitWidth="200.0" />
+            </children>
+          </VBox>
+            <Button fx:id="loadButton" layoutX="255.0" layoutY="425.0" mnemonicParsing="false" onAction="#loadMusic" prefHeight="40.0" prefWidth="88.0" text="load" />
+            <Button fx:id="playButton" layoutX="20.0" layoutY="416.0" mnemonicParsing="false" onAction="#play" prefHeight="49.0" prefWidth="88.0" text="Play" />
+         </children>
+      </Pane>
   </children>
 </AnchorPane>
