@@ -1,6 +1,7 @@
 package sample;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,20 +10,20 @@ import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
+import Server.*;
 
 public class Screen2Controller implements Initializable , ControlledScreen {
     ScreensController myController;
+   // private TemperatureSensor sensor;
 
     final List<MediaPlayer> players = new ArrayList<MediaPlayer>();
     final Label currentlyPlaying = new Label();
@@ -30,6 +31,13 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     private ChangeListener<Duration> progressChangeListener;
     MediaView mediaView;
    // MediaView mediaView = new MediaView();
+
+    private TemperatureSensor sensor;
+
+    private String test = new String("");
+
+
+
     @FXML
     Button playButton;
 
@@ -38,6 +46,9 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
+
+    @FXML
+    private TextArea songRequest;
 
     public Screen2Controller(){
         // determine the source directory for the playlist
@@ -64,7 +75,6 @@ public class Screen2Controller implements Initializable , ControlledScreen {
             // return null;
         }
 
-        // create a view to show the mediaplayers.
         mediaView = new MediaView(players.get(0));
 
         // play each audio file in turn.
@@ -90,6 +100,8 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         mediaView.setMediaPlayer(players.get(0));
       //  mediaView.getMediaPlayer().play();
         setCurrentlyPlaying(mediaView.getMediaPlayer());
+
+
     }
 
 
@@ -107,6 +119,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
         assert mediaView != null : "meh";
         assert playButton != null;
+        assert songRequest != null : "songrequest not injected!";
     }
     
     public void setScreenParent(ScreensController screenParent){
@@ -136,7 +149,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     @FXML
     private void skipMethod(ActionEvent event){
-        skipButton.setText("changed");
+        skipButton.setText("Skip");
         final MediaPlayer curPlayer = mediaView.getMediaPlayer();
         MediaPlayer nextPlayer = players.get((players.indexOf(curPlayer) + 1) % players.size());
         mediaView.setMediaPlayer(nextPlayer);
@@ -146,35 +159,25 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     }
 
     @FXML
-    private void loadMusic(ActionEvent event){
-        System.out.print("test");
-        // determine the source directory for the playlist
-        final File dir = new File("C:\\the set\\");
-        if (!dir.exists() || !dir.isDirectory()) {
-            System.out.println("Cannot find video source directory: " + dir);
-            Platform.exit();
-          //  return null;
-        }
+    private void refreshMethod(ActionEvent event){
+       // System.out.println("refresh");
 
-        // create some media players.
-      //  final List<MediaPlayer> players = new ArrayList<MediaPlayer>();
-        for (String file : dir.list(new FilenameFilter() {
-            @Override public boolean accept(File dir, String name) {
-                return name.endsWith(".mp3");
+        Platform.runLater(() -> {
+            try {
+                System.out.println(sensor.getInputReading());
+                songRequest.appendText(sensor.getInputReading());
+            //    System.out.println("button is clicked");
+            } catch (Exception ex) {
+                //Exceptions.printStackTrace(ex);
             }
-        })) players.add(createPlayer("file:///" + (dir + "\\" + file).replace("\\", "/").replaceAll(" ", "%20")));
-        // %20 is immediately recognisable as a whitespace character -
-        // while not really having any meaning in a URI it is encoded in order to avoid breaking the string into multiple "parts".
-
-        if (players.isEmpty()) {
-            System.out.println("No audio found in " + dir);
-            Platform.exit();
-           // return null;
-        }
-
-        // create a view to show the mediaplayers.
-        mediaView = new MediaView(players.get(0));
+        });
     }
+
+    @FXML
+    private void loadMusic(ActionEvent event) {
+        sensor = new TemperatureSensor();
+    }
+
 
 
     private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
@@ -202,4 +205,29 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         });
         return player;
     }
+
+    public class MyThread extends Thread {
+
+
+    }
+
+
+    public void updateTemperature(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("testing this");
+                    Thread.sleep(2000);
+                    //  skipButton.setText(sensor.getInputReading());
+                    //   songRequest.appendText(sensor.getInputReading()+"\n");
+                    sensor.getInputReading();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if(!"".equals(sensor.getInputReading()))
+                    test = sensor.getInputReading();
+            }
+        });
+    }//updateTemperature
 }

@@ -62,7 +62,7 @@ public class ScreensController  extends StackPane {
             if (!getChildren().isEmpty()) {    //if there is more than one screen
                 Timeline fade = new Timeline(
                         new KeyFrame(Duration.ZERO, new KeyValue(opacity, 1.0)),
-                        new KeyFrame(new Duration(500),// once fade out is finished, call eventhandler
+                        new KeyFrame(new Duration(900),// once fade out is finished, call eventhandler
                                 new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent t) {

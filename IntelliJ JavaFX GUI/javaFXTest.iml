@@ -7,6 +7,37 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../../Eclipse/libraries/google-common.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../../Eclipse/libraries/com.google.common_1.0.0.201004262004.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../../Project Year 5/archive/bluecove-2.1.1-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../Project Year 5/archive/bluecove-gpl-2.1.1-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <NATIVE>
+          <root url="jar://$MODULE_DIR$/../../../../Project Year 5/archive/bluecove-2.1.1-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../Project Year 5/archive/bluecove-gpl-2.1.1-SNAPSHOT.jar!/" />
+        </NATIVE>
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
-
