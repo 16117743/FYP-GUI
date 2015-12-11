@@ -1,0 +1,15 @@
+
+Sceneswitching tutorial
+https://www.youtube.com/watch?v=5GsdaZWDcdY
+
+Sceneswitching tutorial source code
+https://github.com/acaicedo/JFX-MultiScreen
+
+Playing javaFX mediaPlayers source code
+http://stackoverflow.com/questions/12548603/playing-audio-using-javafx-mediaplayer-in-a-normal-java-application
+
+Server source code
+http://luugiathuy.com/2011/02/android-java-bluetooth/
+
+Android Bluetooth chat source code
+https://github.com/marcuspimenta/Chat-Bluetooth-Android

@@ -41,7 +41,7 @@ public class ScreensController  extends StackPane {
                                                 //class cast to controlled screen
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());
             //inject screen controllers to myscreencontroller
-            myScreenControler.setScreenParent(this);
+            myScreenControler.setScreenParent(this);// inject screen controllers to each screen here
             addScreen(name, loadScreen);
             return true;
         } catch (Exception e) {
@@ -79,7 +79,7 @@ public class ScreensController  extends StackPane {
             } 
            else {
                 setOpacity(0.0);   // getting tree structure of screen given by name
-                //adding it to the sceene graph
+                            //then adding it to the scene graph
                 getChildren().add(screens.get(name));       //no one else been displayed, then just show
                 Timeline fadeIn = new Timeline(
                         new KeyFrame(Duration.ZERO, new KeyValue(opacity, 0.0)),
