@@ -52,6 +52,28 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     public Screen2Controller(){
         // determine the source directory for the playlist
+
+
+
+    }
+
+
+
+//    @FXML
+//    private Button playButton; // value will be injected by the FXMLLoader
+//    @FXML
+//    private Button loadButton; // value will be injected by the FXMLLoader
+
+    /**
+     * Initializes the controller class.
+     */
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
+        assert mediaView != null : "meh";
+        assert playButton != null;
+        assert songRequest != null : "songrequest not injected!";
+
         final File dir = new File("C:\\the set\\");
         if (!dir.exists() || !dir.isDirectory()) {
             System.out.println("Cannot find video source directory: " + dir);
@@ -98,28 +120,8 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         });
 
         mediaView.setMediaPlayer(players.get(0));
-      //  mediaView.getMediaPlayer().play();
+        //  mediaView.getMediaPlayer().play();
         setCurrentlyPlaying(mediaView.getMediaPlayer());
-
-
-    }
-
-
-
-//    @FXML
-//    private Button playButton; // value will be injected by the FXMLLoader
-//    @FXML
-//    private Button loadButton; // value will be injected by the FXMLLoader
-
-    /**
-     * Initializes the controller class.
-     */
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
-        assert mediaView != null : "meh";
-        assert playButton != null;
-        assert songRequest != null : "songrequest not injected!";
     }
     
     public void setScreenParent(ScreensController screenParent){
@@ -158,25 +160,12 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         nextPlayer.play();
     }
 
-    @FXML
-    private void refreshMethod(ActionEvent event){
-       // System.out.println("refresh");
 
-        Platform.runLater(() -> {
-            try {
-                System.out.println(sensor.getInputReading());
-                songRequest.appendText(sensor.getInputReading());
-            //    System.out.println("button is clicked");
-            } catch (Exception ex) {
-                //Exceptions.printStackTrace(ex);
-            }
-        });
-    }
 
     @FXML
-    private void loadMusic(ActionEvent event) {
+    private void startServer(ActionEvent event) {
         sensor = new TemperatureSensor();
-    }
+    } //start bluetooth server thread
 
 
 
@@ -209,6 +198,21 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     public class MyThread extends Thread {
 
 
+    }
+
+    @FXML
+    private void refreshMethod(ActionEvent event){
+        // System.out.println("refresh");
+
+        Platform.runLater(() -> {
+            try {
+                System.out.println(sensor.getInputReading());
+                songRequest.appendText(sensor.getInputReading());
+                //    System.out.println("button is clicked");
+            } catch (Exception ex) {
+                //Exceptions.printStackTrace(ex);
+            }
+        });
     }
 
 

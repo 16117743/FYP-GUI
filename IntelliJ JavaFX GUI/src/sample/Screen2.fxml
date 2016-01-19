@@ -56,7 +56,7 @@
                   <MediaView fx:id="mediaView" fitHeight="50.0" fitWidth="200.0" />
             </children>
           </VBox>
-            <Button fx:id="loadButton" layoutX="515.0" layoutY="421.0" mnemonicParsing="false" onAction="#loadMusic" prefHeight="40.0" prefWidth="88.0" text="Start Server" />
+            <Button fx:id="loadButton" layoutX="515.0" layoutY="421.0" mnemonicParsing="false" onAction="#startServer" prefHeight="40.0" prefWidth="88.0" text="Start Server" />
             <Button fx:id="playButton" layoutX="20.0" layoutY="416.0" mnemonicParsing="false" onAction="#play" prefHeight="49.0" prefWidth="88.0" text="Play" />
             <TextArea fx:id="songRequest" layoutX="424.0" layoutY="142.0" prefHeight="200.0" prefWidth="200.0" />
             <Text fill="#eeff00" layoutX="432.0" layoutY="128.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Requests" wrappingWidth="98.0" />
