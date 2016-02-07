@@ -1,13 +1,19 @@
 package sample;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.ResourceBundle;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -20,6 +26,13 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import Server.*;
+import model.*;
+import javax.bluetooth.DiscoveryAgent;
+import javax.bluetooth.LocalDevice;
+import javax.bluetooth.UUID;
+import javax.microedition.io.Connector;
+import javax.microedition.io.StreamConnection;
+import javax.microedition.io.StreamConnectionNotifier;
 
 public class Screen2Controller implements Initializable , ControlledScreen {
     ScreensController myController;
@@ -32,11 +45,46 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     MediaView mediaView;
    // MediaView mediaView = new MediaView();
 
-    private TemperatureSensor sensor;
-
     private String test = new String("");
+    private String input = "";
+
+    /*****************************************/
+    final Model model = new Model();
+    final AtomicInteger count = new AtomicInteger(-1);
+    final NumberFormat formatter = NumberFormat.getIntegerInstance();
+    //formatter.setGroupingUsed(true);
+
+    final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
+    final LongProperty lastUpdate = new SimpleLongProperty();
+    final long minUpdateInterval = 0 ;
 
 
+    public class MessageProducer implements Runnable {
+        private final BlockingQueue<String> messageQueue ;
+
+        public MessageProducer(BlockingQueue<String> messageQueue) {
+            this.messageQueue = messageQueue ;
+        }
+
+        @Override
+        public void run() {
+            long messageCount = 0 ;
+            try {
+                while (true) {
+                    final String message;
+                   // if(!input.equals(null)) {
+                        message = input;
+                        messageQueue.put(message);
+                        input = "";
+                        Thread.sleep(100);
+                  //  }
+                }
+            } catch (InterruptedException exc) {
+                System.out.println("Message producer interrupted: exiting.");
+            }
+        }
+    }
+    /*****************************************/
 
     @FXML
     Button playButton;
@@ -52,9 +100,6 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     public Screen2Controller(){
         // determine the source directory for the playlist
-
-
-
     }
 
 
@@ -64,17 +109,19 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 //    @FXML
 //    private Button loadButton; // value will be injected by the FXMLLoader
 
-    /**
+    /*************************************************************************************************************************
      * Initializes the controller class.
-     */
+     ****************************************************************************************************************/
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+
+        System.out.println("screen2 intiialised");
         assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
         assert mediaView != null : "meh";
         assert playButton != null;
         assert songRequest != null : "songrequest not injected!";
 
-        final File dir = new File("C:\\the set\\");
+        final File dir = new File("C:\\theset\\");
         if (!dir.exists() || !dir.isDirectory()) {
             System.out.println("Cannot find video source directory: " + dir);
             Platform.exit();
@@ -122,22 +169,154 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         mediaView.setMediaPlayer(players.get(0));
         //  mediaView.getMediaPlayer().play();
         setCurrentlyPlaying(mediaView.getMediaPlayer());
+
+       // sensor = new TemperatureSensor();
+
+        input = "";
+
+
+
+        AnimationTimer timer = new AnimationTimer() {
+
+            @Override
+            public void handle(long now) {
+                if (now - lastUpdate.get() > minUpdateInterval) {
+                    final String message = messageQueue.poll();
+                    if (message != null && !message.equals("")) {
+                            songRequest.appendText("\n" + message);
+                    }
+//                    else if (!message.equals("")) {
+//                        songRequest.appendText("\n" + message);
+//                    }
+                    lastUpdate.set(now);
+                }
+            }
+
+        };
+        timer.start();
+
+        /******????????????????????????????????????????????????????????????????**************/
+        model.StringProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(final ObservableValue<? extends String> observable,
+                                final String oldValue, final String newValue) {
+               // if (count.getAndSet(newValue.intValue()) == -1) {
+                    if (model.StringProperty().equals(newValue)) {
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                            //    String value = count.getAndSet(-1);
+                             //   songRequest.setText(formatter.format(value));
+                                // songRequest.appendText(input + "\n");
+                            }
+                        });
+                    }
+                }
+
+           // }
+        });
     }
     
     public void setScreenParent(ScreensController screenParent){
         myController = screenParent;
     }
+/******************************************************************************************************
+ *
+ * **********************************************************************************/
+
 
     @FXML
-    private void goToScreen1(ActionEvent event){
-       myController.setScreen(ScreensFramework.screen1ID);
-    }
-    
-    @FXML
-    private void goToScreen3(ActionEvent event){
-       myController.setScreen(ScreensFramework.screen3ID);
+    private void refreshMethod(ActionEvent event){
+        // System.out.println("refresh");
+        //model.start();
+        MessageProducer producer = new MessageProducer(messageQueue);
+        Thread t = new Thread(producer);
+        t.setDaemon(true);
+        t.start();
+
     }
 
+
+
+
+    /******************************************************************************************/
+    public void doThreadStuff(){
+            try
+            {
+                new Thread(){
+                    public void run() {
+                        Boolean flag = false;
+                        // retrieve the local Bluetooth device object
+                        StreamConnectionNotifier notifier = null;
+                        StreamConnection connection = null;
+                        String localInput = null;
+
+                        try {
+                            LocalDevice local = null;
+                            local = LocalDevice.getLocalDevice();
+                            local.setDiscoverable(DiscoveryAgent.GIAC);
+                            UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
+                            String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
+                            notifier = (StreamConnectionNotifier) Connector.open(url);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        connection = null;
+                        // waiting for connection
+                        while (flag == false) {
+                            try {
+                                System.out.println("waiting for connection...");
+                                connection = notifier.acceptAndOpen();
+                                System.out.println("connected!");
+                                flag = true;
+                                //Thread processThread = new Thread(new ProcessConnectionThread(connection));
+                                // processThread.start();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        try {
+                            DataInputStream dataInputStream = new DataInputStream(connection.openInputStream());
+                            DataOutputStream dataOutputStream = new DataOutputStream(connection.openOutputStream());
+
+                            System.out.println("waiting for input");
+                            while (true) {
+                                if (dataInputStream.available() > 0) {
+                                    byte[] msg = new byte[dataInputStream.available()];
+                                    dataInputStream.read(msg, 0, dataInputStream.available());
+                                    String msgstring = new String(msg);
+                                    input = msgstring;
+                                    System.out.print(msgstring + "\n");
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            }.start();
+}
+            catch(
+            Exception e
+            )
+
+            {
+                e.printStackTrace();
+            }
+            //}
+        }
+
+    @FXML
+    private void startServer(ActionEvent event) {
+
+        doThreadStuff();
+        MessageProducer producer = new MessageProducer(messageQueue);
+        Thread t = new Thread(producer);
+        t.setDaemon(true);
+        t.start();
+        }
+
+    /*******************MUSIC button methods **************************************************/
     @FXML
     private void play(ActionEvent event){
         if ("Pause".equals(playButton.getText())) {
@@ -160,78 +339,44 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         nextPlayer.play();
     }
 
+            /*******************MUSIC MODEL **************************************************/
 
+
+            private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
+                progress.setProgress(0);
+                progressChangeListener = new ChangeListener<Duration>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+                        progress.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
+                    }
+                };
+                newPlayer.currentTimeProperty().addListener(progressChangeListener);
+
+                String source = newPlayer.getMedia().getSource();
+                source = source.substring(0, source.length() - ".mp4".length());
+                source = source.substring(source.lastIndexOf("/") + 1).replaceAll("%20", " ");
+                currentlyPlaying.setText("Now Playing: " + source);
+            }
+
+            private MediaPlayer createPlayer(String aMediaSrc) {
+                //System.out.println("Creating player for: " + aMediaSrc);
+                final MediaPlayer player = new MediaPlayer(new Media(aMediaSrc));
+                player.setOnError(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("Media error occurred: " + player.getError());
+                    }
+                });
+                return player;
+            }
 
     @FXML
-    private void startServer(ActionEvent event) {
-        sensor = new TemperatureSensor();
-    } //start bluetooth server thread
-
-
-
-    private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
-        progress.setProgress(0);
-        progressChangeListener = new ChangeListener<Duration>() {
-            @Override public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
-                progress.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
-            }
-        };
-        newPlayer.currentTimeProperty().addListener(progressChangeListener);
-
-        String source = newPlayer.getMedia().getSource();
-        source = source.substring(0, source.length() - ".mp4".length());
-        source = source.substring(source.lastIndexOf("/") + 1).replaceAll("%20", " ");
-        currentlyPlaying.setText("Now Playing: " + source);
-    }
-
-    private MediaPlayer createPlayer(String aMediaSrc) {
-        //System.out.println("Creating player for: " + aMediaSrc);
-        final MediaPlayer player = new MediaPlayer(new Media(aMediaSrc));
-        player.setOnError(new Runnable() {
-            @Override public void run() {
-                System.out.println("Media error occurred: " + player.getError());
-            }
-        });
-        return player;
-    }
-
-    public class MyThread extends Thread {
-
-
+    private void goToScreen1(ActionEvent event){
+        myController.setScreen(ScreensFramework.screen1ID);
     }
 
     @FXML
-    private void refreshMethod(ActionEvent event){
-        // System.out.println("refresh");
-
-        Platform.runLater(() -> {
-            try {
-                System.out.println(sensor.getInputReading());
-                songRequest.appendText(sensor.getInputReading());
-                //    System.out.println("button is clicked");
-            } catch (Exception ex) {
-                //Exceptions.printStackTrace(ex);
-            }
-        });
+    private void goToScreen3(ActionEvent event){
+        myController.setScreen(ScreensFramework.screen3ID);
     }
-
-
-    public void updateTemperature(){
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("testing this");
-                    Thread.sleep(2000);
-                    //  skipButton.setText(sensor.getInputReading());
-                    //   songRequest.appendText(sensor.getInputReading()+"\n");
-                    sensor.getInputReading();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if(!"".equals(sensor.getInputReading()))
-                    test = sensor.getInputReading();
-            }
-        });
-    }//updateTemperature
-}
+        }

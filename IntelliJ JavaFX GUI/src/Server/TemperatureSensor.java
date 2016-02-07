@@ -80,6 +80,8 @@ public class TemperatureSensor {
 
                     System.out.println("waiting for input");
 
+
+
                     while (true) {
                         if(dataInputStream.available() > 0){
                             byte[] msg = new byte[dataInputStream.available()];
@@ -87,9 +89,10 @@ public class TemperatureSensor {
                             String msgstring = new String(msg);
                             System.out.print( msgstring+"\n");
                            // publish(new String(msg));
-                            sendMessageByBluetooth("request received: " + "'" + msgstring +"'");
+                           // sendMessageByBluetooth("request received: " + "'" + msgstring +"'");
                             input = msgstring + "\n";
                             fireTemperatureChangeEvent();
+
                         }
                         //return null;
                     }
@@ -111,8 +114,8 @@ public class TemperatureSensor {
 
     public void addListener(TemperatureSensorListener listener) {
         Preconditions.checkNotNull(listener);
-       // listeners.add(listener);
-        lisener = listener;
+        listeners.add(listener);
+       // lisener = listener;
     }
 
     public float getCurrentReading(){
