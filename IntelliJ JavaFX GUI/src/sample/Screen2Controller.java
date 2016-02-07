@@ -47,7 +47,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     private String test = new String("");
     private String input = "";
-
+    DataOutputStream dataOutputStream;
     /*****************************************/
     final Model model = new Model();
     final AtomicInteger count = new AtomicInteger(-1);
@@ -240,6 +240,25 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
 
     /******************************************************************************************/
+
+    public boolean sendMessageByBluetooth(String msg){
+        try {
+            if(dataOutputStream != null){
+                dataOutputStream.write(msg.getBytes());
+                dataOutputStream.flush();
+                return true;
+            }else{
+              //  sendHandler(ChatActivity.MSG_TOAST, context.getString(R.string.no_connection));
+                return false;
+            }
+        } catch (IOException e) {
+         //   LogUtil.e(e.getMessage());
+
+         //   sendHandler(ChatActivity.MSG_TOAST, context.getString(R.string.failed_to_send_message));
+            return false;
+        }
+    }
+
     public void doThreadStuff(){
             try
             {
@@ -278,7 +297,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
                         try {
                             DataInputStream dataInputStream = new DataInputStream(connection.openInputStream());
-                            DataOutputStream dataOutputStream = new DataOutputStream(connection.openOutputStream());
+                            dataOutputStream = new DataOutputStream(connection.openOutputStream());
 
                             System.out.println("waiting for input");
                             while (true) {
@@ -288,6 +307,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
                                     String msgstring = new String(msg);
                                     input = msgstring;
                                     System.out.print(msgstring + "\n");
+                                    sendMessageByBluetooth(msgstring);
                                 }
                             }
                         } catch (IOException e) {
