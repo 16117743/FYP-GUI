@@ -4,7 +4,6 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -16,16 +15,15 @@ import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
-import Server.*;
 import model.*;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -38,11 +36,12 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     ScreensController myController;
    // private TemperatureSensor sensor;
 
+    final List<Song> Songs = new ArrayList<>();
     final List<MediaPlayer> players = new ArrayList<MediaPlayer>();
     final Label currentlyPlaying = new Label();
     final ProgressBar progress = new ProgressBar();
     private ChangeListener<Duration> progressChangeListener;
-    MediaView mediaView;
+   // MediaView mediaView;
    // MediaView mediaView = new MediaView();
 
     private String test = new String("");
@@ -89,8 +88,8 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     @FXML
     Button playButton;
 
-//    @FXML
-//    MediaView mediaView;
+    @FXML
+    MediaView mediaView;
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
@@ -98,16 +97,12 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     @FXML
     private TextArea songRequest;
 
+    @FXML
+    private VBox vBox;
+
     public Screen2Controller(){
         // determine the source directory for the playlist
     }
-
-
-
-//    @FXML
-//    private Button playButton; // value will be injected by the FXMLLoader
-//    @FXML
-//    private Button loadButton; // value will be injected by the FXMLLoader
 
     /*************************************************************************************************************************
      * Initializes the controller class.
@@ -115,7 +110,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
-        System.out.println("screen2 intiialised");
+//        System.out.println("screen2 intialized");
         assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
         assert mediaView != null : "meh";
         assert playButton != null;
@@ -130,11 +125,14 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
         // create some media players.
         //  final List<MediaPlayer> players = new ArrayList<MediaPlayer>();
-        for (String file : dir.list(new FilenameFilter() {
-            @Override public boolean accept(File dir, String name) {
-                return name.endsWith(".mp3");
-            }
-        })) players.add(createPlayer("file:///" + (dir + "\\" + file).replace("\\", "/").replaceAll(" ", "%20")));
+        int ii = 0;
+        for (String file : dir.list(new FilenameFilter() {@Override public boolean accept(File dir, String name) {return name.endsWith(".mp3");}}))
+        {
+            String path = "file:///" + (dir + "\\" + file).replace("\\", "/").replaceAll(" ", "%20");
+            Songs.add(new Song(path));
+            players.add(Songs.get(ii).getPlayer());
+            ii++;
+        }
         // %20 is immediately recognisable as a whitespace character -
         // while not really having any meaning in a URI it is encoded in order to avoid breaking the string into multiple "parts".
 
@@ -144,8 +142,8 @@ public class Screen2Controller implements Initializable , ControlledScreen {
             // return null;
         }
 
-        mediaView = new MediaView(players.get(0));
-
+       // mediaView = new MediaView(players.get(0));
+       mediaView.setMediaPlayer(players.get(0));
         // play each audio file in turn.
         for (int i = 0; i < players.size(); i++) {
             final MediaPlayer player     = players.get(i);
@@ -166,15 +164,11 @@ public class Screen2Controller implements Initializable , ControlledScreen {
             }
         });
 
-        mediaView.setMediaPlayer(players.get(0));
+      //  mediaView.setMediaPlayer(players.get(0));
         //  mediaView.getMediaPlayer().play();
         setCurrentlyPlaying(mediaView.getMediaPlayer());
 
-       // sensor = new TemperatureSensor();
-
         input = "";
-
-
 
         AnimationTimer timer = new AnimationTimer() {
 
@@ -185,9 +179,6 @@ public class Screen2Controller implements Initializable , ControlledScreen {
                     if (message != null && !message.equals("")) {
                             songRequest.appendText("\n" + message);
                     }
-//                    else if (!message.equals("")) {
-//                        songRequest.appendText("\n" + message);
-//                    }
                     lastUpdate.set(now);
                 }
             }
@@ -196,25 +187,6 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         timer.start();
 
         /******????????????????????????????????????????????????????????????????**************/
-        model.StringProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(final ObservableValue<? extends String> observable,
-                                final String oldValue, final String newValue) {
-               // if (count.getAndSet(newValue.intValue()) == -1) {
-                    if (model.StringProperty().equals(newValue)) {
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                            //    String value = count.getAndSet(-1);
-                             //   songRequest.setText(formatter.format(value));
-                                // songRequest.appendText(input + "\n");
-                            }
-                        });
-                    }
-                }
-
-           // }
-        });
     }
     
     public void setScreenParent(ScreensController screenParent){

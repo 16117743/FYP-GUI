@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.media.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Screen2Controller">
+  <children>
+      <AnchorPane prefHeight="509.0" prefWidth="638.0">
+         <children>
+            <MenuBar prefHeight="20.0" prefWidth="638.0">
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+         </children>
+      </AnchorPane>
+      <Pane fx:id="loadButton" prefHeight="483.0" prefWidth="630.0">
+         <children>
+            <Button fx:id="skipButton" layoutX="118.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" prefHeight="49.0" prefWidth="98.0" text="Skip" />
+            <SplitMenuButton layoutX="4.0" layoutY="26.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="119.0" text="Select Song">
+              <items>
+                <MenuItem mnemonicParsing="false" text="Action 1" />
+                <MenuItem mnemonicParsing="false" text="Action 2" />
+              </items>
+            </SplitMenuButton>
+            <ListView layoutX="3.0" layoutY="104.0" prefHeight="275.0" prefWidth="154.0" />
+            <Text fill="#ccff00" layoutX="20.0" layoutY="96.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
+          <VBox alignment="CENTER" layoutX="481.0" layoutY="39.0" prefHeight="132.0" prefWidth="126.0" spacing="20.0">
+            <children>
+              <Button mnemonicParsing="false" onAction="#goToScreen3" prefHeight="28.0" prefWidth="104.0" text="Disk Jockey" />
+            </children>
+          </VBox>
+            <Button fx:id="loadButton" layoutX="515.0" layoutY="421.0" mnemonicParsing="false" onAction="#startServer" prefHeight="40.0" prefWidth="88.0" text="Start Server" />
+            <Button fx:id="playButton" layoutX="20.0" layoutY="416.0" mnemonicParsing="false" onAction="#play" prefHeight="49.0" prefWidth="88.0" text="Play" />
+            <TextArea fx:id="songRequest" layoutX="424.0" layoutY="142.0" prefHeight="200.0" prefWidth="200.0" />
+            <Text fill="#eeff00" layoutX="432.0" layoutY="128.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Requests" wrappingWidth="98.0" />
+        <Button fx:id="refreshButton" layoutX="461.0" layoutY="353.0" mnemonicParsing="false" onAction="#refreshMethod" prefHeight="15.0" prefWidth="98.0" text="Refresh" />
+            <StackPane layoutX="187.0" layoutY="115.0" prefHeight="225.0" prefWidth="219.0">
+               <children>
+                   <MediaView fx:id="mediaView" fitHeight="280.0" fitWidth="240.0" />
+               </children>
+            </StackPane>
+         </children>
+      </Pane>
+  </children>
+</AnchorPane>
