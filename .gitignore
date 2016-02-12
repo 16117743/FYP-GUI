@@ -1,12 +1,18 @@
-/Music-Player-GUI/nbproject/private/
-/MP3 Player Widget/build/
-/MP3 Player Widget/dist/
-/MP3 Player Widget/nbproject/private/
-/JavaFXMusicGUI/build/
-/JavaFXMusicGUI/dist/
-/IntelliJ JavaFX GUI/.idea
-/IntelliJ JavaFX GUI/lib
-/IntelliJ JavaFX GUI/out
-/IntelliJ JavaFX GUI/javaFXTest.iml
+FXGUI/.idea/workspace.xml
+/FXGUI/.idea
+/FXGUI/.idea/
+/FXGUI/.idea/workspace.xml
+FXGUI/.idea/workspace.xml
+FXGUI/.idea/*.xml
+/.idea/*.xml
+.idea/*.xml
+
+/FXGUI/.idea/*.xml
+/FXGUI/lib
+/FXGUI/lib/
+/FXGUI/out
+/FXGUI/out/
+/FXGUI/out/*.class
+/FXGUI/javaFXTest.iml
 *.xml
 *.class
