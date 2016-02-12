@@ -1,4 +1,4 @@
-//testing git .ignore
+//test 2 git .ignore
 
 package sample;
 import java.io.*;
