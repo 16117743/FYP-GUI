@@ -1,3 +1,5 @@
+//testing git .ignore
+
 package sample;
 import java.io.*;
 import java.net.URL;
@@ -34,7 +36,6 @@ import javax.microedition.io.StreamConnectionNotifier;
 
 public class Screen2Controller implements Initializable , ControlledScreen {
     ScreensController myController;
-   // private TemperatureSensor sensor;
 
     final List<Song> Songs = new ArrayList<>();
     final List<MediaPlayer> players = new ArrayList<MediaPlayer>();
