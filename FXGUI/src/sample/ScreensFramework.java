@@ -26,15 +26,11 @@ public class ScreensFramework extends Application {
         
         mainContainer.setScreen(ScreensFramework.screen1ID);
 
-        Group root = new Group();
-        root.getChildren().addAll(mainContainer);
-        Scene scene = new Scene(root);
-        //scene.getStylesheets().addAll(this.getClass().getResource("style.css").toExternalForm());
-//        String image = ScreensFramework.class.getResource("background_image.jpg").toExternalForm();
-//        root.setStyle("-fx-background-image: url('" + image + "'); " +
-//                "-fx-background-position: center center; " +
-//                "-fx-background-repeat: stretch;");
-        primaryStage.setScene(scene);
+        Group root = new Group();//Constructs a group consisting of children.
+        root.getChildren().addAll(mainContainer);/*Gets the list of children of this {Group}. return the list of children of this {Group}.*/
+        Scene scene = new Scene(root);//add children to the scene
+
+        primaryStage.setScene(scene);//Specify the scene to be used on this stage.
         primaryStage.show();
     }
 

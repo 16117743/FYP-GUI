@@ -200,17 +200,8 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     @FXML
     private void refreshMethod(ActionEvent event){
-        // System.out.println("refresh");
-        //model.start();
-        MessageProducer producer = new MessageProducer(messageQueue);
-        Thread t = new Thread(producer);
-        t.setDaemon(true);
-        t.start();
-
+        System.out.println(myController.getTest());
     }
-
-
-
 
     /******************************************************************************************/
 

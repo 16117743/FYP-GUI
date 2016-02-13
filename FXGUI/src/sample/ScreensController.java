@@ -1,4 +1,5 @@
 package sample;
+import java.sql.Connection;
 import java.util.HashMap;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -11,14 +12,22 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-                          //keep pane so we can remove add screens on top/bottom
+import model.DB;
+
+//keep pane so we can remove add screens on top/bottom
 public class ScreensController  extends StackPane {
-    //Holds the screens to be displayed
+    //Holds the screens to be displaye
+    private String test = "test1";
 
     private HashMap<String, Node> screens = new HashMap<>();
+    DB db;
+    Connection conn;
                 //id of screen, represents root of the screen graph for that scene
     public ScreensController() {
-        super();
+        super();//inherit StackPane class
+//         db = new DB();
+//         conn=db.dbConnect(
+//                 "jdbc:mysql://localhost:3306/localsong","root","root");
     }
 
     //Add the screen to the collection
@@ -37,9 +46,9 @@ public class ScreensController  extends StackPane {
         try {                            //fxml file
             FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
             System.out.println(resource);
-            Parent loadScreen = (Parent) myLoader.load();
-                                                //class cast to controlled screen
-            ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());
+            Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
+
+            ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
             //inject screen controllers to myscreencontroller
             myScreenControler.setScreenParent(this);// inject screen controllers to each screen here
             addScreen(name, loadScreen);
@@ -59,24 +68,31 @@ public class ScreensController  extends StackPane {
         if (screens.get(name) != null) {   //screen loaded
             final DoubleProperty opacity = opacityProperty();
 
-            if (!getChildren().isEmpty()) {    //if there is more than one screen
-                Timeline fade = new Timeline(
-                        new KeyFrame(Duration.ZERO, new KeyValue(opacity, 1.0)),
-                        new KeyFrame(new Duration(900),// once fade out is finished, call eventhandler
-                                new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent t) {
-                        getChildren().remove(0);                    //remove the displayed screen
-                        getChildren().add(0, screens.get(name));     //add the screen
-                        Timeline fadeIn = new Timeline(
-                                new KeyFrame(Duration.ZERO, new KeyValue(opacity, 0.0)),
-                                new KeyFrame(new Duration(500), new KeyValue(opacity, 1.0)));
-                        fadeIn.play();
-                    }
-                }, new KeyValue(opacity, 0.0)));
+            if (!getChildren().isEmpty())// getChildren returns a modifiable list of children
+            {    //if there is more than one screen
+                Timeline fade = new Timeline
+                        (
+                            new KeyFrame(Duration.ZERO, new KeyValue(opacity, 1.0)),
+                            new KeyFrame
+                                (
+                                        new Duration(900),// once fade out is finished, call eventhandler
+                                    new EventHandler<ActionEvent>()
+                                    {
+                                        @Override
+                                        public void handle(ActionEvent t)
+                                        {
+                                             getChildren().remove(0);                    //remove the displayed screen
+                                            getChildren().add(0, screens.get(name));     //add the screen
+                                            Timeline fadeIn = new Timeline(
+                                            new KeyFrame(Duration.ZERO, new KeyValue(opacity, 0.0)),
+                                            new KeyFrame(new Duration(500), new KeyValue(opacity, 1.0)));
+                                            fadeIn.play();
+                                        }
+                                    }, new KeyValue(opacity, 0.0)
+                                )//end new keyframe
+                        );//end time line fade
                 fade.play();
-
-            } 
+            } //end if (!getChildren().isEmpty())
            else {
                 setOpacity(0.0);   // getting tree structure of screen given by name
                             //then adding it to the scene graph
@@ -91,23 +107,15 @@ public class ScreensController  extends StackPane {
             System.out.println("screen hasn't been loaded!!! \n");
             return false;
         }
-
-
-        /*Node screenToRemove;
-         if(screens.get(name) != null){   //screen loaded
-         if(!getChildren().isEmpty()){    //if there is more than one screen
-         getChildren().add(0, screens.get(name));     //add the screen
-         screenToRemove = getChildren().get(1);
-         getChildren().remove(1);                    //remove the displayed screen
-         }else{
-         getChildren().add(screens.get(name));       //no one else been displayed, then just show
-         }
-         return true;
-         }else {
-         System.out.println("screen hasn't been loaded!!! \n");
-         return false;
-         }*/
     }
+
+      public String getTest() {
+          return test;
+      }
+
+      public void setTest(String test) {
+          this.test = test;
+      }
 
     //This method will remove the screen with the given name from the collection of screens
     public boolean unloadScreen(String name) {

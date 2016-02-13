@@ -70,6 +70,11 @@
                   <Font size="64.0" />
                </font>
             </Text>
+            <HBox prefHeight="28.0" prefWidth="415.0">
+               <children>
+                   <PasswordField fx:id="login" promptText="Password" />
+               </children>
+            </HBox>
         <HBox alignment="CENTER" prefHeight="57.0" prefWidth="281.0" spacing="20.0">
           <children>
               <Label id="loginTextID" prefHeight="44.0" prefWidth="90.0" text="Login">
@@ -80,7 +85,6 @@
                         <Glow />
                      </effect>
               </Label>
-                  <TextField promptText="Pasword" />
                   <PasswordField fx:id="passwordField" promptText="Password" />
             <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
           </children>
