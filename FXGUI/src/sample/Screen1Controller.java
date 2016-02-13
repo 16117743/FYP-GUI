@@ -13,6 +13,7 @@ import model.*;
 public class Screen1Controller implements Initializable, ControlledScreen {
 
     ScreensController myController;
+    Model mainModel;
 
     @FXML
     private PasswordField login;
@@ -33,19 +34,25 @@ public class Screen1Controller implements Initializable, ControlledScreen {
         //db.getImageData(conn);
     }
 
-    public void setScreenParent(ScreensController screenParent){
+    public void setScreenParent(ScreensController screenParent, Model model){
         myController = screenParent;
+        mainModel = model;
+    }
+
+    public void setModel(Model model){
+    mainModel = model;
     }
 
     @FXML
     private void goToScreen2(ActionEvent event){
         Boolean b = Login();
         myController.setScreen(ScreensFramework.screen2ID);
+
     }
 
     private Boolean Login(){
 
-        System.out.println(myController.getTest());
+        System.out.println(mainModel.getTest());
 
         String id = "";
           id  = login.getText();
@@ -53,7 +60,8 @@ public class Screen1Controller implements Initializable, ControlledScreen {
         pw = passwordField.getText();
 
         System.out.println(id +"\n" + pw);
-        myController.setTest("test2");
+        mainModel.setTest("test2");
+       // myController.getTest();
         return true;
     }
 

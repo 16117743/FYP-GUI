@@ -13,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import model.DB;
+import model.Model;
 
 //keep pane so we can remove add screens on top/bottom
 public class ScreensController  extends StackPane {
@@ -22,13 +23,25 @@ public class ScreensController  extends StackPane {
     private HashMap<String, Node> screens = new HashMap<>();
     DB db;
     Connection conn;
+    Model model;
                 //id of screen, represents root of the screen graph for that scene
     public ScreensController() {
         super();//inherit StackPane class
 //         db = new DB();
 //         conn=db.dbConnect(
 //                 "jdbc:mysql://localhost:3306/localsong","root","root");
+        model = new Model();
     }
+
+
+
+    /********************MODEL RETURN METHODS***************************************/
+    public Void mediaViewGetMediaPlayerPause(){
+     //   mediaView.getMediaPlayer().pause();
+     //   playButton.setText("Play");
+        return null;
+    }
+    /********************MODEL RETURN METHODS***************************************/
 
     //Add the screen to the collection
     public void addScreen(String name, Node screen) {
@@ -45,12 +58,15 @@ public class ScreensController  extends StackPane {
     public boolean loadScreen(String name, String resource) {
         try {                            //fxml file
             FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
-            System.out.println(resource);
+           // System.out.println(resource);
             Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
 
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
             //inject screen controllers to myscreencontroller
-            myScreenControler.setScreenParent(this);// inject screen controllers to each screen here
+            myScreenControler.setScreenParent(this,model);// inject screen controllers to each screen here
+
+           // InterfaceModel myModel = ((InterfaceModel) myLoader.getController());
+           // myModel.setModel(this.model);
             addScreen(name, loadScreen);
             return true;
         } catch (Exception e) {
@@ -110,12 +126,12 @@ public class ScreensController  extends StackPane {
     }
 
       public String getTest() {
-          return test;
-      }
+    return test;
+}
 
-      public void setTest(String test) {
-          this.test = test;
-      }
+public void setTest(String test) {
+    this.test = test;
+}
 
     //This method will remove the screen with the given name from the collection of screens
     public boolean unloadScreen(String name) {

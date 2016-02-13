@@ -3,6 +3,7 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import model.Model;
 import sample.ScreensController;
 
 
@@ -20,6 +21,8 @@ public class ScreensFramework extends Application {
     public void start(Stage primaryStage) {
         
         ScreensController mainContainer = new ScreensController();
+//        Model mainModel = new Model();
+//        mainModel.setTest("aaaaaa");
         mainContainer.loadScreen(ScreensFramework.screen1ID, ScreensFramework.screen1File);
         mainContainer.loadScreen(ScreensFramework.screen2ID, ScreensFramework.screen2File);
         mainContainer.loadScreen(ScreensFramework.screen3ID, ScreensFramework.screen3File);

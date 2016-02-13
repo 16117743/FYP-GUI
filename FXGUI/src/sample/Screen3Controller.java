@@ -43,6 +43,7 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import model.Model;
 import sample.ControlledScreen;
 import sample.ScreensController;
 
@@ -50,22 +51,25 @@ import sample.ScreensController;
 public class Screen3Controller implements Initializable, ControlledScreen {
 
     ScreensController myController;
-    
+    Model mainModel;
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
-    }    
-    
-    public void setScreenParent(ScreensController screenParent){
-        myController = screenParent;
+    }
+
+    public void setScreenParent(ScreensController screenParent, Model model){
+    myController = screenParent;
+    mainModel = model;
     }
 
     @FXML
     private void goToScreen1(ActionEvent event){
-       myController.setScreen(ScreensFramework.screen1ID);
+       System.out.print(mainModel.getTest());
+        mainModel.setTest("hghghgh");
+        myController.setScreen(ScreensFramework.screen1ID);
     }
     
     @FXML

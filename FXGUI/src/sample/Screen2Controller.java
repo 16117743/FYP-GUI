@@ -35,6 +35,7 @@ import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
 
 public class Screen2Controller implements Initializable , ControlledScreen {
+    Model mainModel;
     ScreensController myController;
 
     final List<Song> Songs = new ArrayList<>();
@@ -190,9 +191,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
         /******????????????????????????????????????????????????????????????????**************/
     }
     
-    public void setScreenParent(ScreensController screenParent){
-        myController = screenParent;
-    }
+
 /******************************************************************************************************
  *
  * **********************************************************************************/
@@ -200,7 +199,7 @@ public class Screen2Controller implements Initializable , ControlledScreen {
 
     @FXML
     private void refreshMethod(ActionEvent event){
-        System.out.println(myController.getTest());
+        System.out.println(mainModel.getTest());
     }
 
     /******************************************************************************************/
@@ -363,4 +362,11 @@ public class Screen2Controller implements Initializable , ControlledScreen {
     private void goToScreen3(ActionEvent event){
         myController.setScreen(ScreensFramework.screen3ID);
     }
-        }
+
+    public void setModel(Model model){mainModel = model;}
+
+    public void setScreenParent(ScreensController screenParent, Model model){
+    myController = screenParent;
+    mainModel = model;
+}
+}
