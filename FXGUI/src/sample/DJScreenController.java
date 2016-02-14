@@ -48,7 +48,7 @@ import sample.ControlledScreen;
 import sample.ScreensController;
 
 
-public class Screen3Controller implements Initializable, ControlledScreen {
+public class DJScreenController implements Initializable, ControlledScreen {
 
     ScreensController myController;
     Model mainModel;
@@ -68,12 +68,12 @@ public class Screen3Controller implements Initializable, ControlledScreen {
     @FXML
     private void goToScreen1(ActionEvent event){
        System.out.print(mainModel.getTest());
-        mainModel.setTest("hghghgh");
-        myController.setScreen(ScreensFramework.screen1ID);
+        mainModel.Play();
+        //myController.setScreen(MusicHostFramework.screen1ID);
     }
     
     @FXML
     private void goToScreen2(ActionEvent event){
-       myController.setScreen(ScreensFramework.screen2ID);
+       mainModel.Skip();
     }
 }

@@ -26,6 +26,11 @@ public class Model {
     final Label currentlyPlaying = new Label();
     final ProgressBar progress = new ProgressBar();
     private ChangeListener<Duration> progressChangeListener;
+
+
+
+final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
+
     // MediaView mediaView;
     // MediaView mediaView = new MediaView();
 
@@ -98,6 +103,8 @@ public class Model {
         });
     }
 
+/*************************************************************************************/
+
     public String getTest() {
         return test;
     }
@@ -124,9 +131,24 @@ public class Model {
     currentlyPlaying.setText("Now Playing: " + source);
     }
 
-    /****************Helper methods ***************/
-//    public void
-//    mediaView.getMediaPlayer().pause();
-//    playButton.setText("Play");
+    /****************Helper methods ************************************************/
+    public void Play() {
+        mediaView.getMediaPlayer().play();
+    }
+    public void Pause() {
+        mediaView.getMediaPlayer().pause();
+    }
 
+    public void Skip(){
+        final MediaPlayer curPlayer = mediaView.getMediaPlayer();
+        MediaPlayer nextPlayer = players.get((players.indexOf(curPlayer) + 1) % players.size());
+        mediaView.setMediaPlayer(nextPlayer);
+        curPlayer.currentTimeProperty().removeListener(progressChangeListener);
+        curPlayer.stop();
+        nextPlayer.play();
+    }
+
+    public BlockingQueue<String> getMessageQueue() {
+        return messageQueue;
+    }
   }

@@ -1,8 +1,6 @@
 package sample;
 
-import java.awt.*;
 import java.net.URL;
-import java.sql.Connection;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,7 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.PasswordField;
 import model.*;
 
-public class Screen1Controller implements Initializable, ControlledScreen {
+public class LoginSceneController implements Initializable, ControlledScreen {
 
     ScreensController myController;
     Model mainModel;
@@ -45,9 +43,8 @@ public class Screen1Controller implements Initializable, ControlledScreen {
 
     @FXML
     private void goToScreen2(ActionEvent event){
-        Boolean b = Login();
-        myController.setScreen(ScreensFramework.screen2ID);
-
+       // Boolean b = Login();
+        myController.setScreen(MusicHostFramework.screen2ID);
     }
 
     private Boolean Login(){
@@ -61,12 +58,12 @@ public class Screen1Controller implements Initializable, ControlledScreen {
 
         System.out.println(id +"\n" + pw);
         mainModel.setTest("test2");
-       // myController.getTest();
+        myController.getTest();
         return true;
     }
 
     @FXML
     private void goToScreen3(ActionEvent event){
-        myController.setScreen(ScreensFramework.screen3ID);
+        myController.setScreen(MusicHostFramework.screen3ID);
     }
 }

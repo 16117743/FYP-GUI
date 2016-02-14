@@ -52,7 +52,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Screen1Controller">
+<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
   <children>
       <AnchorPane prefHeight="200.0" prefWidth="200.0">
          <children>
