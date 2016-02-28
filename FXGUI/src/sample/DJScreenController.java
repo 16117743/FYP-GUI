@@ -43,6 +43,7 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import model.AzureDB;
 import model.Model;
 import sample.ControlledScreen;
 import sample.ScreensController;
@@ -52,6 +53,8 @@ public class DJScreenController implements Initializable, ControlledScreen {
 
     ScreensController myController;
     Model mainModel;
+    AzureDB db;
+
     /**
      * Initializes the controller class.
      */
@@ -60,9 +63,10 @@ public class DJScreenController implements Initializable, ControlledScreen {
         // TODO
     }
 
-    public void setScreenParent(ScreensController screenParent, Model model){
+    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
     myController = screenParent;
     mainModel = model;
+    db = database;
     }
 
     @FXML

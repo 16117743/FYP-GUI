@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import model.AzureDB;
 import model.DB;
 import model.Model;
 
@@ -21,16 +22,16 @@ public class ScreensController  extends StackPane {
     private String test = "test1";
 
     private HashMap<String, Node> screens = new HashMap<>();
-    DB db;
+  //  DB db;
     Connection conn;
-    Model model;
+  //  Model model;
                 //id of screen, represents root of the screen graph for that scene
     public ScreensController() {
         super();//inherit StackPane class
 //         db = new DB();
 //         conn=db.dbConnect(
 //                 "jdbc:mysql://localhost:3306/localsong","root","root");
-        model = new Model();
+   //     model = new Model();
     }
 
 
@@ -57,13 +58,15 @@ public class ScreensController  extends StackPane {
     //finally injects the screenPane to the controller.
     public boolean loadScreen(String name, String resource) {
         try {                            //fxml file
+            AzureDB db = new AzureDB();
+            Model mainmodel = new Model();
             FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
            // System.out.println(resource);
             Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
 
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
             //inject screen controllers to myscreencontroller
-            myScreenControler.setScreenParent(this,model);// inject screen controllers to each screen here
+            myScreenControler.setScreenParent(this,mainmodel,db);// inject screen controllers to each screen here
 
            // InterfaceModel myModel = ((InterfaceModel) myLoader.getController());
            // myModel.setModel(this.model);

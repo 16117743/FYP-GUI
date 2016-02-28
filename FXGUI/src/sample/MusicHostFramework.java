@@ -3,6 +3,7 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import model.AzureDB;
 
 
 public class MusicHostFramework extends Application {
@@ -17,9 +18,10 @@ public class MusicHostFramework extends Application {
     
     @Override
     public void start(Stage primaryStage) {
-        
+        AzureDB db = new AzureDB();
         ScreensController mainContainer = new ScreensController();
 //        Model mainModel = new Model();
+
 //        mainModel.setTest("aaaaaa");
         mainContainer.loadScreen(MusicHostFramework.screen1ID, MusicHostFramework.screen1File);
         mainContainer.loadScreen(MusicHostFramework.screen2ID, MusicHostFramework.screen2File);

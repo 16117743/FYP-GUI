@@ -1,3 +1,6 @@
+FXGUI/libignore/
+FXGUI/src/ignore/*.java
+FXGUI/out/production/FXGUI/ignore/*.class
 FXGUI/.idea/workspace.xml
 /FXGUI/.idea
 /FXGUI/.idea/
@@ -6,6 +9,7 @@ FXGUI/.idea/workspace.xml
 FXGUI/.idea/*.xml
 /.idea/*.xml
 .idea/*.xml
+
 
 /FXGUI/.idea/*.xml
 /FXGUI/lib

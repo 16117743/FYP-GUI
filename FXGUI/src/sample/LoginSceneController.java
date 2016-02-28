@@ -10,6 +10,7 @@ import model.*;
 
 public class LoginSceneController implements Initializable, ControlledScreen {
 
+    AzureDB db;
     ScreensController myController;
     Model mainModel;
 
@@ -32,10 +33,11 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         //db.getImageData(conn);
     }
 
-    public void setScreenParent(ScreensController screenParent, Model model){
-        myController = screenParent;
-        mainModel = model;
-    }
+    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+    myController = screenParent;
+    mainModel = model;
+    db = database;
+}
 
     public void setModel(Model model){
     mainModel = model;

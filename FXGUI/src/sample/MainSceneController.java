@@ -13,6 +13,7 @@ import model.*;
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
     ServerModel serverModel;
+    AzureDB db;
     ScreensController myController;
     final LongProperty lastUpdate = new SimpleLongProperty();
     final long minUpdateInterval = 0 ;
@@ -28,6 +29,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     public MainSceneController(){
         serverModel = new ServerModel();
+        db = new AzureDB();
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -54,6 +56,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void refreshMethod(ActionEvent event){
         System.out.println(mainModel.getTest());
+        db.test1();
     }
 
     @FXML
@@ -89,8 +92,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
         myController.setScreen(MusicHostFramework.screen3ID);
     }
     //interface injection of screenParent and main model for songs and DB
-    public void setScreenParent(ScreensController screenParent, Model model){
+    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
     myController = screenParent;
     mainModel = model;
+    db = database;
     }
 }
