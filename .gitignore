@@ -1,3 +1,4 @@
+FXGUI/FXGUI.iml
 FXGUI/libignore/
 FXGUI/src/ignore/*.java
 FXGUI/out/production/FXGUI/ignore/*.class

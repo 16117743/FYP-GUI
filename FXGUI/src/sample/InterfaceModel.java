@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.scene.control.ProgressBar;
 import model.Model;
 
 /**
@@ -7,5 +8,5 @@ import model.Model;
  */
 public interface InterfaceModel {
 
-    public void setModel(Model model);
+    public void setModel(ProgressBar bar);
 }

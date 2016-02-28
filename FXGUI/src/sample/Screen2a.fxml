@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.effect.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.media.*?>
 <?import javafx.scene.image.*?>
@@ -10,9 +11,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+<AnchorPane id="AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
   <children>
-      <AnchorPane prefHeight="509.0" prefWidth="638.0">
+      <AnchorPane>
          <children>
             <MenuBar prefHeight="20.0" prefWidth="638.0">
               <menus>
@@ -37,24 +38,29 @@
       </AnchorPane>
       <Pane fx:id="loadButton">
          <children>
-            <Button fx:id="skipButton" layoutX="378.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" prefHeight="49.0" prefWidth="98.0" text="Skip" />
-            <SplitMenuButton layoutX="4.0" layoutY="26.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="119.0" text="Select Song">
+            <Button fx:id="skipButton" layoutX="378.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" text="Skip" />
+            <SplitMenuButton layoutX="4.0" layoutY="26.0" mnemonicParsing="false" text="Select Song">
               <items>
                 <MenuItem mnemonicParsing="false" text="Action 1" />
                 <MenuItem mnemonicParsing="false" text="Action 2" />
               </items>
             </SplitMenuButton>
-            <ListView layoutX="4.0" layoutY="55.0" />
-            <Text fill="#ccff00" layoutX="20.0" layoutY="96.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
-            <Button fx:id="loadButton" layoutX="516.0" layoutY="425.0" mnemonicParsing="false" onAction="#startServer" prefHeight="40.0" prefWidth="88.0" text="Start Server" />
-            <Button fx:id="playButton" layoutX="263.0" layoutY="420.0" mnemonicParsing="false" onAction="#play" prefHeight="49.0" prefWidth="88.0" text="Play" />
-        <Button fx:id="refreshButton" layoutX="467.0" layoutY="380.0" mnemonicParsing="false" onAction="#refreshMethod" prefHeight="15.0" prefWidth="98.0" text="Refresh" />
-            <StackPane layoutX="406.0" layoutY="30.0" prefHeight="225.0" prefWidth="219.0">
+            <ListView layoutX="4.0" layoutY="55.0">
+               <effect>
+                  <Bloom />
+               </effect></ListView>
+            <Text fill="#0f1108" layoutX="20.0" layoutY="96.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
+            <Button fx:id="loadButton" layoutX="516.0" layoutY="425.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
+            <Button fx:id="playButton" layoutX="263.0" layoutY="420.0" mnemonicParsing="false" onAction="#play" text="Play" />
+        <Button fx:id="refreshButton" layoutX="467.0" layoutY="380.0" mnemonicParsing="false" onAction="#refreshMethod" text="Refresh" />
+            <StackPane layoutX="406.0" layoutY="30.0">
                <children>
                   <TextArea fx:id="songRequest" />
                </children>
             </StackPane>
-        <Button layoutX="326.0" layoutY="378.0" mnemonicParsing="false" onAction="#goToScreen3" prefHeight="28.0" prefWidth="104.0" text="Disk Jockey" />
+        <Button layoutX="326.0" layoutY="378.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
+            <ProgressIndicator fx:id="prog" layoutX="305.0" layoutY="152.0" progress="0.0" />
+            <ProgressBar fx:id="progbar" layoutX="268.0" layoutY="123.0" prefHeight="5.0" prefWidth="102.0" progress="0.0" />
          </children>
       </Pane>
   </children>

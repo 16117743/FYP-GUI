@@ -65,19 +65,14 @@
       </AnchorPane>
     <VBox alignment="CENTER" layoutX="10.0" prefHeight="222.0" prefWidth="301.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
       <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="    Muzik Host" wrappingWidth="481.13671875">
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="    Music Host" wrappingWidth="481.13671875">
                <font>
                   <Font size="64.0" />
                </font>
             </Text>
-            <HBox prefHeight="28.0" prefWidth="415.0">
-               <children>
-                   <PasswordField fx:id="login" promptText="Password" />
-               </children>
-            </HBox>
         <HBox alignment="CENTER" prefHeight="57.0" prefWidth="281.0" spacing="20.0">
           <children>
-              <Label id="loginTextID" prefHeight="44.0" prefWidth="90.0" text="Login">
+              <Label id="loginTextID" text="Login">
                 <font>
                   <Font size="36.0" />
                 </font>
@@ -85,6 +80,8 @@
                         <Glow />
                      </effect>
               </Label>
+                   <PasswordField fx:id="login" promptText="Username" />
+                  <HBox />
                   <PasswordField fx:id="passwordField" promptText="Password" />
             <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
           </children>

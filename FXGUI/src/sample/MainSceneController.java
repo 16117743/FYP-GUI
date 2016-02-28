@@ -4,6 +4,7 @@ import java.util.ResourceBundle;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -19,6 +20,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
     final long minUpdateInterval = 0 ;
 
     @FXML
+    ProgressBar progBar;
+
+    @FXML
+    ProgressIndicator prog;
+
+    @FXML
     Button playButton;
 
     @FXML
@@ -30,7 +37,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
     public MainSceneController(){
         serverModel = new ServerModel();
         db = new AzureDB();
-
+       // ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());
+       // InterfaceModel myInterface = ((InterfaceModel) db.getProgressBar());
+        //myInterface.setModel(db.getProgressBar());
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -38,6 +47,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     final String message = serverModel.pollQueue();
                     if (message != null && !message.equals("")) {
                         songRequest.appendText("\n" + message);
+                        progBar.se
+                        //System.out.println(progBar.get);
                     }
                     lastUpdate.set(now);
                 }
@@ -51,12 +62,16 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
         assert playButton != null;
         assert songRequest != null : "songrequest not injected!";
+        assert prog != null : "songrequest not injected!";
+        assert progBar != null : "songrequest not injected!";
+
+        db.setModel(progBar);
     }
 
     @FXML
     private void refreshMethod(ActionEvent event){
         System.out.println(mainModel.getTest());
-        db.test1();
+        db.test2();
     }
 
     @FXML
@@ -83,13 +98,55 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     @FXML
-    private void goToScreen1(ActionEvent event){
-        myController.setScreen(MusicHostFramework.screen1ID);
+    private void goToScreen1(ActionEvent event)
+    {
+        progBar.setVisible(true);
+        System.out.print("go");
+        //db.test1();
+       // myController.setScreen(MusicHostFramework.screen1ID);
+        progBar.setProgress(4);
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                final int max = 100;
+                for (int i=1; i<=max; i++) {
+                    if (isCancelled()) {
+                        break;
+                    }
+                    updateProgress(i, max);
+                }
+                return null;
+            }
+        };
+       // progBar = new ProgressBar();
+
+
+        progBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
     }
 
     @FXML
     private void goToScreen3(ActionEvent event){
-        myController.setScreen(MusicHostFramework.screen3ID);
+
+        System.out.print("go");
+        //db.test1();
+        // myController.setScreen(MusicHostFramework.screen1ID);
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                final int max = 1000000;
+                for (int i=1; i<=max; i++) {
+                    if (isCancelled()) {
+                        break;
+                    }
+                    updateProgress(i, max);
+                }
+                return null;
+            }
+        };
+        progBar = new ProgressBar();
+        progBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
+       // myController.setScreen(MusicHostFramework.screen3ID);
     }
     //interface injection of screenParent and main model for songs and DB
     public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
@@ -97,4 +154,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     mainModel = model;
     db = database;
     }
+
+
 }
