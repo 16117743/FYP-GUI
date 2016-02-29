@@ -71,7 +71,6 @@ public class DJScreenController implements Initializable, ControlledScreen {
 
     @FXML
     private void goToScreen1(ActionEvent event){
-       System.out.print(mainModel.getTest());
         mainModel.Play();
         //myController.setScreen(MusicHostFramework.screen1ID);
     }

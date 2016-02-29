@@ -36,9 +36,9 @@
             </MenuBar>
          </children>
       </AnchorPane>
-      <Pane fx:id="loadButton">
+      <Pane fx:id="loadButton" layoutX="-14.0" layoutY="-7.0">
          <children>
-            <Button fx:id="skipButton" layoutX="378.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" text="Skip" />
+            <Button fx:id="skipButton" layoutX="312.0" layoutY="420.0" mnemonicParsing="false" onAction="#skipMethod" text="Skip" />
             <SplitMenuButton layoutX="4.0" layoutY="26.0" mnemonicParsing="false" text="Select Song">
               <items>
                 <MenuItem mnemonicParsing="false" text="Action 1" />
@@ -50,17 +50,20 @@
                   <Bloom />
                </effect></ListView>
             <Text fill="#0f1108" layoutX="20.0" layoutY="96.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
-            <Button fx:id="loadButton" layoutX="516.0" layoutY="425.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
+            <Button fx:id="loadButton" layoutX="561.0" layoutY="420.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
             <Button fx:id="playButton" layoutX="263.0" layoutY="420.0" mnemonicParsing="false" onAction="#play" text="Play" />
-        <Button fx:id="refreshButton" layoutX="467.0" layoutY="380.0" mnemonicParsing="false" onAction="#refreshMethod" text="Refresh" />
+        <Button fx:id="refreshButton" layoutX="482.0" layoutY="331.0" mnemonicParsing="false" onAction="#refreshMethod" text="Refresh" />
             <StackPane layoutX="406.0" layoutY="30.0">
                <children>
                   <TextArea fx:id="songRequest" />
                </children>
             </StackPane>
-        <Button layoutX="326.0" layoutY="378.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
-            <ProgressIndicator fx:id="prog" layoutX="305.0" layoutY="152.0" progress="0.0" />
-            <ProgressBar fx:id="progbar" layoutX="268.0" layoutY="123.0" prefHeight="5.0" prefWidth="102.0" progress="0.0" />
+        <Button layoutX="262.0" layoutY="26.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
+            <ProgressIndicator fx:id="prog" layoutX="222.0" layoutY="28.0" progress="0.0" />
+            <ProgressBar fx:id="progbar" layoutX="114.0" layoutY="30.0" progress="0.0" />
+            <Button fx:id="addbtn" layoutX="482.0" layoutY="215.0" mnemonicParsing="false" onAction="#add" text="add" />
+            <Button fx:id="removebtn" layoutX="482.0" layoutY="255.0" mnemonicParsing="false" onAction="#remove" text="remove" />
+            <Button fx:id="initbtn" layoutX="484.0" layoutY="297.0" mnemonicParsing="false" onAction="#init" text="init" />
          </children>
       </Pane>
   </children>

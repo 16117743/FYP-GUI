@@ -51,7 +51,7 @@ public class LoginSceneController implements Initializable, ControlledScreen {
 
     private Boolean Login(){
 
-        System.out.println(mainModel.getTest());
+      //  System.out.println(mainModel.getTest());
 
         String id = "";
           id  = login.getText();
@@ -59,7 +59,7 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         pw = passwordField.getText();
 
         System.out.println(id +"\n" + pw);
-        mainModel.setTest("test2");
+      //  mainModel.setTest("test2");
         myController.getTest();
         return true;
     }

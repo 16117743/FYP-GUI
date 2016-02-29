@@ -29,6 +29,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Button playButton;
 
     @FXML
+    Button initbtn;
+    @FXML
+    Button addbtn;
+
+    @FXML
+    Button removebtn;
+
+    @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
 
     @FXML
@@ -47,7 +55,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     final String message = serverModel.pollQueue();
                     if (message != null && !message.equals("")) {
                         songRequest.appendText("\n" + message);
-                        progBar.se
+                       // progBar.se
                         //System.out.println(progBar.get);
                     }
                     lastUpdate.set(now);
@@ -68,19 +76,24 @@ public class MainSceneController implements Initializable , ControlledScreen {
         db.setModel(progBar);
     }
 
-    @FXML
-    private void refreshMethod(ActionEvent event){
-        System.out.println(mainModel.getTest());
-        db.test2();
-    }
-
-    @FXML
-    private void startServer(ActionEvent event) {
-        serverModel.doThreadStuff();
-        serverModel.createQueue();
-    }
-
     /*******************MUSIC button methods **************************************************/
+    @FXML
+     private void add(ActionEvent event) {
+      //  System.out.println("add");
+        mainModel.addSong();
+    }
+
+    @FXML
+    private void remove(ActionEvent event) {
+      //  System.out.println("remove");
+        mainModel.removeSong();
+    }
+    @FXML
+    private void init(ActionEvent event) {
+       // System.out.println("init");
+        mainModel.initSongs();
+    }
+
     @FXML
     private void play(ActionEvent event){
         if ("Pause".equals(playButton.getText())) {
@@ -100,8 +113,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void goToScreen1(ActionEvent event)
     {
-        progBar.setVisible(true);
-        System.out.print("go");
+        //progBar.setVisible(true);
+        System.out.print("test1");
         //db.test1();
        // myController.setScreen(MusicHostFramework.screen1ID);
         progBar.setProgress(4);
@@ -113,6 +126,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     if (isCancelled()) {
                         break;
                     }
+                    if(i%1000 ==0)
+                        System.out.println(i);
                     updateProgress(i, max);
                 }
                 return null;
@@ -128,24 +143,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void goToScreen3(ActionEvent event){
 
-        System.out.print("go");
+        System.out.print("test 2");
         //db.test1();
         // myController.setScreen(MusicHostFramework.screen1ID);
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-                final int max = 1000000;
-                for (int i=1; i<=max; i++) {
-                    if (isCancelled()) {
-                        break;
-                    }
-                    updateProgress(i, max);
-                }
-                return null;
-            }
-        };
-        progBar = new ProgressBar();
-        progBar.progressProperty().bind(task.progressProperty());
-        new Thread(task).start();
        // myController.setScreen(MusicHostFramework.screen3ID);
     }
     //interface injection of screenParent and main model for songs and DB
@@ -153,6 +153,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
     myController = screenParent;
     mainModel = model;
     db = database;
+    }
+
+    @FXML
+    private void refreshMethod(ActionEvent event){
+        System.out.println("refresh");
+        mainModel.initSongs();
+        //db.test2();
+    }
+
+    @FXML
+    private void startServer(ActionEvent event) {
+        serverModel.doThreadStuff();
+        serverModel.createQueue();
     }
 
 
