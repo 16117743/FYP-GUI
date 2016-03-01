@@ -115,13 +115,18 @@ public class MainSceneController implements Initializable , ControlledScreen {
 //                    updateProgress(i, max);
                 }
 
-                for (int i = 0; i < max; i++) {
+                Platform.runLater(new Runnable() {
+                    @Override public void run() {
+                        for (int i = 0; i < max; i++) {
 //                    System.out.println(mainModel.getSongInfo(i));
 //                    songList.getItems().add(mainModel.getSongInfo(i));
-                   // songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                    queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
-                    songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                }
+                            // songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                            queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
+                            songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                        }
+                    }
+                });
+
                 return null;
             }
         };
@@ -217,9 +222,38 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private void skipMethod(ActionEvent event){
         mainModel.Skip();
         if ("Play".equals(playButton.getText())) {
-            //mainModel.Pause();
             playButton.setText("Pause");
         }
+        // songList.getItems().add("test " + Integer.toString(i));//update gui with selection info
+        //songList.getItems().add(mainModel.getSongInfo(0));//update gui with selection info
+        //songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        // updateProgress(i, 5);
+        queueList.getItems().remove(0);
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                try {
+                    mainModel.Skip();
+                        if ("Play".equals(playButton.getText())) {
+                            playButton.setText("Pause");
+                        }
+                        // songList.getItems().add("test " + Integer.toString(i));//update gui with selection info
+                        //songList.getItems().add(mainModel.getSongInfo(0));//update gui with selection info
+                        //songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                       // updateProgress(i, 5);
+                        queueList.getItems().remove(0);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        };
+        // progBar = new ProgressBar();
+
+        // progBar.progressProperty().bind(task.progressProperty());
+         //  new Thread(task).start();
+
     }
 
     @FXML

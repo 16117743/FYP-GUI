@@ -45,10 +45,13 @@
                 <MenuItem mnemonicParsing="false" text="Action 2" />
               </items>
             </SplitMenuButton>
-            <ListView fx:id="queueList" layoutX="4.0" layoutY="55.0">
+            <ListView fx:id="queueList" blendMode="DARKEN" layoutX="4.0" layoutY="55.0">
                <effect>
-                  <Bloom />
-               </effect></ListView>
+                  <Glow />
+               </effect>
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor></ListView>
             <Text fill="#0f1108" layoutX="291.0" layoutY="89.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
             <Button fx:id="loadButton" layoutX="561.0" layoutY="420.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
             <Button fx:id="playButton" layoutX="263.0" layoutY="420.0" mnemonicParsing="false" onAction="#play" text="Play" />
