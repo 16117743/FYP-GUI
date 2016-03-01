@@ -2,8 +2,11 @@ package sample;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,6 +21,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ScreensController myController;
     final LongProperty lastUpdate = new SimpleLongProperty();
     final long minUpdateInterval = 0 ;
+    public static final ObservableList data = FXCollections.observableArrayList();
+
 
     @FXML
     ProgressBar progBar;
@@ -37,6 +42,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Button removebtn;
 
     @FXML
+    ListView queueList;
+
+    @FXML
+    ListView songList;
+
+    @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
 
     @FXML
@@ -45,9 +56,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     public MainSceneController(){
         serverModel = new ServerModel();
         db = new AzureDB();
-       // ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());
-       // InterfaceModel myInterface = ((InterfaceModel) db.getProgressBar());
-        //myInterface.setModel(db.getProgressBar());
+
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -72,26 +81,125 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert songRequest != null : "songrequest not injected!";
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
-
         db.setModel(progBar);
+        progBar.setProgress(0);
     }
 
     /*******************MUSIC button methods **************************************************/
     @FXML
      private void add(ActionEvent event) {
       //  System.out.println("add");
-        mainModel.addSong();
+//        progBar.setProgress(0);
+        //int args = 4;
+       // final int max = mainModel.getSelectionSize();
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                final int max = mainModel.getSelectionSize() - 1;;
+                for (int i=1; i<=max ; i++) {
+                    try {
+                        mainModel.downloadSong(i);//step 1
+                        System.out.print("\n DL song " + i);
+                        mainModel.addSong(i);//step 2
+                        System.out.print("\n added song " + i + "to queue");
+                        updateProgress(i, max);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        System.out.print("\n cancelled");
+                    }
+                    if (isCancelled()) {
+                        break;
+                    }
+//                    if(i%1000 ==0)
+//                        System.out.println(i);
+//                    updateProgress(i, max);
+                }
+
+                for (int i = 0; i < max; i++) {
+//                    System.out.println(mainModel.getSongInfo(i));
+//                    songList.getItems().add(mainModel.getSongInfo(i));
+                   // songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                    queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
+                    songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                }
+                return null;
+            }
+        };
+        progBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
+
     }
 
     @FXML
     private void remove(ActionEvent event) {
-      //  System.out.println("remove");
-        mainModel.removeSong();
+        //mainModel.removeSong();
+    }
+
+    @FXML  // add song args
+    private void refreshMethod(ActionEvent event){
+
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                System.out.println("test download");
+                // progBar.setProgress(4);
+                mainModel.downloadSong(0);
+                System.out.print("done 1");
+                mainModel.downloadSong(1);
+                System.out.print("done 2");
+                mainModel.downloadSong(2);
+                System.out.print("done 3");
+                mainModel.downloadSong(3);
+                /**** REMOVE SONG FROM VIEW**/
+                //songList.getItems().remove(4);
+                //songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                return null;
+            }
+        };
+        // progBar = new ProgressBar();
+        progBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
     }
     @FXML
     private void init(ActionEvent event) {
-       // System.out.println("init");
+        //queueList.getItems().add(mainModel.get );
+        //queueList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         mainModel.initSongs();
+
+        for (int i = 0; i < 5; i++) {
+            songList.getItems().add("test " + Integer.toString(i));//update gui with selection info
+            System.out.print(mainModel.getSongInfo(i));
+            songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
+            songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            //updateProgress(i, 5);
+        }
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+
+                try {
+                   // mainModel.initSongs();
+                    Thread.sleep(1000);
+                    for (int i = 0; i < 5; i++) {
+                       // songList.getItems().add("test " + Integer.toString(i));//update gui with selection info
+                        songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
+                        songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                        updateProgress(i, 5);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        };
+        // progBar = new ProgressBar();
+
+       // progBar.progressProperty().bind(task.progressProperty());
+     //   new Thread(task).start();
+
+
+
     }
 
     @FXML
@@ -108,45 +216,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void skipMethod(ActionEvent event){
         mainModel.Skip();
+        if ("Play".equals(playButton.getText())) {
+            //mainModel.Pause();
+            playButton.setText("Pause");
+        }
     }
 
     @FXML
     private void goToScreen1(ActionEvent event)
     {
-        //progBar.setVisible(true);
-        System.out.print("test1");
-        //db.test1();
-       // myController.setScreen(MusicHostFramework.screen1ID);
-        progBar.setProgress(4);
 
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-                final int max = 100;
-                for (int i=1; i<=max; i++) {
-                    if (isCancelled()) {
-                        break;
-                    }
-                    if(i%1000 ==0)
-                        System.out.println(i);
-                    updateProgress(i, max);
-                }
-                return null;
-            }
-        };
-       // progBar = new ProgressBar();
-
-
-        progBar.progressProperty().bind(task.progressProperty());
-        new Thread(task).start();
     }
 
     @FXML
     private void goToScreen3(ActionEvent event){
-
-        System.out.print("test 2");
-        //db.test1();
-        // myController.setScreen(MusicHostFramework.screen1ID);
-       // myController.setScreen(MusicHostFramework.screen3ID);
+        myController.setScreen(MusicHostFramework.screen3ID);
     }
     //interface injection of screenParent and main model for songs and DB
     public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
@@ -155,18 +239,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
     db = database;
     }
 
-    @FXML
-    private void refreshMethod(ActionEvent event){
-        System.out.println("refresh");
-        mainModel.initSongs();
-        //db.test2();
-    }
+
 
     @FXML
     private void startServer(ActionEvent event) {
         serverModel.doThreadStuff();
         serverModel.createQueue();
     }
-
 
 }

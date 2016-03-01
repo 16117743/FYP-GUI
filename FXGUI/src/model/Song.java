@@ -15,23 +15,42 @@ import java.net.URI;
 public class Song {
     private MediaPlayer player;
     private String artist;
-    private String song;
+
+private String song;
     private byte[] songByte;
     private Boolean bool = true;
     private int id = 0;
     private String name = "0";
     private String path = "file:///" + ("C:\\test\\" + "\\" + name).replace("\\", "/").replaceAll(" ", "%20");
 
-    public Song(String uri, int id){
+    public Song(String uri, int id, String iSong){
         player = createPlayer(uri);
         this.id = id;
         this.name = Integer.toString(id);
     }
+    public Song(String name, int id){
+    // player = createPlayer(uri);
+    this.id = id;
+    this.song = name;
+        this.name = name;
+    this.bool = false;
+      //  song = iSong;
+}
 
     public Song(String uri, String iSong, String iArtist){
         player = createPlayer(uri);
         artist = iArtist;
         song = iSong;
+    }
+
+    public Song(byte[] bytes, int id, String iSong){
+    songByte = bytes;
+    bool = false;
+    this.id = id;
+    this.name = Integer.toString(id);
+    song = iSong;
+//        artist = iArtist;
+    // song = iSong;
     }
 
 
@@ -103,5 +122,21 @@ public class Song {
 
     public String getSong(){
         return song;
+    }
+
+    public void setSong(String song) {
+        this.song = song;
+    }
+
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+//    public int returnSongSize(){
+//        return ;
+//    }
+    public void setByteArray(byte[]fileBytes){
+
+        songByte = fileBytes;
     }
 }

@@ -45,11 +45,11 @@
                 <MenuItem mnemonicParsing="false" text="Action 2" />
               </items>
             </SplitMenuButton>
-            <ListView layoutX="4.0" layoutY="55.0">
+            <ListView fx:id="queueList" layoutX="4.0" layoutY="55.0">
                <effect>
                   <Bloom />
                </effect></ListView>
-            <Text fill="#0f1108" layoutX="20.0" layoutY="96.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
+            <Text fill="#0f1108" layoutX="291.0" layoutY="89.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
             <Button fx:id="loadButton" layoutX="561.0" layoutY="420.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
             <Button fx:id="playButton" layoutX="263.0" layoutY="420.0" mnemonicParsing="false" onAction="#play" text="Play" />
         <Button fx:id="refreshButton" layoutX="482.0" layoutY="331.0" mnemonicParsing="false" onAction="#refreshMethod" text="Refresh" />
@@ -60,10 +60,11 @@
             </StackPane>
         <Button layoutX="262.0" layoutY="26.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
             <ProgressIndicator fx:id="prog" layoutX="222.0" layoutY="28.0" progress="0.0" />
-            <ProgressBar fx:id="progbar" layoutX="114.0" layoutY="30.0" progress="0.0" />
+            <ProgressBar fx:id="progBar" layoutX="114.0" layoutY="30.0" progress="0.0" />
             <Button fx:id="addbtn" layoutX="482.0" layoutY="215.0" mnemonicParsing="false" onAction="#add" text="add" />
             <Button fx:id="removebtn" layoutX="482.0" layoutY="255.0" mnemonicParsing="false" onAction="#remove" text="remove" />
             <Button fx:id="initbtn" layoutX="484.0" layoutY="297.0" mnemonicParsing="false" onAction="#init" text="init" />
+            <ListView fx:id="songList" layoutX="259.0" layoutY="100.0" prefHeight="168.0" prefWidth="144.0" />
          </children>
       </Pane>
   </children>

@@ -124,6 +124,6 @@ public class AzureDB implements InterfaceModel{
 
     @Override
     public void setModel(ProgressBar bar){
-        //progBar = bar;
+        progBar = bar;
     }
 }
