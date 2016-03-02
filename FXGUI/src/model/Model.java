@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class Model implements InterfaceModel {
+public class Model {
 List<Song> songQueue = new ArrayList<>();
 List<Song> selection = new ArrayList<>();
 final Label currentlyPlaying = new Label();
@@ -25,6 +25,7 @@ final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
 private String con;
 private Ignore ignore;
 private Connection connection;
+private boolean changedBool;
 
 public Model() {
     init();
@@ -94,12 +95,36 @@ private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
     currentlyPlaying.setText("Now Playing: " + source);
 }
 
+//synchronized(MyClass.class){
+//    log.writeln(msg1);
+//    log.writeln(msg2);
+//}
+
+public synchronized boolean changed(){
+    if (changedBool == true){//it has changed
+       // changedBool = false;
+       // System.out.print("\n changed true");
+        return true;// return it has changed
+    }
+    else {
+       // changedBool = false;
+        return false;
+     //   System.out.print("\n changed false");
+    }
+
+}
+
+public synchronized void setChanged(boolean bool){
+    System.out.print("\n test set changed to " +  bool);
+    changedBool = bool;
+}
+
 /****************
  * Helper methods
  ************************************************/
 public void Play() {
     songQueue.get(0).getPlayer().play();
-
+    songQueue.get(0).play();
 }
 
 public void Pause() {
@@ -126,9 +151,6 @@ public String getSongInfo(int index) {
 public int getSelectionSize() {
     return selection.size();
 }
-
-@Override
-public void setModel(ProgressBar bar) {}
 
 /***********************************************************************************************************/
 public void downloadSong(int index1) // enum state 1

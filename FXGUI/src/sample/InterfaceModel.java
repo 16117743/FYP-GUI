@@ -8,5 +8,12 @@ import model.Model;
  */
 public interface InterfaceModel {
 
-    public void setModel(ProgressBar bar);
+    //public void setModel(ProgressBar bar);
+
+    public void iPlay();
+    public void iSkip();
+    public void iAddToQueue();
+    public void iRemoveFromQueue();
+    public void iLogout();
+
 }

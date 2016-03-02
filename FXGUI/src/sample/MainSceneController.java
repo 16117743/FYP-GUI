@@ -14,7 +14,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import model.*;
 
-public class MainSceneController implements Initializable , ControlledScreen {
+public class MainSceneController implements Initializable , ControlledScreen, InterfaceModel {
     Model mainModel;
     ServerModel serverModel;
     AzureDB db;
@@ -78,7 +78,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert songRequest != null : "songrequest not injected!";
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
-        db.setModel(progBar);
+       // db.setModel(progBar);
         progBar.setProgress(0);
     }
 
@@ -140,6 +140,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                         songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                     }
+                    mainModel.setChanged(true);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -185,7 +186,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private void goToScreen1(ActionEvent event) {}
 
     @FXML
-    private void goToScreen3(ActionEvent event){myController.setScreen(MusicHostFramework.screen3ID);}
+    private void goToScreen3(ActionEvent event){
+        myController.setScreen(MusicHostFramework.screen3ID);
+    }
 
     //interface injection of screenParent and main model for songs and DB
     public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
@@ -198,5 +201,31 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private void startServer(ActionEvent event) {
         serverModel.doThreadStuff();
         serverModel.createQueue();
+    }
+
+    /***************************************************/
+    @Override
+    public void iPlay() {
+
+    }
+
+    @Override
+    public void iSkip() {
+
+    }
+
+    @Override
+    public void iAddToQueue() {
+
+    }
+
+    @Override
+    public void iRemoveFromQueue() {
+
+    }
+
+    @Override
+    public void iLogout() {
+
     }
 }

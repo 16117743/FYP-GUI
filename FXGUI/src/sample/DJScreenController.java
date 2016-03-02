@@ -38,29 +38,165 @@
  * holder.
  */
 package sample;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.*;
+
 import model.AzureDB;
 import model.Model;
-import sample.ControlledScreen;
-import sample.ScreensController;
 
 
-public class DJScreenController implements Initializable, ControlledScreen {
+
+public class DJScreenController implements Initializable, ControlledScreen, InterfaceModel {
 
     ScreensController myController;
     Model mainModel;
     AzureDB db;
+    public boolean  bool1;
+final LongProperty lastUpdate = new SimpleLongProperty();
+final double minUpdateInterval = 2000000000;
+    public DJScreenController()
+{
+    AnimationTimer timer = new AnimationTimer() {
+        @Override
+        public void handle(long now) {
+
+            if ((now - lastUpdate.get()- 10000000) > 2000000000) {
+                                Platform.runLater(new Runnable() {
+                    @Override public void run() {
+                        //note: tidy method for updating gui components
+                       // songRequest2.appendText("\n" + (now - lastUpdate.get()));
+                        for (int i = 0; i < 1; i++) {
+                            queueList2.getItems().add("1111");//update gui with selection info
+                            queueList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                            songList2.getItems().add("1111");//update gui with selection info
+                            songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                        }
+                    }
+                });
+
+//                if (mainModel.changed())//has the model changed
+//                {
+//                    songRequest2.appendText(mainModel.getSongInfo(2));
+//                   // mainModel.setChanged(false);
+//                    queueList2.getItems().add(mainModel.getSongInfo(2));//update gui with selection info
+//                    queueList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+//                }
+                System.out.print("\nop" + (now - lastUpdate.get()));
+                lastUpdate.set(now);
+            }
+        }
+    };
+    timer.start();
+}
+
+    @FXML
+    Button playBtn;
+
+    @FXML
+    Button skipBtn;
+
+    @FXML
+    Button addBtn;
+
+    @FXML
+    Button logoutBtn;
+
+    @FXML
+    Button switchBtn;
+
+    @FXML
+    ListView songList2;
+
+    @FXML
+    ListView queueList2;
+
+    @FXML
+    TextArea songRequest2;
 
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
+        assert playBtn != null : "playBtn not injected!";;
+        assert skipBtn != null : "skipBtn not injected!";;
+        assert addBtn != null : "addBtn not injected!";
+        assert logoutBtn != null : "logoutBtn not injected!";
+        assert switchBtn != null : "switchBtn not injected!";
+        assert songList2 != null : "DJSelection not injected!";
+       assert queueList2 != null : "DJSongQueue not injected!";
+        assert songRequest2 != null : "DJRequests not injected!";
+      //  assert vbox1 != null : "DJRequests not injected!";
+        bool1 = true;
+
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+
+                while(bool1 == true)
+                {
+                    if (isCancelled()) {
+                        updateMessage("Cancelled");
+                        System.out.print("Cancelled");
+                        break;
+                    }
+                    if (mainModel.changed())//has the model changed
+                    {
+                        //int cnt = 0;
+                       // System.out.print("\ntesting" + cnt++);
+                        mainModel.setChanged(false);
+
+                        Platform.runLater( () ->
+                        {
+                            try
+                            {
+
+                              //  int max = mainModel.getSelectionSize();
+//                                for (int i = 0; i < max; i++)
+//                                {
+                          //          skipBtn.setText("testing");
+//                                    System.out.println(mainModel.getSongInfo(i));
+                                    songList2.getItems().add(mainModel.getSongInfo(0));//update gui with selection info
+                                songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                                    queueList2.getItems().add("song111");//update gui with selection info
+//                                    Thread.sleep(2000);
+//                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        });
+                        try
+                        {
+                            Thread.sleep(2000);
+                        }
+                        catch (InterruptedException interrupted)
+                        {
+                            if (isCancelled()) {
+                                updateMessage("Cancelled");
+                                System.out.print("Cancelled");
+                                break;
+                            }
+                        }
+                    }//end if changd
+                }
+                    System.out.print("\nDONE");
+                return null;
+            }
+        };
+      //  new Thread(task).start();
     }
 
     public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
@@ -71,12 +207,53 @@ public class DJScreenController implements Initializable, ControlledScreen {
 
     @FXML
     private void goToScreen1(ActionEvent event){
-        mainModel.Play();
-        //myController.setScreen(MusicHostFramework.screen1ID);
+       // mainModel.Play();
+        myController.setScreen(MusicHostFramework.screen1ID);
     }
     
     @FXML
     private void goToScreen2(ActionEvent event){
-       mainModel.Skip();
+        myController.setScreen(MusicHostFramework.screen2ID);
+    }
+
+    /********************************************************/
+    @Override
+    public void iPlay() {
+        bool1 = false;
+        System.out.println("test interface play");
+        if ("skipBtn".equals(playBtn.getText())) {
+            playBtn.setText("PlayBtn");
+        }
+        else if ("*****".equals(skipBtn.getText())) {
+            playBtn.setText("skipBtn");
+        }
+    }
+
+    @Override
+    public void iSkip() {
+        System.out.println("test interface skip");
+    }
+
+    @Override
+    public void iAddToQueue() {
+        System.out.println("test interface add");
+        Platform.runLater(new Runnable() {
+            @Override public void run() {
+                for (int i = 0; i < 5; i++) {
+                    songList2.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
+                    songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void iRemoveFromQueue() {
+        System.out.println("test interface remove");
+    }
+
+    @Override
+    public void iLogout() {
+        System.out.println("test interface logout");
     }
 }

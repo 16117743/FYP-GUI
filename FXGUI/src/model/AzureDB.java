@@ -11,7 +11,7 @@ import java.sql.*;
 /**
  * Created by user on 24/02/2016.
  */
-public class AzureDB implements InterfaceModel{
+public class AzureDB {
     private String con;
     private int result;
     private PreparedStatement sqlInsertName = null;
@@ -122,8 +122,5 @@ public class AzureDB implements InterfaceModel{
         return progBar;
     }
 
-    @Override
-    public void setModel(ProgressBar bar){
-        progBar = bar;
-    }
+
 }
