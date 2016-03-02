@@ -25,12 +25,8 @@ public class LoginSceneController implements Initializable, ControlledScreen {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-
-
         assert login != null : "login not injected!";
         assert passwordField != null : "login not injected!";
-        //   db.insertImage(conn,"C://theset//test2.mp3");
-        //db.getImageData(conn);
     }
 
     public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
@@ -50,14 +46,11 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     }
 
     private Boolean Login(){
-
       //  System.out.println(mainModel.getTest());
-
         String id = "";
           id  = login.getText();
         String pw = "";
         pw = passwordField.getText();
-
         System.out.println(id +"\n" + pw);
       //  mainModel.setTest("test2");
         myController.getTest();
