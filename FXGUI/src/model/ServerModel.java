@@ -1,5 +1,9 @@
 package model;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import org.json.JSONArray;
+
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.UUID;
@@ -9,6 +13,7 @@ import javax.microedition.io.StreamConnectionNotifier;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -20,17 +25,41 @@ public class ServerModel {
     DataOutputStream dataOutputStream;
     String input = "";
     final BlockingQueue<String> messageQueue;
+    JSONArray jsonArray;
+    Gson gson;
+    JSONArray jsArray;
+    String jsonStr;
 
     /**contructor*/
     public ServerModel(){
         messageQueue = new ArrayBlockingQueue<>(1);
+
+       // jsonArray = new JSONArray(readlocationFeed);
+        gson = new Gson();
+
+        //ArrayList<String> arrayList= (ArrayList<String>) ClassName.getArrayList();
+
+// Serializing to a JSON element node
+    //    JsonElement jsonElement = gson.toJsonTree(arrayList);
+     //   System.out.println(jsonElement.isJsonArray()); // true
+
+// Or, directly to JSON string
+     //   String json = gson.toJson(arrayList);
+     //   System.out.println(json);
+
+        ArrayList<String> list = new ArrayList<String>();
+        list.add("blah1");
+        list.add("bleh2");
+        jsArray = new JSONArray(list);
+        jsonStr = jsArray.toString();
     }
 
     public boolean sendMessageByBluetooth(String msg){
     try
     {
         if(dataOutputStream != null){
-            dataOutputStream.write(msg.getBytes());
+            // msg.getBytes() jsonStr
+            dataOutputStream.write(jsonStr .getBytes());
             dataOutputStream.flush();
             return true;
         }else{

@@ -15,7 +15,7 @@
   <children>
       <HBox>
          <children>
-            <ListView fx:id="songList" prefHeight="354.0" />
+            <ListView fx:id="songList" />
             <ListView fx:id="queueList" blendMode="DARKEN">
                <effect>
                   <Glow />
@@ -30,7 +30,7 @@
       <Pane fx:id="loadButton" layoutX="-14.0" layoutY="-7.0">
          <children>
             <Button fx:id="skipButton" layoutX="534.0" layoutY="185.0" mnemonicParsing="false" onAction="#skipMethod" text="Skip" />
-            <Text fill="#0f1108" layoutX="75.0" layoutY="47.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
+            <Text fill="#0f1108" layoutX="272.0" layoutY="55.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Song Queue" wrappingWidth="119.0" />
             <Button fx:id="loadButton" layoutX="522.0" layoutY="369.0" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
         <Button layoutX="433.0" layoutY="18.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
             <ProgressIndicator fx:id="prog" layoutX="389.0" layoutY="11.0" progress="0.0" />
