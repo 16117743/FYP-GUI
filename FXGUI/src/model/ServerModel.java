@@ -70,6 +70,22 @@ public class ServerModel {
     }
 }
 
+    public boolean sendJsonByBluetooth(JSONArray msg){
+        try
+        {
+            if(dataOutputStream != null){
+                // msg.getBytes() jsonStr
+                dataOutputStream.write(jsonStr .getBytes());
+                dataOutputStream.flush();
+                return true;
+            }else{
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
 public void doThreadStuff(){
     try
     {
@@ -110,7 +126,8 @@ public void doThreadStuff(){
                     dataOutputStream = new DataOutputStream(connection.openOutputStream());
 
                     System.out.println("waiting for input");
-                    while (true) {
+                    while (true)
+                    {
                         if (dataInputStream.available() > 0) {
                             byte[] msg = new byte[dataInputStream.available()];
                             dataInputStream.read(msg, 0, dataInputStream.available());

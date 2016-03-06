@@ -2,8 +2,7 @@ package sample;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import Interface.MainInterface;
-import Interface.SongInterfaceForModel;
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
@@ -17,7 +16,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import model.*;
 
-public class MainSceneController implements Initializable , ControlledScreen, MainInterface {
+public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
     ServerModel serverModel;
     AzureDB db;
@@ -56,22 +55,20 @@ public class MainSceneController implements Initializable , ControlledScreen, Ma
     private TextArea songRequest;
 
     public MainSceneController(){
-        serverModel = new ServerModel();
-        db = new AzureDB();
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 if (now - lastUpdate.get() > minUpdateInterval) {
-                    final String message = mainModel.ServerPollQueue();
-                    if (message != null && !message.equals(""))
+                    if(mainModel != null)
                     {
-                        Platform.runLater(() ->
-                        {
-                            songRequest.appendText("\n" + message);
-                        });
+                        final String message = mainModel.pollQueue();
+                        if (message != null && !message.equals("")) {
+                            Platform.runLater(() -> {
+                                songRequest.appendText("\n" + message);
+                            });
+                        }
                     }
-
                     lastUpdate.set(now);
                 }
             }
@@ -127,13 +124,6 @@ public class MainSceneController implements Initializable , ControlledScreen, Ma
     }
 
     @FXML
-    private void remove(ActionEvent event) {//mainModel.removeSong()
-    }
-
-    @FXML
-    private void refreshMethod(ActionEvent event){}
-
-    @FXML
     private void init(ActionEvent event)
     {
         Task task = new Task<Void>()
@@ -187,9 +177,9 @@ public class MainSceneController implements Initializable , ControlledScreen, Ma
 
     @FXML
     private void startServer(ActionEvent event) {
-//        serverModel.doThreadStuff();
+//        serverModel.
 //        serverModel.createQueue();
-        mainModel.startServer();
+        mainModel.doThreadStuff();
     }
 
     /***************************************************/
@@ -197,13 +187,13 @@ public class MainSceneController implements Initializable , ControlledScreen, Ma
     public void iPlay() {
         System.out.println("test interface play");
         mainModel.playSong(this.getClass());
-//        if ("Pause".equals(playButton.getText())) {
-//            mainModel.Pause();
-//            playButton.setText("Play");
-//        } else {
-//            mainModel.Play();
-//            playButton.setText("Pause");
-//        }
+        if ("Pause".equals(playButton.getText())) {
+            mainModel.pauseSong();
+            playButton.setText("Play");
+        } else {
+            mainModel.playSong(this.getClass());
+            playButton.setText("Pause");
+        }
     }
 
     public void iSkip() {
@@ -214,18 +204,4 @@ public class MainSceneController implements Initializable , ControlledScreen, Ma
         }
     }
 
-@Override
-public void playSong(Class instance) {
-
-}
-
-@Override
-public void skipSong() {
-
-}
-
-@Override
-public void pauseSong() {
-
-}
 }
