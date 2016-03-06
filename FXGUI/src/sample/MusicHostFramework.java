@@ -9,20 +9,15 @@ import model.AzureDB;
 public class MusicHostFramework extends Application {
     
     public static String screen1ID = "main";
-    public static String screen1File = "Screen1.fxml";
+    public static String screen1File = "/View/Screen1.fxml";
     public static String screen2ID = "screen2";
-    public static String screen2File = "Screen2a.fxml";
+    public static String screen2File = "/View/Screen2a.fxml";
     public static String screen3ID = "screen3";
-    public static String screen3File = "Screen3.fxml";
-    
-    
+    public static String screen3File = "/View/Screen3.fxml";
+
     @Override
     public void start(Stage primaryStage) {
-        AzureDB db = new AzureDB();
         ScreensController mainContainer = new ScreensController();
-//        Model mainModel = new Model();
-
-//        mainModel.setTest("aaaaaa");
         mainContainer.loadScreen(MusicHostFramework.screen1ID, MusicHostFramework.screen1File);
         mainContainer.loadScreen(MusicHostFramework.screen2ID, MusicHostFramework.screen2File);
         mainContainer.loadScreen(MusicHostFramework.screen3ID, MusicHostFramework.screen3File);

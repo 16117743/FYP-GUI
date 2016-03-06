@@ -1,6 +1,9 @@
 package sample;
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import Interface.MainInterface;
+import Interface.SongInterfaceForModel;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
@@ -14,7 +17,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import model.*;
 
-public class MainSceneController implements Initializable , ControlledScreen, InterfaceModel {
+public class MainSceneController implements Initializable , ControlledScreen, MainInterface {
     Model mainModel;
     ServerModel serverModel;
     AzureDB db;
@@ -60,10 +63,15 @@ public class MainSceneController implements Initializable , ControlledScreen, In
             @Override
             public void handle(long now) {
                 if (now - lastUpdate.get() > minUpdateInterval) {
-                    final String message = serverModel.pollQueue();
-                    if (message != null && !message.equals("")) {
-                        songRequest.appendText("\n" + message);
+                    final String message = mainModel.ServerPollQueue();
+                    if (message != null && !message.equals(""))
+                    {
+                        Platform.runLater(() ->
+                        {
+                            songRequest.appendText("\n" + message);
+                        });
                     }
+
                     lastUpdate.set(now);
                 }
             }
@@ -78,7 +86,6 @@ public class MainSceneController implements Initializable , ControlledScreen, In
         assert songRequest != null : "songrequest not injected!";
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
-       // db.setModel(progBar);
         progBar.setProgress(0);
     }
 
@@ -140,7 +147,7 @@ public class MainSceneController implements Initializable , ControlledScreen, In
                         songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                         songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                     }
-                    mainModel.setChanged(true);
+                   // mainModel.setChanged(true);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -153,33 +160,14 @@ public class MainSceneController implements Initializable , ControlledScreen, In
 
     @FXML
     private void play(ActionEvent event){
-        if ("Pause".equals(playButton.getText())) {
-            mainModel.Pause();
-            playButton.setText("Play");
-        } else {
-            mainModel.Play();
-            playButton.setText("Pause");
-        }
-    }
-
-    @FXML
-    private void skipMethod(ActionEvent event){
-        queueList.getItems().remove(0);
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-                try {
-                    mainModel.Skip();
-                        if ("Play".equals(playButton.getText())) {
-                            playButton.setText("Pause");
-                        }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                return null;
-            }
-        };
-        new Thread(task).start();
+        mainModel.playSong(this.getClass());
+//        if ("Pause".equals(playButton.getText())) {
+//            mainModel.Pause();
+//            playButton.setText("Play");
+//        } else {
+//            mainModel.Play();
+//            playButton.setText("Pause");
+//        }
     }
 
     @FXML
@@ -199,33 +187,45 @@ public class MainSceneController implements Initializable , ControlledScreen, In
 
     @FXML
     private void startServer(ActionEvent event) {
-        serverModel.doThreadStuff();
-        serverModel.createQueue();
+//        serverModel.doThreadStuff();
+//        serverModel.createQueue();
+        mainModel.startServer();
     }
 
     /***************************************************/
-    @Override
+
     public void iPlay() {
-
+        System.out.println("test interface play");
+        mainModel.playSong(this.getClass());
+//        if ("Pause".equals(playButton.getText())) {
+//            mainModel.Pause();
+//            playButton.setText("Play");
+//        } else {
+//            mainModel.Play();
+//            playButton.setText("Pause");
+//        }
     }
 
-    @Override
     public void iSkip() {
-
+        queueList.getItems().remove(0);
+        mainModel.skipSong();
+        if ("Play".equals(playButton.getText())) {
+            playButton.setText("Pause");
+        }
     }
 
-    @Override
-    public void iAddToQueue() {
+@Override
+public void playSong(Class instance) {
 
-    }
+}
 
-    @Override
-    public void iRemoveFromQueue() {
+@Override
+public void skipSong() {
 
-    }
+}
 
-    @Override
-    public void iLogout() {
+@Override
+public void pauseSong() {
 
-    }
+}
 }

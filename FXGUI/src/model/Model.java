@@ -1,164 +1,95 @@
 package model;
 
+import Interface.MainInterface;
 import ignore.Ignore;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
-import sample.InterfaceModel;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class Model {
-List<Song> songQueue = new ArrayList<>();
-List<Song> selection = new ArrayList<>();
-final Label currentlyPlaying = new Label();
-final ProgressBar progress = new ProgressBar();
-private ChangeListener<Duration> progressChangeListener;
-final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
-/***********************************/
-private String con;
-private Ignore ignore;
-private Connection connection;
-private boolean changedBool;
+public class Model implements MainInterface{
 
-public Model() {
-    init();
-}
+    /**GUI related*/
+    List<Song> songQueue = new ArrayList<>();
+    List<Song> selection = new ArrayList<>();
+    private ChangeListener<Duration> progressChangeListener;
+    final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
 
-/*********
- * Constructor methods
- *************************************************************/
-public void init() {
-    try {
-        ignore = new Ignore();
-        con = ignore.getCon();
-        String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-        Class.forName(driver);
-        connection = DriverManager.getConnection(con);
-    } catch (ClassNotFoundException e) {
-        e.printStackTrace();
-    } catch (SQLException e) {
-        e.printStackTrace();
+    /** Azure DB related*/
+    private String con;
+    private Ignore ignore;
+    private Connection connection;
+
+    /** meh */
+    private boolean changedBool;
+    private ServerModel serverModel;
+
+    /**Constructor*/
+    public Model() {
+        init();
     }
-}
 
-public void initSongs() {
-    try
-    {
-        final String query = "select songname from UserSongs";//where songName = 'song3'
-        Statement state = connection.createStatement();
-        ResultSet rs = state.executeQuery(query);
-
-        while (rs.next())
-        {
-            String test = rs.getString(1);
-            System.out.println(test);
-            selection.add(new Song(test, selection.size()));//call 2 arg song constructor
-            System.out.println("\nselection size =" + selection.size());
+    /**Constructor methods*/
+    public void init() {
+        try {
+            ignore = new Ignore();
+            con = ignore.getCon();
+            String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+            Class.forName(driver);
+            connection = DriverManager.getConnection(con);
+            serverModel = new ServerModel();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
     }
-}
-
-public void addSong(int index) {
-    if (!selection.get(index).getBool())
-    {
-        selection.get(index).createPlayer2();
-        selection.get(index).setBool(true);
-        songQueue.add(selection.get(index));
-    }
-}
-
-public void removeSong() {}
-
-private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
-    progress.setProgress(0);
-    progressChangeListener = new ChangeListener<Duration>() {
-        @Override
-        public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
-            progress.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
-        }
-    };
-
-    newPlayer.currentTimeProperty().addListener(progressChangeListener);
-
-    String source = newPlayer.getMedia().getSource();
-    source = source.substring(0, source.length() - ".mp4".length());
-    source = source.substring(source.lastIndexOf("/") + 1).replaceAll("%20", " ");
-    currentlyPlaying.setText("Now Playing: " + source);
-}
-
-//synchronized(MyClass.class){
-//    log.writeln(msg1);
-//    log.writeln(msg2);
-//}
-
-public synchronized boolean changed(){
-    if (changedBool == true){//it has changed
-       // changedBool = false;
-       // System.out.print("\n changed true");
-        return true;// return it has changed
-    }
-    else {
-       // changedBool = false;
-        return false;
-     //   System.out.print("\n changed false");
+    public void startServer(){
+        serverModel.doThreadStuff();
     }
 
-}
+    public String ServerPollQueue(){
+        return serverModel.pollQueue();
+    }
 
-public synchronized void setChanged(boolean bool){
-    System.out.print("\n test set changed to " +  bool);
-    changedBool = bool;
-}
-
-/****************
- * Helper methods
- ************************************************/
-public void Play() {
-    songQueue.get(0).getPlayer().play();
-    songQueue.get(0).play();
-}
-
-public void Pause() {
-    songQueue.get(0).getPlayer().pause();
-}
-
-public void Skip() {
-    if (songQueue.size() > 0) {
-        songQueue.get(0).getPlayer().stop();
-        songQueue.get(1 % songQueue.size()).getPlayer().play();
-        songQueue.remove(0);
-    } else
-        System.out.print("\n no songs in queue");
-}
-
-public BlockingQueue<String> getMessageQueue() {
-    return messageQueue;
-}
-
-public String getSongInfo(int index) {
-    return selection.get(index).getSong();
-}
-
-public int getSelectionSize() {
-    return selection.size();
-}
-
-/***********************************************************************************************************/
-public void downloadSong(int index1) // enum state 1
-{
+    /**song methods*/
+    public void initSongs() {
         try
         {
-            final int index = index1;
-            final String indexStr = Integer.toString(index);
+            final String query = "select songname from UserSongs";//where songName = 'song3'
+            Statement state = connection.createStatement();
+            ResultSet rs = state.executeQuery(query);
+
+            while (rs.next())
+            {
+                String test = rs.getString(1);
+                System.out.println(test);
+                selection.add(new Song(test, selection.size()));//call 2 arg song constructor
+                System.out.println("\nselection size =" + selection.size());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addSong(int index) {
+        if (!selection.get(index).getBool())
+        {
+            selection.get(index).createPlayer2();
+            selection.get(index).setBool(true);
+            songQueue.add(selection.get(index));
+        }
+    }
+
+    public void downloadSong(int index1) // enum state 1
+    {
+        try
+        {
+            final String indexStr = Integer.toString(index1);
             final String query = "select data from UserSongs where S_Id = " + indexStr;
 
             Statement state = connection.createStatement();
@@ -167,7 +98,7 @@ public void downloadSong(int index1) // enum state 1
 
             if (rs.next()) {
                 byte[] fileBytes = rs.getBytes(1);
-                selection.get(index).setByteArray(fileBytes);
+                selection.get(index1).setByteArray(fileBytes);
             }
         }
         catch (Exception e)
@@ -175,5 +106,68 @@ public void downloadSong(int index1) // enum state 1
             e.printStackTrace();
         }
     }
+    /***********************************************************************************************************/
+    /**Main Interface*/
+    @Override
+    public void playSong(Class instance) {
+        if(instance.equals(sample.DJScreenController.class)) {
+            System.out.print("DJ\n");
+        }
+        else if(instance.equals(sample.MainSceneController.class)) {
+            System.out.print("Main\n");
+        }
+    }
+
+    @Override
+    public void skipSong() {
+        try {
+            if (songQueue.size() > 0) {
+                songQueue.get(0).skipMe();
+                songQueue.get(1 % songQueue.size()).playMe();
+            }
+            else
+                System.out.print("\n no songs in queue");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            songQueue.remove(0);
+        }
+    }
+
+    @Override
+    public void pauseSong() {
+        songQueue.get(0).pauseMe();
+    }
+
+    /**DJ interface**/
+
+
+
+    /** Getters and setters*/
+    public BlockingQueue<String> getMessageQueue() {
+        return messageQueue;
+    }
+
+    public String getSongInfo(int index) {
+        return selection.get(index).getSong();
+    }
+
+    public int getSelectionSize() {
+        return selection.size();
+    }
+
+    private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
+//    progress.setProgress(0);
+//    progressChangeListener = new ChangeListener<Duration>() {
+//        @Override
+//        public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+//            progress.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
+//        }                               //queueList.get(0).getCurrentTime() / queueList.get(0).getTotalDuration()
+//    };
+//
+//    newPlayer.currentTimeProperty().addListener(progressChangeListener);
+    }
 }
+
+
 

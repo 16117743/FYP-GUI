@@ -127,12 +127,11 @@ public void doThreadStuff(){
             }//end run()
         }.start();//end new Thread();
     }//end try 1
-            catch(
-                Exception e
-                )
+            catch(Exception e)
         {
             e.printStackTrace();
         }
+    createQueue();
     }
 
     public void createQueue(){

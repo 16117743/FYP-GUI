@@ -15,7 +15,7 @@
          <children>
             <ImageView fitHeight="509.0" fitWidth="638.0">
                <image>
-                  <Image url="@background2.jpg" />
+                  <Image url="@../sample/background2.jpg" />
                </image>
             </ImageView>
             <MenuBar prefHeight="20.0" prefWidth="638.0">

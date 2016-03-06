@@ -20,9 +20,7 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     @FXML
     private PasswordField passwordField;
 
-    /**
-     * Initializes the controller class.
-     */
+    /**Initializes the controller class.*/
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         assert login != null : "login not injected!";
@@ -33,27 +31,20 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     myController = screenParent;
     mainModel = model;
     db = database;
-}
+    }
 
     public void setModel(Model model){
     mainModel = model;
     }
 
     @FXML
-    private void goToScreen2(ActionEvent event){
-       // Boolean b = Login();
-        myController.setScreen(MusicHostFramework.screen2ID);
-    }
+    private void goToScreen2(ActionEvent event){myController.setScreen(MusicHostFramework.screen2ID);}
 
     private Boolean Login(){
-      //  System.out.println(mainModel.getTest());
         String id = "";
-          id  = login.getText();
+        id  = login.getText();
         String pw = "";
         pw = passwordField.getText();
-        System.out.println(id +"\n" + pw);
-      //  mainModel.setTest("test2");
-        myController.getTest();
         return true;
     }
 

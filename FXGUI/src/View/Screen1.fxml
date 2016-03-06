@@ -58,7 +58,7 @@
          <children>
             <ImageView fitHeight="509.0" fitWidth="638.0">
                <image>
-                  <Image url="@background_image.jpg" />
+                  <Image url="@../sample/background_image.jpg" />
                </image>
             </ImageView>
          </children>

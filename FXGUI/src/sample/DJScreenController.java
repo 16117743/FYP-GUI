@@ -41,6 +41,9 @@ package sample;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import Interface.InterfaceDJ;
+import Interface.MainInterface;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
@@ -58,14 +61,14 @@ import model.Model;
 
 
 
-public class DJScreenController implements Initializable, ControlledScreen, InterfaceModel {
+public class DJScreenController implements Initializable, ControlledScreen, InterfaceDJ, MainInterface {
 
     ScreensController myController;
     Model mainModel;
     AzureDB db;
     public boolean  bool1;
-final LongProperty lastUpdate = new SimpleLongProperty();
-final double minUpdateInterval = 2000000000;
+    final LongProperty lastUpdate = new SimpleLongProperty();
+    final double minUpdateInterval = 2000000000;
     public DJScreenController()
 {
     AnimationTimer timer = new AnimationTimer() {
@@ -85,21 +88,12 @@ final double minUpdateInterval = 2000000000;
                         }
                     }
                 });
-
-//                if (mainModel.changed())//has the model changed
-//                {
-//                    songRequest2.appendText(mainModel.getSongInfo(2));
-//                   // mainModel.setChanged(false);
-//                    queueList2.getItems().add(mainModel.getSongInfo(2));//update gui with selection info
-//                    queueList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-//                }
-                System.out.print("\nop" + (now - lastUpdate.get()));
                 lastUpdate.set(now);
             }
         }
     };
-    timer.start();
-}
+  //  timer.start();
+    }
 
     @FXML
     Button playBtn;
@@ -136,11 +130,10 @@ final double minUpdateInterval = 2000000000;
         assert logoutBtn != null : "logoutBtn not injected!";
         assert switchBtn != null : "switchBtn not injected!";
         assert songList2 != null : "DJSelection not injected!";
-       assert queueList2 != null : "DJSongQueue not injected!";
+        assert queueList2 != null : "DJSongQueue not injected!";
         assert songRequest2 != null : "DJRequests not injected!";
-      //  assert vbox1 != null : "DJRequests not injected!";
         bool1 = true;
-
+        /*
         Task task = new Task<Void>() {
             @Override public Void call() {
 
@@ -153,25 +146,12 @@ final double minUpdateInterval = 2000000000;
                     }
                     if (mainModel.changed())//has the model changed
                     {
-                        //int cnt = 0;
-                       // System.out.print("\ntesting" + cnt++);
                         mainModel.setChanged(false);
-
                         Platform.runLater( () ->
                         {
                             try
                             {
 
-                              //  int max = mainModel.getSelectionSize();
-//                                for (int i = 0; i < max; i++)
-//                                {
-                          //          skipBtn.setText("testing");
-//                                    System.out.println(mainModel.getSongInfo(i));
-                                    songList2.getItems().add(mainModel.getSongInfo(0));//update gui with selection info
-                                songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                                    queueList2.getItems().add("song111");//update gui with selection info
-//                                    Thread.sleep(2000);
-//                                }
                             }
                             catch (Exception ex)
                             {
@@ -190,12 +170,16 @@ final double minUpdateInterval = 2000000000;
                                 break;
                             }
                         }
+                        finally {
+                            System.out.print("\nDONE");
+                            return null;
+                        }
                     }//end if changd
                 }
                     System.out.print("\nDONE");
                 return null;
             }
-        };
+        };*/
       //  new Thread(task).start();
     }
 
@@ -207,7 +191,6 @@ final double minUpdateInterval = 2000000000;
 
     @FXML
     private void goToScreen1(ActionEvent event){
-       // mainModel.Play();
         myController.setScreen(MusicHostFramework.screen1ID);
     }
     
@@ -217,24 +200,23 @@ final double minUpdateInterval = 2000000000;
     }
 
     /********************************************************/
-    @Override
     public void iPlay() {
         bool1 = false;
         System.out.println("test interface play");
-        if ("skipBtn".equals(playBtn.getText())) {
-            playBtn.setText("PlayBtn");
-        }
-        else if ("*****".equals(skipBtn.getText())) {
-            playBtn.setText("skipBtn");
-        }
+        mainModel.playSong(this.getClass());
+//        if ("skipBtn".equals(playBtn.getText())) {
+//            playBtn.setText("PlayBtn");
+//        }
+//        else if ("*****".equals(skipBtn.getText())) {
+//            playBtn.setText("skipBtn");
+//        }
     }
 
-    @Override
     public void iSkip() {
         System.out.println("test interface skip");
+        mainModel.skipSong();
     }
 
-    @Override
     public void iAddToQueue() {
         System.out.println("test interface add");
         Platform.runLater(new Runnable() {
@@ -247,13 +229,59 @@ final double minUpdateInterval = 2000000000;
         });
     }
 
-    @Override
     public void iRemoveFromQueue() {
         System.out.println("test interface remove");
     }
 
-    @Override
     public void iLogout() {
         System.out.println("test interface logout");
+    }
+
+    /**DJ Interface*/
+    @Override
+    public void DJplayMe() {
+
+    }
+
+    @Override
+    public void DJskipMe() {
+        System.out.println("test interface skip");
+        mainModel.skipSong();
+    }
+
+    @Override
+    public void DJpauseMe() {
+
+    }
+
+    @Override
+    public void DJfadeMeIn(float deltaTime) {
+
+    }
+
+    @Override
+    public void DJfadeMeOut(float deltaTime) {
+
+    }
+
+    @Override
+    public void DJDoSomething() {
+
+    }
+    /******************/
+
+    @Override
+    public void playSong(Class instance) {
+      //  System.out
+    }
+
+    @Override
+    public void skipSong() {
+
+    }
+
+    @Override
+    public void pauseSong() {
+
     }
 }

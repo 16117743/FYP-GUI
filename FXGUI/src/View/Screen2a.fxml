@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.effect.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.media.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="465.0" prefWidth="762.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+  <children>
+      <HBox>
+         <children>
+            <ListView fx:id="songList" />
+            <ListView fx:id="queueList" blendMode="DARKEN">
+               <effect>
+                  <Glow />
+               </effect>
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor>
+            </ListView>
+            <TextArea fx:id="songRequest" prefHeight="0.0" prefWidth="266.0" />
+         </children>
+      </HBox>
+      <HBox layoutX="9.0" layoutY="426.0" prefHeight="32.0" prefWidth="745.0">
+         <children>
+            <Button fx:id="playButton" mnemonicParsing="false" onAction="#play" text="Play" />
+            <Button fx:id="skipButton" mnemonicParsing="false" onAction="#iSkip" text="Skip" />
+            <Button fx:id="initbtn" mnemonicParsing="false" onAction="#init" text="init" />
+            <Button fx:id="addbtn" mnemonicParsing="false" onAction="#add" text="add" />
+            <Button fx:id="removebtn" mnemonicParsing="false" onAction="#remove" text="remove" />
+        <Button fx:id="refreshButton" mnemonicParsing="false" onAction="#refreshMethod" text="Refresh" />
+            <Button fx:id="loadButton" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
+            <ProgressBar fx:id="progBar" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
+            <ProgressIndicator fx:id="prog" progress="0.0" />
+        <Button mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
+         </children>
+      </HBox>
+  </children>
+</AnchorPane>

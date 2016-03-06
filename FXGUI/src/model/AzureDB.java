@@ -3,7 +3,6 @@ package model;
 import ignore.Ignore;
 import javafx.concurrent.Task;
 import javafx.scene.control.ProgressBar;
-import sample.InterfaceModel;
 
 import java.io.*;
 import java.sql.*;
