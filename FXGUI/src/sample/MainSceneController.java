@@ -111,6 +111,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 Platform.runLater(new Runnable() {
                     @Override public void run() {
                         for (int i = 0; i < max; i++) {
+                            songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                             queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                             songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                         }

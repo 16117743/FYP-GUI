@@ -126,7 +126,8 @@ public class Model implements MainInterface{
             System.out.print("DJ\n");
         }
         else if(instance.equals(sample.MainSceneController.class)) {
-            System.out.print("Main\n");
+            System.out.print("\nMain\n");
+            songQueue.get(0).playMe();
         }
     }
 
@@ -212,7 +213,7 @@ public boolean sendJsonByBluetooth(JSONArray msg){
     {
         if(dataOutputStream != null){
             // msg.getBytes() jsonStr
-            dataOutputStream.write(jsonStr .getBytes());
+            dataOutputStream.write(jsonStr.getBytes());
             dataOutputStream.flush();
             return true;
         }else{
@@ -263,7 +264,7 @@ public void doThreadStuff(){
                     dataOutputStream = new DataOutputStream(connection.openOutputStream());
 
                     System.out.println("waiting for input");
-                    sendMessageByBluetooth("testing123",1);
+                    sendMessageByBluetooth(Json(),2);
                     while (true)
                     {
                         if (dataInputStream.available() > 0) {
@@ -272,9 +273,7 @@ public void doThreadStuff(){
                             String msgstring = new String(msg);
                             input = msgstring;
                             System.out.print(msgstring + "\n");
-
                             sendMessageByBluetooth("testing again",2);
-
                         }
                     }
                 }//end try 2
