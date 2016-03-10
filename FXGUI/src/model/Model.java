@@ -184,12 +184,18 @@ public class Model implements MainInterface{
         return  jsonAraay.toString();
     }
 
-    public boolean sendMessageByBluetooth(String msg){
+    public boolean sendMessageByBluetooth(String msg,int whatToDo){
         try
         {
             if(dataOutputStream != null){
                 // msg.getBytes() jsonStr
 
+              //  dataOutputStream.write(msg.getBytes());
+              //  dataOutputStream.flush();
+                String test = "test1";
+                /********************/
+                dataOutputStream.writeInt(whatToDo);
+                dataOutputStream.flush();
                 dataOutputStream.write(msg.getBytes());
                 dataOutputStream.flush();
                 return true;
@@ -257,6 +263,7 @@ public void doThreadStuff(){
                     dataOutputStream = new DataOutputStream(connection.openOutputStream());
 
                     System.out.println("waiting for input");
+                    sendMessageByBluetooth("testing123",1);
                     while (true)
                     {
                         if (dataInputStream.available() > 0) {
@@ -266,7 +273,8 @@ public void doThreadStuff(){
                             input = msgstring;
                             System.out.print(msgstring + "\n");
 
-                            sendMessageByBluetooth(Json());
+                            sendMessageByBluetooth("testing again",2);
+
                         }
                     }
                 }//end try 2

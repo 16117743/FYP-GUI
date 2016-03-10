@@ -126,6 +126,7 @@ public void doThreadStuff(){
                     dataOutputStream = new DataOutputStream(connection.openOutputStream());
 
                     System.out.println("waiting for input");
+                    sendMessageByBluetooth("");
                     while (true)
                     {
                         if (dataInputStream.available() > 0) {
