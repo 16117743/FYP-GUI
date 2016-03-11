@@ -1,9 +1,7 @@
 package model;
 
 import Interface.MainInterface;
-import com.google.gson.Gson;
 import ignore.Ignore;
-import javafx.scene.media.MediaPlayer;
 import org.json.JSONArray;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -22,6 +20,10 @@ import java.util.concurrent.BlockingQueue;
 
 public class Model implements MainInterface{
 
+    final int LOGIN_STATE = 0;
+    final int MAIN_STATE = 1;
+    final int DJ_STATE = 2;
+
     /**GUI related*/
     List<Song> songQueue = new ArrayList<>();
     List<Song> selection = new ArrayList<>();
@@ -38,11 +40,17 @@ public class Model implements MainInterface{
     final BlockingQueue<String> messageQueue;
     String jsonStr;
 
+    /** Enum state */
+    boolean[] boolArray;
+
+
+
+private int UserID;
+
     /**Constructor*/
     public Model() {
         messageQueue = new ArrayBlockingQueue<>(1);
         init();
-
     }
 
     /**Constructor methods*/
@@ -55,6 +63,8 @@ public class Model implements MainInterface{
             Class.forName(driver);
             connection = DriverManager.getConnection(con);
             serverModel = new ServerModel();
+            boolArray = new boolean[3];
+            boolArray[LOGIN_STATE] = true;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (SQLException e) {
@@ -62,9 +72,29 @@ public class Model implements MainInterface{
         }
     }
 
-
-
     /******Database related *****************************************************************************/
+    public int confirmLogin(String user, String pw){
+        try
+        {
+            final String query = "SELECT P_Id from UserLogin " +
+                "WHERE userName = '" + user + "' " +
+                "AND password = '" + pw + "'";
+
+            Statement state = connection.createStatement();
+            ResultSet rs = state.executeQuery(query);
+
+            if (rs.next()) {
+                int test2 = rs.getInt(1);
+                System.out.println(test2);
+                return test2;
+            }
+                else
+                    return -1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 
 
     public void initSongs() {
@@ -168,6 +198,19 @@ public class Model implements MainInterface{
     public int getSelectionSize() {
         return selection.size();
     }
+
+    public boolean getBoolArray(int arg) {
+        return boolArray[arg];
+    }
+
+    public void setBoolArray(int arg,boolean bool) {
+        for(int i=0;i<3;i++)
+            boolArray[i] = false;
+
+        this.boolArray[arg] = bool;
+    }
+
+    public void setUserID(int userID) {UserID = userID;}
 
     /***********************SERVER CODE ********************************************************/
     public String Json(){

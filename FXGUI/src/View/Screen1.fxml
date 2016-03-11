@@ -54,45 +54,34 @@
 
 <AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
   <children>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0">
-         <children>
-            <ImageView fitHeight="509.0" fitWidth="638.0">
-               <image>
-                  <Image url="@../sample/background_image.jpg" />
-               </image>
-            </ImageView>
-         </children>
-      </AnchorPane>
-    <VBox alignment="CENTER" layoutX="10.0" prefHeight="222.0" prefWidth="301.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
-      <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="    Music Host" wrappingWidth="481.13671875">
-               <font>
-                  <Font size="64.0" />
-               </font>
-            </Text>
-        <HBox alignment="CENTER" prefHeight="57.0" prefWidth="281.0" spacing="20.0">
-          <children>
-              <Label id="loginTextID" text="Login">
-                <font>
-                  <Font size="36.0" />
-                </font>
-                     <effect>
-                        <Glow />
-                     </effect>
-              </Label>
-                   <PasswordField fx:id="login" promptText="Username" />
-                  <HBox />
-                  <PasswordField fx:id="passwordField" promptText="Password" />
-            <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
-          </children>
+  <HBox alignment="CENTER" layoutX="24.0" layoutY="325.0" prefHeight="72.0" prefWidth="590.0" spacing="20.0">
+    <children>
+        <Label id="loginTextID" text="Login">
+          <font>
+            <Font size="36.0" />
+          </font>
                <effect>
-                  <Glow level="0.46" />
+                  <Glow />
                </effect>
-        </HBox>
-      </children>
-      <padding>
-        <Insets />
-      </padding>
-    </VBox>
+        </Label>
+            <HBox />
+            <TextField fx:id="userLogin" />
+            <PasswordField fx:id="passwordField" promptText="Password" />
+      <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
+    </children>
+         <effect>
+            <Glow level="0.46" />
+         </effect>
+  </HBox>
+      <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="236.0" layoutY="284.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label contentDisplay="CENTER" layoutX="184.0" layoutY="58.0" prefHeight="72.0" prefWidth="285.0" text="Music Host " textAlignment="JUSTIFY">
+         <font>
+            <Font size="48.0" />
+         </font>
+      </Label>
   </children>
 </AnchorPane>

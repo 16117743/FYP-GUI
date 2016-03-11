@@ -18,12 +18,10 @@ import model.*;
 
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
-    ServerModel serverModel;
     AzureDB db;
     ScreensController myController;
     final LongProperty lastUpdate = new SimpleLongProperty();
     final long minUpdateInterval = 0 ;
-    public static final ObservableList data = FXCollections.observableArrayList();
 
     @FXML
     ProgressBar progBar;
