@@ -1,6 +1,9 @@
 package sample;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashMap;
+
+import Browser.MyBrowser;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -15,6 +18,7 @@ import javafx.util.Duration;
 import model.AzureDB;
 import model.DB;
 import model.Model;
+import Browser.MyBrowser;
 
 //keep pane so we can remove add screens on top/bottom
 public class ScreensController  extends StackPane {
@@ -58,8 +62,21 @@ public class ScreensController  extends StackPane {
         }
     }
 
-    public boolean setScreenV2(final String name, Boolean bool) {
-        return true;
+    public boolean setBrowser(final String name, String resource) {
+        try {
+            FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
+            Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
+
+            ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
+
+            MyBrowser myBrowser = new MyBrowser();
+            myScreenControler.setBrowser(myBrowser);
+            return true;
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     //This method tries to displayed the screen with a predefined name.

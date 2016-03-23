@@ -2,6 +2,8 @@ package sample;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import Browser.MyBrowser;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -90,5 +92,9 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     @FXML
     private void goToScreen3(ActionEvent event){
         myController.setScreen(MusicHostFramework.screen3ID);
+    }
+
+    public void setBrowser(MyBrowser myBrowser){
+      //  region = myBrowser;
     }
 }

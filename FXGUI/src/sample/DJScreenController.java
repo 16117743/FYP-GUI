@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import Browser.MyBrowser;
 import Interface.InterfaceDJ;
 import Interface.MainInterface;
 import javafx.animation.AnimationTimer;
@@ -192,11 +193,7 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
       //  new Thread(task).start();
     }
 
-    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
-    myController = screenParent;
-    mainModel = model;
-    db = database;
-    }
+
 
     @FXML
     private void goToScreen1(ActionEvent event){
@@ -291,6 +288,17 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
 
     @Override
     public void pauseSong() {
+
+    }
+
+    /***??????????????????????????????????????????????????***/
+    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+        myController = screenParent;
+        mainModel = model;
+        db = database;
+    }
+
+    public void setBrowser(MyBrowser myBrowser){
 
     }
 }

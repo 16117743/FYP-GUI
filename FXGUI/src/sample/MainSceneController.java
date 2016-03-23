@@ -3,6 +3,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 
+import Browser.MyBrowser;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
@@ -16,9 +17,7 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.concurrent.Worker.State;
@@ -40,7 +39,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     final long minUpdateInterval = 0 ;
     WebEngine webEngine;
     Label labelFromJavascript;
-    MyBrowser myBrowser;
+    //MyBrowser myBrowser;
 
     @FXML
     ProgressBar progBar;
@@ -69,7 +68,13 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Button javascript;
 
     @FXML
-    WebView webview1;
+    AnchorPane anchorRegion;
+
+    @FXML
+    AnchorPane anctest;
+
+    @FXML
+    MyBrowser region;
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
@@ -109,11 +114,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert javascript != null : "songrequest not injected!";
         progBar.setProgress(0);
 
-        webEngine = webview1.getEngine();
-        myBrowser = new MyBrowser( webview1, webEngine);
+      //  webEngine = webview1.getEngine();
+//                final URL urlHello = getClass().getResource("hello.html");
+//        webEngine.load(urlHello.toExternalForm());
+       // myBrowser = new MyBrowser( webview1, webEngine);
 
 //        final URL urlHello = getClass().getResource("hello.html");
 //        webEngine.load(urlHello.toExternalForm());
+        //region = new MyBrowser();
 
 
         /********************************************/
@@ -202,12 +210,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         myController.setScreen(MusicHostFramework.screen3ID);
     }
 
-    //interface injection of screenParent and main model for songs and DB
-    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
-    myController = screenParent;
-    mainModel = model;
-    db = database;
-    }
+
 
     @FXML
     private void startServer(ActionEvent event) {
@@ -219,7 +222,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void downloadYoutube(){
-        webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
+        //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
+      //  region.setVisible(true);
+      //  javascript.setText("test2");
+       // anctest.getChildren().addAll(region);
+       // MyBrowser browse = new MyBrowser();
+       // region = browse;
         System.out.print("\nyoutube");
        // webEngine.executeScript( "clearHello()" );
     }
@@ -246,90 +254,30 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
+    //interface injection of screenParent and main model for songs and DB
+    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+        myController = screenParent;
+        mainModel = model;
+        db = database;
+    }
+
+    public void setBrowser(MyBrowser myBrowser){
+      //  pane.getChildren().addAll(myBrowser);
+       // pane = new Pane(myBrowser);
+      //  region = new Region(myBrowser);
+      //  Platform.runLater( ()-> {
+          //  region = myBrowser;
+
+//            if ("javascript".equals(javascript.getText())) {
+//                javascript.setText("testinggg");
+//            }
+//            region.setVisible(true);
+//        });
+//
+//        if ("javascript".equals(javascript.getText())) {
+//            javascript.setText("test3");
+//        }
+    }
+
     /**??????????????????????????????????????????????????????????????????????????????***/
-
-    class MyBrowser extends Region {
-
-    HBox toolbar;
-    VBox toolbox;
-
-    WebView webView; //= new WebView();
-    WebEngine webEngine; //= webView.getEngine();
-
-    public MyBrowser(WebView webView, WebEngine webEngine){
-        this.webEngine = webEngine;
-        this.webView = webView;
-
-        final URL urlHello = getClass().getResource("hello.html");
-        webEngine.load(urlHello.toExternalForm());
-
-        webEngine.getLoadWorker().stateProperty().addListener(
-            new ChangeListener<State>(){
-
-                @Override
-                public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
-                    if(newState == State.SUCCEEDED){
-                        JSObject window = (JSObject)webEngine.executeScript("window");
-                        window.setMember("app", new JavaApplication());
-                    }
-                }
-            });
-
-
-        JSObject window = (JSObject)webEngine.executeScript("window");
-        window.setMember("app", new JavaApplication());
-
-        final TextField textField = new TextField ();
-        textField.setPromptText("Hello! Who are?");
-
-        Button buttonEnter = new Button("Enter");
-        buttonEnter.setOnAction(new EventHandler<ActionEvent>(){
-
-            @Override
-            public void handle(ActionEvent arg0) {
-                webEngine.executeScript( " updateHello(' " + textField.getText() + " ') " );
-            }
-        });
-
-        Button buttonClear = new Button("Clear");
-        buttonClear.setOnAction(new EventHandler<ActionEvent>(){
-
-            @Override
-            public void handle(ActionEvent arg0) {
-                webEngine.executeScript( "clearHello()" );
-            }
-        });
-
-        toolbar = new HBox();
-        toolbar.setPadding(new Insets(10, 10, 10, 10));
-        toolbar.setSpacing(10);
-        toolbar.setStyle("-fx-background-color: #336699");
-        toolbar.getChildren().addAll(textField, buttonEnter, buttonClear);
-
-        toolbox = new VBox();
-        labelFromJavascript = new Label();
-        toolbox.getChildren().addAll(toolbar, labelFromJavascript);
-        labelFromJavascript.setText("Wait");
-
-        getChildren().add(toolbox);
-        getChildren().add(webView);
-
-    }
-
-    @Override
-    protected void layoutChildren(){
-        double w = getWidth();
-        double h = getHeight();
-        double toolboxHeight = toolbox.prefHeight(w);
-        layoutInArea(webView, 0, 0, w, h-toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
-        layoutInArea(toolbox, 0, h-toolboxHeight, w, toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
-    }
-
-}
-
-    public class JavaApplication {
-        public void callFromJavascript(String msg) {
-            labelFromJavascript.setText("Click from Javascript: " + msg);
-        }
-    }
 }
