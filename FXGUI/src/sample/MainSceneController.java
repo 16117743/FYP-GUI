@@ -7,14 +7,30 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import javafx.concurrent.Worker.State;
+/*********************/
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.Button;
+import netscape.javascript.JSObject;
+/************************/
+
 import model.*;
+
 
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
@@ -22,6 +38,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ScreensController myController;
     final LongProperty lastUpdate = new SimpleLongProperty();
     final long minUpdateInterval = 0 ;
+    WebEngine webEngine;
+    Label labelFromJavascript;
+    MyBrowser myBrowser;
 
     @FXML
     ProgressBar progBar;
@@ -45,6 +64,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     ListView songList;
+
+    @FXML
+    Button javascript;
+
+    @FXML
+    WebView webview1;
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
@@ -81,7 +106,17 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert songRequest != null : "songrequest not injected!";
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
+        assert javascript != null : "songrequest not injected!";
         progBar.setProgress(0);
+
+        webEngine = webview1.getEngine();
+        myBrowser = new MyBrowser( webview1, webEngine);
+
+//        final URL urlHello = getClass().getResource("hello.html");
+//        webEngine.load(urlHello.toExternalForm());
+
+
+        /********************************************/
     }
 
     /*******************MUSIC button methods **************************************************/
@@ -181,6 +216,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         mainModel.doThreadStuff();
     }
 
+
+    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+    private void downloadYoutube(){
+        webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
+        System.out.print("\nyoutube");
+       // webEngine.executeScript( "clearHello()" );
+    }
+
     /***************************************************/
 
     public void iPlay() {
@@ -203,4 +246,90 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
+    /**??????????????????????????????????????????????????????????????????????????????***/
+
+    class MyBrowser extends Region {
+
+    HBox toolbar;
+    VBox toolbox;
+
+    WebView webView; //= new WebView();
+    WebEngine webEngine; //= webView.getEngine();
+
+    public MyBrowser(WebView webView, WebEngine webEngine){
+        this.webEngine = webEngine;
+        this.webView = webView;
+
+        final URL urlHello = getClass().getResource("hello.html");
+        webEngine.load(urlHello.toExternalForm());
+
+        webEngine.getLoadWorker().stateProperty().addListener(
+            new ChangeListener<State>(){
+
+                @Override
+                public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
+                    if(newState == State.SUCCEEDED){
+                        JSObject window = (JSObject)webEngine.executeScript("window");
+                        window.setMember("app", new JavaApplication());
+                    }
+                }
+            });
+
+
+        JSObject window = (JSObject)webEngine.executeScript("window");
+        window.setMember("app", new JavaApplication());
+
+        final TextField textField = new TextField ();
+        textField.setPromptText("Hello! Who are?");
+
+        Button buttonEnter = new Button("Enter");
+        buttonEnter.setOnAction(new EventHandler<ActionEvent>(){
+
+            @Override
+            public void handle(ActionEvent arg0) {
+                webEngine.executeScript( " updateHello(' " + textField.getText() + " ') " );
+            }
+        });
+
+        Button buttonClear = new Button("Clear");
+        buttonClear.setOnAction(new EventHandler<ActionEvent>(){
+
+            @Override
+            public void handle(ActionEvent arg0) {
+                webEngine.executeScript( "clearHello()" );
+            }
+        });
+
+        toolbar = new HBox();
+        toolbar.setPadding(new Insets(10, 10, 10, 10));
+        toolbar.setSpacing(10);
+        toolbar.setStyle("-fx-background-color: #336699");
+        toolbar.getChildren().addAll(textField, buttonEnter, buttonClear);
+
+        toolbox = new VBox();
+        labelFromJavascript = new Label();
+        toolbox.getChildren().addAll(toolbar, labelFromJavascript);
+        labelFromJavascript.setText("Wait");
+
+        getChildren().add(toolbox);
+        getChildren().add(webView);
+
+    }
+
+    @Override
+    protected void layoutChildren(){
+        double w = getWidth();
+        double h = getHeight();
+        double toolboxHeight = toolbox.prefHeight(w);
+        layoutInArea(webView, 0, 0, w, h-toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
+        layoutInArea(toolbox, 0, h-toolboxHeight, w, toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
+    }
+
+}
+
+    public class JavaApplication {
+        public void callFromJavascript(String msg) {
+            labelFromJavascript.setText("Click from Javascript: " + msg);
+        }
+    }
 }

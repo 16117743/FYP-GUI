@@ -56,6 +56,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import model.AzureDB;
 import model.Model;
 
@@ -119,6 +121,9 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
     @FXML
     TextArea songRequest2;
 
+    @FXML
+    WebView webview;
+
     /**
      * Initializes the controller class.
      */
@@ -133,6 +138,10 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
         assert queueList2 != null : "DJSongQueue not injected!";
         assert songRequest2 != null : "DJRequests not injected!";
         bool1 = true;
+
+        WebEngine webEngine = webview.getEngine();
+        webEngine.load("http://google.com");
+
         /*
         Task task = new Task<Void>() {
             @Override public Void call() {

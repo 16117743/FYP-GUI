@@ -46,7 +46,8 @@ public class LoginSceneController implements Initializable, ControlledScreen {
 
     @FXML
     private void goToScreen2(ActionEvent event){
-        if(Login())
+        myController.setScreen(MusicHostFramework.screen2ID);
+       /* if(Login())
         {
             try {
                 response.setText("succces!");
@@ -70,8 +71,7 @@ public class LoginSceneController implements Initializable, ControlledScreen {
             {
                 response.setText("Incorrect login");
             });
-        }
-
+        }*/
     }
 
     private boolean Login(){

@@ -42,6 +42,7 @@
  */ -
 -->
 
+<?import javafx.scene.web.*?>
 <?import javafx.scene.effect.*?>
 <?import javafx.scene.shape.*?>
 <?import java.lang.*?>
@@ -86,5 +87,6 @@
             <TextArea fx:id="songRequest2" prefHeight="102.0" prefWidth="88.0" />
          </children>
       </HBox>
+      <WebView fx:id="webview" layoutX="429.0" layoutY="144.0" prefHeight="200.0" prefWidth="200.0" />
   </children>
 </AnchorPane>

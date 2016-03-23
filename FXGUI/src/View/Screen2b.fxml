@@ -43,6 +43,5 @@
          </children>
       </HBox>
       <WebView fx:id="webview1" layoutX="413.0" layoutY="54.0" prefHeight="200.0" prefWidth="200.0" />
-      <Button fx:id="javascript" layoutX="507.0" layoutY="341.0" mnemonicParsing="false" onAction="#downloadYoutube" text="javascript" />
   </children>
 </AnchorPane>
