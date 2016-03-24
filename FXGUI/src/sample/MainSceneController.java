@@ -1,8 +1,6 @@
 package sample;
 import java.net.URL;
 import java.util.ResourceBundle;
-
-
 import Browser.MyBrowser;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -10,26 +8,15 @@ import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.HPos;
-import javafx.geometry.Insets;
-import javafx.geometry.VPos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
-import javafx.concurrent.Worker.State;
-/*********************/
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Button;
 import netscape.javascript.JSObject;
 /************************/
-
 import model.*;
-
 
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
@@ -37,9 +24,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ScreensController myController;
     final LongProperty lastUpdate = new SimpleLongProperty();
     final long minUpdateInterval = 0 ;
-    WebEngine webEngine;
-    Label labelFromJavascript;
-    //MyBrowser myBrowser;
 
     @FXML
     ProgressBar progBar;
@@ -113,18 +97,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert progBar != null : "songrequest not injected!";
         assert javascript != null : "songrequest not injected!";
         progBar.setProgress(0);
-
-      //  webEngine = webview1.getEngine();
-//                final URL urlHello = getClass().getResource("hello.html");
-//        webEngine.load(urlHello.toExternalForm());
-       // myBrowser = new MyBrowser( webview1, webEngine);
-
-//        final URL urlHello = getClass().getResource("hello.html");
-//        webEngine.load(urlHello.toExternalForm());
-        //region = new MyBrowser();
-
-
         /********************************************/
+    }
+
+    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+    private void downloadYoutube(){
+        //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
+      //  System.out.print(region.test());
+        mainModel.stopConnection();
+        //region.script();
     }
 
     /*******************MUSIC button methods **************************************************/
@@ -220,17 +201,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
 
-    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-    private void downloadYoutube(){
-        //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
-      //  region.setVisible(true);
-      //  javascript.setText("test2");
-       // anctest.getChildren().addAll(region);
-       // MyBrowser browse = new MyBrowser();
-       // region = browse;
-        System.out.print("\nyoutube");
-       // webEngine.executeScript( "clearHello()" );
-    }
+
 
     /***************************************************/
 
@@ -262,21 +233,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     public void setBrowser(MyBrowser myBrowser){
-      //  pane.getChildren().addAll(myBrowser);
-       // pane = new Pane(myBrowser);
-      //  region = new Region(myBrowser);
-      //  Platform.runLater( ()-> {
-          //  region = myBrowser;
 
-//            if ("javascript".equals(javascript.getText())) {
-//                javascript.setText("testinggg");
-//            }
-//            region.setVisible(true);
-//        });
-//
-//        if ("javascript".equals(javascript.getText())) {
-//            javascript.setText("test3");
-//        }
     }
 
     /**??????????????????????????????????????????????????????????????????????????????***/

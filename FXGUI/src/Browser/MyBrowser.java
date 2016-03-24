@@ -41,15 +41,15 @@ public MyBrowser(){
             @Override
             public void changed(ObservableValue<? extends Worker.State> ov, Worker.State oldState, Worker.State newState) {
                 if(newState == Worker.State.SUCCEEDED){
-                    JSObject window = (JSObject)webEngine.executeScript("window");
-                    window.setMember("app", new JavaApplication());
+                    JSObject window1 = (JSObject)webEngine.executeScript("window");
+                    window1.setMember("app", new JavaApplication());
                 }
             }
         });
 
 
-    JSObject window = (JSObject)webEngine.executeScript("window");
-    window.setMember("app", new JavaApplication());
+    JSObject window1 = (JSObject)webEngine.executeScript("window");
+    window1.setMember("app", new JavaApplication());
 
     final TextField textField = new TextField ();
     textField.setPromptText("Hello! Who are?");
@@ -88,19 +88,25 @@ public MyBrowser(){
 
 }
 
-@Override
-protected void layoutChildren(){
-    double w = getWidth();
-    double h = getHeight();
-    double toolboxHeight = toolbox.prefHeight(w);
-     layoutInArea(webView, 0, 0, w, h-toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
-    layoutInArea(toolbox, 0, h-toolboxHeight, w, toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
-}
+    public void script(){
+       // webEngine.executeScript(" updateHello(' " + "controller" + " ') " );
+        webEngine.loadContent(" <iframe width=\"640\" height=\"360\" src=\"https://www.youtube.com/embed/2tUGbFtmW4s\" frameborder=\"0\" allowfullscreen></iframe>");
+
+    }
+
+    @Override
+    protected void layoutChildren(){
+        double w = getWidth();
+        double h = getHeight();
+        double toolboxHeight = toolbox.prefHeight(w);
+         layoutInArea(webView, 0, 0, w, h-toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
+        layoutInArea(toolbox, 0, h-toolboxHeight, w, toolboxHeight, 0, HPos.CENTER, VPos.CENTER);
+    }
 
 public class JavaApplication {
     public void callFromJavascript(String msg) {
        // labelFromJavascript.setText("Click from Javascript: " + msg);
-        System.out.println("from java script");
+        System.out.println(msg);
     }
 }
 

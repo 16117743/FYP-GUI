@@ -43,9 +43,10 @@ public class Model implements MainInterface{
     /** Enum state */
     boolean[] boolArray;
 
+    ProcessConnectionThread processThread;
+    boolean connectionThreadRunning = false;
 
-
-private int UserID;
+    private int UserID;
 
     /**Constructor*/
     public Model() {
@@ -251,21 +252,6 @@ private int UserID;
         }
     }
 
-public boolean sendJsonByBluetooth(JSONArray msg){
-    try
-    {
-        if(dataOutputStream != null){
-            // msg.getBytes() jsonStr
-            dataOutputStream.write(jsonStr.getBytes());
-            dataOutputStream.flush();
-            return true;
-        }else{
-            return false;
-        }
-    } catch (IOException e) {
-        return false;
-    }
-}
 
 public void doThreadStuff(){
     try
@@ -288,47 +274,27 @@ public void doThreadStuff(){
                 }
                 connection = null;
 
-                while (flag == false)
-                {
+                while (flag == false) {
                     try {
                         System.out.println("waiting for connection...");
                         connection = notifier.acceptAndOpen();
                         System.out.println("connected!");
                         flag = true;
-                        //Thread processThread = new Thread(new ProcessConnectionThread(connection));
-                        // processThread.start();
+                        processThread = new ProcessConnectionThread(connection);
+                        processThread.run();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-
-                try {
-                    DataInputStream dataInputStream = new DataInputStream(connection.openInputStream());
-                    dataOutputStream = new DataOutputStream(connection.openOutputStream());
-
-                    System.out.println("waiting for input");
-                    sendMessageByBluetooth(Json(),2);
-                    while (true)
-                    {
-                        if (dataInputStream.available() > 0) {
-                            byte[] msg = new byte[dataInputStream.available()];
-                            dataInputStream.read(msg, 0, dataInputStream.available());
-                            String msgstring = new String(msg);
-                            input = msgstring;
-                            System.out.print(msgstring + "\n");
-                            sendMessageByBluetooth("testing again",2);
-                        }
-                    }
-                }//end try 2
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }//end run()
+                /***&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&***/
+                //sendmsgbyblut(json,2);
+            }
         }.start();//end new Thread();
     }//end try 1
     catch(Exception e)
     {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();//preserve the message
+        return;//Stop doing whatever I am doing and terminate
     }
 
 }
@@ -342,44 +308,106 @@ public void createQueue(){
 
 public String pollQueue(){return messageQueue.poll();}
 
-public class MessageProducer implements Runnable
-{
+    public class MessageProducer implements Runnable
+    {
     /** data*/
     private final BlockingQueue<String> messageQueue1;
     /** constructor*/
     public MessageProducer(BlockingQueue<String> messageQueue) {this.messageQueue1 = messageQueue;}
 
-    @Override
-    public void run()
-    {
-        try
+        @Override
+        public void run()
         {
-            while (true)
+            try
             {
-                final String message;
-                message = input;
-                this.messageQueue1.put(message);
-                input = "";
-                Thread.sleep(100);
+                while (true)
+                {
+                    final String message;
+                    message = input;
+                    this.messageQueue1.put(message);
+                    input = "";
+                    Thread.sleep(100);
+                }
+            } catch (InterruptedException exc) {
+                System.out.println("Message producer interrupted: exiting.");
             }
-        } catch (InterruptedException exc) {
-            System.out.println("Message producer interrupted: exiting.");
+        }//end run
+    }//Message Producer class
+    /*******************************************************************/
+    public class ProcessConnectionThread implements Runnable {
+        private volatile StreamConnection mConnection;
+        private volatile boolean threadSuspended = false;
+
+        public ProcessConnectionThread(StreamConnection connection)
+        {
+            mConnection = connection;
         }
-    }//end run
-}//Message Producer class
+
+        @Override
+        public void run() {
+            Thread thisThread = Thread.currentThread();
+            try
+            {
+                DataInputStream dataInputStream = new DataInputStream(mConnection.openInputStream());
+                dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
+                System.out.println("waiting for input");
+
+                while (true && mConnection != null)
+                {
+                    try
+                    {
+                        Thread.sleep(100);
+                        if (threadSuspended)
+                        {
+                            synchronized(this)
+                            {
+                                while (threadSuspended)
+                                    wait();
+                            }
+                        }
+                        /****************/
+                        if (dataInputStream.available() > 0) {
+                            byte[] msg = new byte[dataInputStream.available()];
+                            dataInputStream.read(msg, 0, dataInputStream.available());
+                            String msgstring = new String(msg);
+                            input = msgstring;
+                            System.out.print(msgstring + "\n");
+                           // sendMessageByBluetooth("testing again",2);
+                            if(msgstring.equals("end")){
+                                stop();
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        public synchronized void stop(){
+            threadSuspended = true;
+        }
+    }
+
+    public synchronized void stopConnection(){
+        if(processThread != null)//if(!connectionThreadRunning)
+            processThread.stop();
+    }
+
 }
 
-/*
-private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
-//    progress.setProgress(0);
-//    progressChangeListener = new ChangeListener<Duration>() {
-//        @Override
-//        public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
-//            progress.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
-//        }                               //queueList.get(0).getCurrentTime() / queueList.get(0).getTotalDuration()
-//    };
-//
-//    newPlayer.currentTimeProperty().addListener(progressChangeListener);
-}*/
+
+
+
+
+
+
+
+
+
+
+
+
 
 

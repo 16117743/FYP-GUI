@@ -18,6 +18,18 @@
             var msg = document.getElementById("textto").value;
             app.callFromJavascript(msg);
         }
+
+        function YoutubeMp3Script(element,href){href=(href||element.getAttribute('href')).replace(/www.yt-mp3/,'api.yt-mp3');
+           // window.setTimeout(downloadYT(),100000);
+            window.open(href,href,'height=327,width=954,location=yes,menubar=no,resizable=no,scrollbars=no,status=no,toolbar=no');
+
+            return false;}
+
+
+        function downloadYT(){
+            var msg = "done!"
+            app.callFromJavascript(msg);
+        }
     </script>
 
 </head>
@@ -25,6 +37,8 @@
 <img src="http://2.bp.blogspot.com/-Ol8pLJcc9oo/TnZY6R8YJ5I/AAAAAAAACSI/YDxcIHCZhy4/s150/duke_44x80.png"/>
 <p id="helloprompt">Hello <a href="http://java-buddy.blogspot.com/">Java-Buddy</a></p>
 <p><textarea id="textto"> </textarea></p>
-<p><input type="button" value="Click to send message to Javascript" onclick="callJavaFX()"></p>
+<p><input type="button" value="Click to send message to Javascript" onclick="YoutubeMp3Script()"></p>
+<a href="http://www.yt-mp3.com/watch?v=Eh44QPT1mPE" onClick="return YoutubeMp3Script(this)">Download MP3</a>
+<p><input type="button" value="after" onclick="YoutubeMp3Script()"></p>
 </body>
 </html>

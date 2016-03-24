@@ -42,15 +42,14 @@
         <Button mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
          </children>
       </HBox>
-      <Button fx:id="javascript" layoutX="507.0" layoutY="341.0" mnemonicParsing="false" onAction="#downloadYoutube" text="javascript" />
-      <AnchorPane fx:id="anchorRegion" blendMode="RED" layoutX="531.0" layoutY="27.0" prefHeight="200.0" prefWidth="200.0">
+      <Button fx:id="javascript" layoutX="331.0" layoutY="362.0" mnemonicParsing="false" onAction="#downloadYoutube" text="javascript" />
+      <AnchorPane fx:id="anchorRegion" layoutX="358.0" layoutY="14.0" prefHeight="128.0" prefWidth="188.0">
          <children>
             <MyBrowser fx:id="region" />
          </children>
          <effect>
-            <SepiaTone />
+            <Blend />
          </effect>
       </AnchorPane>
-      <AnchorPane fx:id="anctest" layoutX="358.0" layoutY="109.0" prefHeight="179.0" prefWidth="98.0" />
   </children>
 </AnchorPane>
