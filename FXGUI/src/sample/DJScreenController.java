@@ -70,32 +70,31 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
     Model mainModel;
     AzureDB db;
     public boolean  bool1;
-    final LongProperty lastUpdate = new SimpleLongProperty();
-    final double minUpdateInterval = 2000000000;
-    public DJScreenController()
-{
-    AnimationTimer timer = new AnimationTimer() {
-        @Override
-        public void handle(long now) {
 
-            if ((now - lastUpdate.get()- 10000000) > 2000000000) {
-                                Platform.runLater(new Runnable() {
-                    @Override public void run() {
-                        //note: tidy method for updating gui components
-                       // songRequest2.appendText("\n" + (now - lastUpdate.get()));
-                        for (int i = 0; i < 1; i++) {
-                            queueList2.getItems().add("1111");//update gui with selection info
-                            queueList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                            songList2.getItems().add("1111");//update gui with selection info
-                            songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    public DJScreenController()
+    {
+        Task animate2 = new Task<Void>() {
+            @Override public Void call() {
+                while(true) {
+                    try {
+                        Thread.sleep(1000);
+                        if (mainModel != null) {
+                            final String message = mainModel.readSongRequest();
+                            System.out.print("\n DJ returned " );
+                            if (message != null && !message.equals("")) {
+                                Platform.runLater(() -> {
+                                    songRequest2.appendText("\n" + message);
+                                });
+                            }
                         }
+                    } catch (InterruptedException e) {
+                        System.out.print("\n interrupted");
+                        e.printStackTrace();
                     }
-                });
-                lastUpdate.set(now);
+                }
             }
-        }
-    };
-  //  timer.start();
+        };
+      //  new Thread(animate2).start();
     }
 
     @FXML
@@ -122,9 +121,6 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
     @FXML
     TextArea songRequest2;
 
-    @FXML
-    WebView webview;
-
     /**
      * Initializes the controller class.
      */
@@ -140,57 +136,7 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
         assert songRequest2 != null : "DJRequests not injected!";
         bool1 = true;
 
-        WebEngine webEngine = webview.getEngine();
-        webEngine.load("http://google.com");
 
-        /*
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-
-                while(bool1 == true)
-                {
-                    if (isCancelled()) {
-                        updateMessage("Cancelled");
-                        System.out.print("Cancelled");
-                        break;
-                    }
-                    if (mainModel.changed())//has the model changed
-                    {
-                        mainModel.setChanged(false);
-                        Platform.runLater( () ->
-                        {
-                            try
-                            {
-
-                            }
-                            catch (Exception ex)
-                            {
-
-                            }
-                        });
-                        try
-                        {
-                            Thread.sleep(2000);
-                        }
-                        catch (InterruptedException interrupted)
-                        {
-                            if (isCancelled()) {
-                                updateMessage("Cancelled");
-                                System.out.print("Cancelled");
-                                break;
-                            }
-                        }
-                        finally {
-                            System.out.print("\nDONE");
-                            return null;
-                        }
-                    }//end if changd
-                }
-                    System.out.print("\nDONE");
-                return null;
-            }
-        };*/
-      //  new Thread(task).start();
     }
 
 
@@ -207,9 +153,13 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
 
     /********************************************************/
     public void iPlay() {
-        bool1 = false;
-        System.out.println("test interface play");
-        mainModel.playSong(this.getClass());
+        Platform.runLater(() -> {
+            mainModel.doThreadStuff();
+            songRequest2.appendText("\ntests");
+        });
+//        bool1 = false;
+//        System.out.println("test interface play");
+//        mainModel.playSong(this.getClass());
 //        if ("skipBtn".equals(playBtn.getText())) {
 //            playBtn.setText("PlayBtn");
 //        }
@@ -220,7 +170,9 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
 
     public void iSkip() {
         System.out.println("test interface skip");
-        mainModel.skipSong();
+        mainModel.stopConnection();
+
+      //  mainModel.skipSong();
     }
 
     public void iAddToQueue() {

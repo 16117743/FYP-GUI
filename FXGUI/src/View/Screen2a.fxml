@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.*?>
 <?import Browser.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="465.0" prefWidth="762.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+<AnchorPane id="AnchorPane" prefHeight="532.0" prefWidth="1033.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
   <children>
       <HBox prefHeight="254.0" prefWidth="358.0">
          <children>
@@ -39,11 +39,10 @@
             <Button fx:id="loadButton" mnemonicParsing="false" onAction="#startServer" text="Start Server" />
             <ProgressBar fx:id="progBar" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
             <ProgressIndicator fx:id="prog" progress="0.0" />
-        <Button mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
          </children>
       </HBox>
-      <Button fx:id="javascript" layoutX="331.0" layoutY="362.0" mnemonicParsing="false" onAction="#downloadYoutube" text="javascript" />
-      <AnchorPane fx:id="anchorRegion" layoutX="358.0" layoutY="14.0" prefHeight="128.0" prefWidth="188.0">
+      <Button fx:id="javascript" layoutX="267.0" layoutY="348.0" mnemonicParsing="false" onAction="#testing" text="javascript" />
+      <AnchorPane fx:id="anchorRegion" layoutX="679.0" layoutY="46.0" prefHeight="131.0" prefWidth="193.0">
          <children>
             <MyBrowser fx:id="region" />
          </children>
@@ -51,5 +50,6 @@
             <Blend />
          </effect>
       </AnchorPane>
+  <Button layoutX="264.0" layoutY="307.0" mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
   </children>
 </AnchorPane>

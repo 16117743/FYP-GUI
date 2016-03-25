@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Model implements MainInterface{
 
@@ -34,9 +36,11 @@ public class Model implements MainInterface{
     private Connection connection;
 
     /** Server related */
+    private ReadWriteLock rwlock;
     private ServerModel serverModel;
-    DataOutputStream dataOutputStream;
-    String input = "";
+    volatile String input = "";
+
+    List<String> songRequests;
     final BlockingQueue<String> messageQueue;
     String jsonStr;
 
@@ -51,6 +55,7 @@ public class Model implements MainInterface{
     /**Constructor*/
     public Model() {
         messageQueue = new ArrayBlockingQueue<>(1);
+        rwlock = new ReentrantReadWriteLock();
         init();
     }
 
@@ -229,31 +234,180 @@ public class Model implements MainInterface{
         return  jsonAraay.toString();
     }
 
-    public boolean sendMessageByBluetooth(String msg,int whatToDo){
-        try
-        {
-            if(dataOutputStream != null){
-                // msg.getBytes() jsonStr
 
-              //  dataOutputStream.write(msg.getBytes());
-              //  dataOutputStream.flush();
-                String test = "test1";
-                /********************/
-                dataOutputStream.writeInt(whatToDo);
-                dataOutputStream.flush();
-                dataOutputStream.write(msg.getBytes());
-                dataOutputStream.flush();
-                return true;
-            }else{
+    public void createQueue(){
+//        MessageProducer producer = new MessageProducer(messageQueue);
+//        Thread t = new Thread(producer);
+//        t.setDaemon(true);
+//        t.start();
+    }
+
+    public synchronized String pollQueue(){return messageQueue.poll();}
+
+    public class MessageProducer implements Runnable
+    {
+    /** data*/
+    private final BlockingQueue<String> messageQueue1;
+    /** constructor*/
+    public MessageProducer(BlockingQueue<String> messageQueue) {this.messageQueue1 = messageQueue;}
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                String msg = null;
+                while (true)
+                {
+                    msg = readSongRequest();
+                    if(msg!=null)
+                        messageQueue1.put(msg);
+
+                    Thread.sleep(100);
+                }
+            } catch (InterruptedException exc) {
+                System.out.println("Message producer interrupted: exiting.");
+            }
+        }//end run
+    }//Message Producer class
+    /*******************************************************************/
+    public class ProcessConnectionThread implements Runnable {
+        private volatile StreamConnection mConnection;
+        private volatile Thread volatileThread;
+        DataInputStream dataInputStream;
+        DataOutputStream dataOutputStream;
+
+        public ProcessConnectionThread(StreamConnection connection)
+        {
+            mConnection = connection;
+        }
+
+        @Override
+        public void run() {
+            volatileThread = Thread.currentThread();
+            Thread thisThread = Thread.currentThread();
+            try
+            {
+                dataInputStream = new DataInputStream(mConnection.openInputStream());
+                dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
+                System.out.println("waiting for input");
+                int whatToDo = 0;
+
+                    try {
+                        while (volatileThread == thisThread) {
+                            try {
+                                whatToDo = dataInputStream.readInt();
+                                thisThread.sleep(100);
+                            } catch (InterruptedException e) {
+                                System.out.print("exited through here");
+                            }
+                            /****************/
+                            if (dataInputStream.available() > 0) {
+                                whatToDo(whatToDo);
+                            }
+                        }
+                    } catch (Exception e) {}
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        public synchronized void myStop(){
+            volatileThread = null;
+        }
+
+        public synchronized void whatToDo(int whatToDo)
+        {
+            switch(whatToDo)
+            {
+                case -1:
+                    System.out.print("\n got -1");
+                    break;
+                case 0:
+                    System.out.print("\n got 0");
+                    break;
+                case 1:
+                    System.out.print("\n got 1");
+                    break;
+                case 2:
+                    System.out.print("\n got 2");
+                    procInput();
+                    break;
+            }
+        }
+
+        public synchronized void respondOK(){
+
+        }
+
+        public synchronized void procInput(){
+            try {
+                byte[] msg = new byte[dataInputStream.available()];
+                dataInputStream.read(msg, 0, dataInputStream.available());
+                String msgstring = new String(msg);
+                writeSongRequest(msgstring);
+               // input = msgstring;
+                System.out.print(msgstring + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public synchronized boolean sendMessageByBluetooth(String msg,int whatToDo)
+        {
+            try
+            {
+                if(dataOutputStream != null){
+                    /********************/
+                    dataOutputStream.writeInt(whatToDo);
+                    dataOutputStream.flush();
+                    dataOutputStream.write(msg.getBytes());
+                    dataOutputStream.flush();
+                    return true;
+                }else{
+                    return false;
+                }
+            } catch (IOException e) {
                 return false;
             }
-        } catch (IOException e) {
-            return false;
+        }
+
+        public synchronized void writeSongRequest(String request){
+            rwlock.writeLock().lock();
+            try {
+                input = request;
+            } finally {
+                rwlock.writeLock().unlock();
+            }
+        }
+    }//end connection thread class
+
+    public synchronized String readSongRequest(){
+        rwlock.readLock().lock();
+        try {
+            if(input !=null) {
+                String temp = input;
+               // input = null;
+                return temp;
+            }
+            else
+                return null;
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
+    public synchronized void stopConnection() {
+        //if(!connectionThreadRunning)
+        if (processThread != null){
+            synchronized (processThread) {
+                processThread.myStop();
+            }
+            connectionThreadRunning = false;
+        }
+    }
 
-public void doThreadStuff(){
+    public void doThreadStuff(){
     try
     {
         new Thread(){
@@ -279,9 +433,9 @@ public void doThreadStuff(){
                         System.out.println("waiting for connection...");
                         connection = notifier.acceptAndOpen();
                         System.out.println("connected!");
-                        flag = true;
                         processThread = new ProcessConnectionThread(connection);
                         processThread.run();
+                        System.out.print("\n exited!");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -293,108 +447,17 @@ public void doThreadStuff(){
     }//end try 1
     catch(Exception e)
     {
-        Thread.currentThread().interrupt();//preserve the message
-        return;//Stop doing whatever I am doing and terminate
+        Thread.currentThread().interrupt();
+        return;
+    }
     }
 
-}
-
-public void createQueue(){
-    MessageProducer producer = new MessageProducer(messageQueue);
-    Thread t = new Thread(producer);
-    t.setDaemon(true);
-    t.start();
-}
-
-public String pollQueue(){return messageQueue.poll();}
-
-    public class MessageProducer implements Runnable
-    {
-    /** data*/
-    private final BlockingQueue<String> messageQueue1;
-    /** constructor*/
-    public MessageProducer(BlockingQueue<String> messageQueue) {this.messageQueue1 = messageQueue;}
-
-        @Override
-        public void run()
-        {
-            try
-            {
-                while (true)
-                {
-                    final String message;
-                    message = input;
-                    this.messageQueue1.put(message);
-                    input = "";
-                    Thread.sleep(100);
-                }
-            } catch (InterruptedException exc) {
-                System.out.println("Message producer interrupted: exiting.");
-            }
-        }//end run
-    }//Message Producer class
-    /*******************************************************************/
-    public class ProcessConnectionThread implements Runnable {
-        private volatile StreamConnection mConnection;
-        private volatile boolean threadSuspended = false;
-
-        public ProcessConnectionThread(StreamConnection connection)
-        {
-            mConnection = connection;
-        }
-
-        @Override
-        public void run() {
-            Thread thisThread = Thread.currentThread();
-            try
-            {
-                DataInputStream dataInputStream = new DataInputStream(mConnection.openInputStream());
-                dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
-                System.out.println("waiting for input");
-
-                while (true && mConnection != null)
-                {
-                    try
-                    {
-                        Thread.sleep(100);
-                        if (threadSuspended)
-                        {
-                            synchronized(this)
-                            {
-                                while (threadSuspended)
-                                    wait();
-                            }
-                        }
-                        /****************/
-                        if (dataInputStream.available() > 0) {
-                            byte[] msg = new byte[dataInputStream.available()];
-                            dataInputStream.read(msg, 0, dataInputStream.available());
-                            String msgstring = new String(msg);
-                            input = msgstring;
-                            System.out.print(msgstring + "\n");
-                           // sendMessageByBluetooth("testing again",2);
-                            if(msgstring.equals("end")){
-                                stop();
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        public synchronized void stop(){
-            threadSuspended = true;
-        }
+    public synchronized String isTrue(){
+        if(processThread == null)
+            return "false";
+        else
+            return "true";
     }
-
-    public synchronized void stopConnection(){
-        if(processThread != null)//if(!connectionThreadRunning)
-            processThread.stop();
-    }
-
 }
 
 

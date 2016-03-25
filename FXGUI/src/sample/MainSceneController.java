@@ -1,11 +1,14 @@
 package sample;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import Browser.MyBrowser;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.SimpleLongProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,13 +20,24 @@ import javafx.scene.control.Button;
 import netscape.javascript.JSObject;
 /************************/
 import model.*;
+import org.json.JSONArray;
+
+import javax.bluetooth.DiscoveryAgent;
+import javax.bluetooth.LocalDevice;
+import javax.bluetooth.UUID;
+import javax.microedition.io.Connector;
+import javax.microedition.io.StreamConnection;
+import javax.microedition.io.StreamConnectionNotifier;
 
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
     AzureDB db;
     ScreensController myController;
-    final LongProperty lastUpdate = new SimpleLongProperty();
-    final long minUpdateInterval = 0 ;
+    /****************/
+    ProcessConnectionThread processThread;
+    private ReadWriteLock rwlock;
+    volatile String input;
+
 
     @FXML
     ProgressBar progBar;
@@ -66,26 +80,33 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private TextArea songRequest;
 
-    public MainSceneController(){
-
-        AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                if (now - lastUpdate.get() > minUpdateInterval) {
-                    if(mainModel != null)
-                    {
-                        final String message = mainModel.pollQueue();
-                        if (message != null && !message.equals("")) {
-                            Platform.runLater(() -> {
-                                songRequest.appendText("\n" + message);
-                            });
+    public MainSceneController()
+    {
+        Task animate = new Task<Void>() {
+            @Override public Void call() {
+                while(true) {
+                    try {
+                        Thread.sleep(1000);
+                        if (mainModel != null) {
+                            final String message = readSongRequest();
+                            //System.out.print("\n Main returned " + message);
+                            if (message != null && !message.equals("")) {
+                                Platform.runLater(() -> {
+                                    songRequest.appendText("\n" + message);
+                                    iSkip();
+                                });
+                            }
                         }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                    lastUpdate.set(now);
                 }
             }
         };
-        timer.start();
+       new Thread(animate).start();
+
+
+        rwlock = new ReentrantReadWriteLock();
     }
 
     @Override
@@ -101,10 +122,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-    private void downloadYoutube(){
+    private void testing(){
         //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
       //  System.out.print(region.test());
-        mainModel.stopConnection();
+      //  mainModel.stopConnection();
         //region.script();
     }
 
@@ -191,20 +212,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
         myController.setScreen(MusicHostFramework.screen3ID);
     }
 
-
-
     @FXML
     private void startServer(ActionEvent event) {
-//        serverModel.
-//        serverModel.createQueue();
-        mainModel.doThreadStuff();
+          doThreadStuff();
     }
 
-
-
-
     /***************************************************/
-
     public void iPlay() {
         System.out.println("test interface play");
         mainModel.playSong(this.getClass());
@@ -237,4 +250,189 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /**??????????????????????????????????????????????????????????????????????????????***/
+
+    public synchronized String readSongRequest(){
+        rwlock.readLock().lock();
+        try {
+            if(input !=null) {
+                String temp = input;
+                input = null;
+                return temp;
+            }
+            else
+                return null;
+        } finally {
+            rwlock.readLock().unlock();
+        }
+    }
+
+public synchronized void stopConnection() {
+    //if(!connectionThreadRunning)
+    if (processThread != null){
+        synchronized (processThread) {
+            processThread.myStop();
+        }
+    }
+}
+
+public void doThreadStuff(){
+    try
+    {
+        new Thread(){
+            public void run() {
+                Boolean flag = false;
+                StreamConnectionNotifier notifier = null;
+                StreamConnection connection = null;
+
+                try {
+                    LocalDevice local = null;
+                    local = LocalDevice.getLocalDevice();
+                    local.setDiscoverable(DiscoveryAgent.GIAC);
+                    UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
+                    String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
+                    notifier = (StreamConnectionNotifier) Connector.open(url);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                connection = null;
+
+                while (flag == false) {
+                    try {
+                        System.out.println("waiting for connection...");
+                        connection = notifier.acceptAndOpen();
+                        System.out.println("connected!");
+                        processThread = new ProcessConnectionThread(connection);
+                        processThread.run();
+                        System.out.print("\n exited!");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                /***&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&***/
+                //sendmsgbyblut(json,2);
+            }
+        }.start();//end new Thread();
+    }//end try 1
+    catch(Exception e)
+    {
+        Thread.currentThread().interrupt();
+        return;
+    }
+    }
+
+/*******************************************************************/
+    public class ProcessConnectionThread implements Runnable {
+    private volatile StreamConnection mConnection;
+    private volatile Thread volatileThread;
+    DataInputStream dataInputStream;
+    DataOutputStream dataOutputStream;
+
+    public ProcessConnectionThread(StreamConnection connection)
+    {
+        mConnection = connection;
+    }
+
+    @Override
+    public void run() {
+        volatileThread = Thread.currentThread();
+        Thread thisThread = Thread.currentThread();
+        try
+        {
+            dataInputStream = new DataInputStream(mConnection.openInputStream());
+            dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
+            System.out.println("waiting for input");
+            int whatToDo = 0;
+
+            try {
+                while (volatileThread == thisThread) {
+                    try {
+                        whatToDo = dataInputStream.readInt();
+                        thisThread.sleep(100);
+                    } catch (InterruptedException e) {
+                        System.out.print("exited through here");
+                    }
+                    /****************/
+                    if (dataInputStream.available() > 0) {
+                        whatToDo(whatToDo);
+                    }
+                }
+            } catch (Exception e) {}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public synchronized void myStop(){
+        volatileThread = null;
+    }
+
+    public synchronized void whatToDo(int whatToDo)
+    {
+        switch(whatToDo)
+        {
+            case -1:
+                System.out.print("\n got -1");
+                break;
+            case 0:
+                System.out.print("\n got 0");
+                break;
+            case 1:
+                System.out.print("\n got 1");
+                break;
+            case 2:
+                System.out.print("\n got 2");
+                procInput();
+                break;
+        }
+    }
+
+    public synchronized void respondOK(){
+
+    }
+
+    public synchronized void procInput(){
+        try {
+            byte[] msg = new byte[dataInputStream.available()];
+            dataInputStream.read(msg, 0, dataInputStream.available());
+            String msgstring = new String(msg);
+            writeSongRequest(msgstring);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public synchronized boolean sendMessageByBluetooth(String msg,int whatToDo)
+    {
+        try
+        {
+            if(dataOutputStream != null){
+                /********************/
+                dataOutputStream.writeInt(whatToDo);
+                dataOutputStream.flush();
+                dataOutputStream.write(msg.getBytes());
+                dataOutputStream.flush();
+                return true;
+            }else{
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public synchronized void writeSongRequest(String request){
+       // System.out.print("\n getting lock ");
+        rwlock.writeLock().lock();
+       // System.out.print("\n hmmmmm ");
+
+        try {
+           // System.out.print("\n fuck if i know");
+            input = request;
+        } finally {
+           rwlock.writeLock().unlock();
+        }
+    }
+}//end connection thread class
+
+
 }

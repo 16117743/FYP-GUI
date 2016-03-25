@@ -19,13 +19,6 @@
             app.callFromJavascript(msg);
         }
 
-        function YoutubeMp3Script(element,href){href=(href||element.getAttribute('href')).replace(/www.yt-mp3/,'api.yt-mp3');
-           // window.setTimeout(downloadYT(),100000);
-            window.open(href,href,'height=327,width=954,location=yes,menubar=no,resizable=no,scrollbars=no,status=no,toolbar=no');
-
-            return false;}
-
-
         function downloadYT(){
             var msg = "done!"
             app.callFromJavascript(msg);
