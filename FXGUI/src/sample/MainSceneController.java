@@ -266,15 +266,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
-public synchronized void stopConnection() {
-    //if(!connectionThreadRunning)
-    if (processThread != null){
-        synchronized (processThread) {
-            processThread.myStop();
-        }
-    }
-}
-
 public void doThreadStuff(){
     try
     {
@@ -349,7 +340,7 @@ public void doThreadStuff(){
                         whatToDo = dataInputStream.readInt();
                         thisThread.sleep(100);
                     } catch (InterruptedException e) {
-                        System.out.print("exited through here");
+                        System.out.print("\nexited through here");
                     }
                     /****************/
                     if (dataInputStream.available() > 0) {
@@ -372,16 +363,24 @@ public void doThreadStuff(){
         {
             case -1:
                 System.out.print("\n got -1");
+                procInput();
+                sendMessageByBluetooth("response -1", -1);
                 break;
             case 0:
                 System.out.print("\n got 0");
+                procInput();
+                sendMessageByBluetooth("response 0", 0);
                 break;
             case 1:
                 System.out.print("\n got 1");
+                procInput();
+                sendMessageByBluetooth("End connection", 1);
+                myStop();
                 break;
             case 2:
                 System.out.print("\n got 2");
                 procInput();
+                sendMessageByBluetooth(mainModel.Json(),2);
                 break;
         }
     }
@@ -421,18 +420,12 @@ public void doThreadStuff(){
     }
 
     public synchronized void writeSongRequest(String request){
-       // System.out.print("\n getting lock ");
         rwlock.writeLock().lock();
-       // System.out.print("\n hmmmmm ");
-
         try {
-           // System.out.print("\n fuck if i know");
             input = request;
         } finally {
            rwlock.writeLock().unlock();
         }
     }
 }//end connection thread class
-
-
 }
