@@ -426,84 +426,132 @@ public void doThreadStuff(){
         }
     }
     /*************************************************************************/
+    /**
+     * Send song selecting to client
+     */
     @Override
     public void send1() {
-        
+
     }
 
+    /**
+     * Received view song selection request from client
+     */
     @Override
-    public int recv1() {
-        return 0;
+    public void recv1() {
+
     }
 
+    /**
+     * Send song request ok to client
+     */
     @Override
     public void send2() {
 
     }
 
+    /**
+     * Received selected song from client
+     */
     @Override
-    public int recv2() {
-        return 0;
+    public void recv2() {
+
     }
 
+    /**
+     * Send song DJ comment history to client
+     */
     @Override
     public void send3() {
 
     }
 
+    /**
+     * Received DJ comment from client
+     */
     @Override
-    public int recv3() {
-        return 0;
+    public void recv3() {
+
     }
 
+    /**
+     * Send skip ok to client
+     */
     @Override
     public void send4() {
 
     }
 
+    /**
+     * Received skip request from client
+     */
     @Override
-    public int recv4() {
-        return 0;
+    public void recv4() {
+
     }
 
+    /**
+     * Send songs that echoed with my selection to client
+     */
     @Override
     public void send5() {
 
     }
 
+    /**
+     * Received shared preferences songs from client
+     */
     @Override
-    public int recv5() {
-        return 0;
+    public void recv5() {
+
     }
 
+    /**
+     * Send send blob service to client
+     */
     @Override
     public void send6() {
 
     }
 
+    /**
+     * Received song blob service song string from client
+     */
     @Override
-    public int recv6() {
-        return 0;
+    public void recv6() {
+
     }
 
+    /**
+     * Send repeat song ok to client
+     */
     @Override
     public void send7() {
 
     }
 
+    /**
+     * Received repeat song select from client
+     */
     @Override
-    public int recv7() {
-        return 0;
+    public void recv7() {
+
     }
 
+    /**
+     * Send end repeat song select ok to client
+     */
     @Override
     public void send8() {
 
     }
 
+    /**
+     * Received end repeat song select from client
+     */
     @Override
-    public int recv8() {
-        return 0;
+    public void recv8() {
+
     }
 }//end connection thread class
 }
