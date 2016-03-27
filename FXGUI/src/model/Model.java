@@ -82,7 +82,7 @@ public class Model implements MainInterface{
     public int confirmLogin(String user, String pw){
         try
         {
-            final String query = "SELECT P_Id from UserLogin " +
+            final String query = "SELECT id from UserLogin " +
                 "WHERE userName = '" + user + "' " +
                 "AND password = '" + pw + "'";
 
@@ -101,6 +101,15 @@ public class Model implements MainInterface{
         }
         return -1;
     }
+
+/**
+ * S_id int NOT NULL PRIMARY KEY,
+ songName VARCHAR(MAX),
+ artistName VARCHAR(MAX),
+ dataSize INT(MAX),
+ songData VARBINARY(MAX),
+ id INT NOT NULL FOREIGN KEY REFERENCES UserLogin1(id)
+ */
 
 
     public void initSongs() {

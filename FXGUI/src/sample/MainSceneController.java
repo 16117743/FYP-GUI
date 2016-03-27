@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import Browser.MyBrowser;
+import Interface.MusicHostInterface;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -15,13 +16,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.web.WebEngine;
 import javafx.scene.control.Button;
-import netscape.javascript.JSObject;
 /************************/
 import model.*;
-import org.json.JSONArray;
-
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.UUID;
@@ -103,7 +100,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 }
             }
         };
-       new Thread(animate).start();
+     //  new Thread(animate).start();
 
 
         rwlock = new ReentrantReadWriteLock();
@@ -282,6 +279,7 @@ public void doThreadStuff(){
                     UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
                     String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
                     notifier = (StreamConnectionNotifier) Connector.open(url);
+                    System.out.print("stop");;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -289,7 +287,7 @@ public void doThreadStuff(){
 
                 while (flag == false) {
                     try {
-                        System.out.println("waiting for connection...");
+                        System.out.println("waiting for connectionsssssss...");
                         connection = notifier.acceptAndOpen();
                         System.out.println("connected!");
                         processThread = new ProcessConnectionThread(connection);
@@ -312,7 +310,7 @@ public void doThreadStuff(){
     }
 
 /*******************************************************************/
-    public class ProcessConnectionThread implements Runnable {
+    public class ProcessConnectionThread implements Runnable, MusicHostInterface {
     private volatile StreamConnection mConnection;
     private volatile Thread volatileThread;
     DataInputStream dataInputStream;
@@ -426,6 +424,86 @@ public void doThreadStuff(){
         } finally {
            rwlock.writeLock().unlock();
         }
+    }
+    /*************************************************************************/
+    @Override
+    public void send1() {
+        
+    }
+
+    @Override
+    public int recv1() {
+        return 0;
+    }
+
+    @Override
+    public void send2() {
+
+    }
+
+    @Override
+    public int recv2() {
+        return 0;
+    }
+
+    @Override
+    public void send3() {
+
+    }
+
+    @Override
+    public int recv3() {
+        return 0;
+    }
+
+    @Override
+    public void send4() {
+
+    }
+
+    @Override
+    public int recv4() {
+        return 0;
+    }
+
+    @Override
+    public void send5() {
+
+    }
+
+    @Override
+    public int recv5() {
+        return 0;
+    }
+
+    @Override
+    public void send6() {
+
+    }
+
+    @Override
+    public int recv6() {
+        return 0;
+    }
+
+    @Override
+    public void send7() {
+
+    }
+
+    @Override
+    public int recv7() {
+        return 0;
+    }
+
+    @Override
+    public void send8() {
+
+    }
+
+    @Override
+    public int recv8() {
+        return 0;
     }
 }//end connection thread class
 }
