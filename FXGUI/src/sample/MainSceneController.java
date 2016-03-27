@@ -115,7 +115,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert progBar != null : "songrequest not injected!";
         assert javascript != null : "songrequest not injected!";
         progBar.setProgress(0);
-        /********************************************/
+
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
@@ -315,6 +315,16 @@ public void doThreadStuff(){
     private volatile Thread volatileThread;
     DataInputStream dataInputStream;
     DataOutputStream dataOutputStream;
+    /*****CONSTANTS ****************************/
+    final int SONG_SELECT = 1;
+    final int SONG_SELECTED = 2;
+    final int DJ_COMMENT = 3;
+    final int SKIP_SONG  = 4;
+    final int ECHO_SHARED_PREF_SONGS = 5;
+    final int ECHO_BLOB_SONGS = 6;
+    final int REMOTE_SELECT = 7;
+    final int WANT_END = 8;
+    /********************************************/
 
     public ProcessConnectionThread(StreamConnection connection)
     {
@@ -365,6 +375,27 @@ public void doThreadStuff(){
                 sendMessageByBluetooth("response -1", -1);
                 break;
             case 0:
+                System.out.print("\n got 0");
+                procInput();
+                sendMessageByBluetooth("response 0", 0);
+                break;
+            case 1:
+                System.out.print("\n got 1");
+                procInput();
+                sendMessageByBluetooth("End connection", 1);
+                myStop();
+                break;
+            case 3:
+                System.out.print("\n got 2");
+                procInput();
+                sendMessageByBluetooth(mainModel.Json(),2);
+                break;
+            case 4:
+                System.out.print("\n got -1");
+                procInput();
+                sendMessageByBluetooth("response -1", -1);
+                break;
+            case 5:
                 System.out.print("\n got 0");
                 procInput();
                 sendMessageByBluetooth("response 0", 0);
