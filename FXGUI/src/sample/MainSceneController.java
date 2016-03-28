@@ -3,6 +3,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.ResourceBundle;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -34,7 +36,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ProcessConnectionThread processThread;
     private ReadWriteLock rwlock;
     volatile String input;
-
+    BitSet bitSet = new BitSet(5);
+    Boolean[] boolArray = new Boolean[5];
 
     @FXML
     ProgressBar progBar;
@@ -62,14 +65,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     Button javascript;
 
-    @FXML
-    AnchorPane anchorRegion;
+//    @FXML
+//    ListView DJComments;
+//
+//    @FXML
+//    Button boolDJComment;
+//
+//    @FXML
+//    Button boolSkip;
 
-    @FXML
-    AnchorPane anctest;
-
-    @FXML
-    MyBrowser region;
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
@@ -79,15 +83,24 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     public MainSceneController()
     {
-        Task animate = new Task<Void>() {
+        rwlock = new ReentrantReadWriteLock();
+
+        Task threadInputController = new Task<Void>() {
             @Override public Void call() {
-                while(true) {
+                int switcher =0;
+                while(true)
+                {
                     try {
                         Thread.sleep(1000);
-                        if (mainModel != null) {
+                        //prevent compilation error
+                        if (mainModel != null)
+                        {
                             final String message = readSongRequest();
+                            /*****************/
+                            /*******************/
                             //System.out.print("\n Main returned " + message);
                             if (message != null && !message.equals("")) {
+                                /***/
                                 Platform.runLater(() -> {
                                     songRequest.appendText("\n" + message);
                                     iSkip();
@@ -100,10 +113,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 }
             }
         };
-     //  new Thread(animate).start();
+     //  new Thread(threadInputController).start();
 
+        for(int i =0;i<5;i++)
+            boolArray[i] = true;
 
-        rwlock = new ReentrantReadWriteLock();
+        boolArray[2]=false;
     }
 
     @Override
@@ -114,6 +129,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
         assert javascript != null : "songrequest not injected!";
+       // assert DJComments != null : "songrequest not injected!";
         progBar.setProgress(0);
 
     }
@@ -211,11 +227,13 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     private void startServer(ActionEvent event) {
+        skipButton.setStyle("-fx-background-color:blue");
           doThreadStuff();
     }
 
     /***************************************************/
     public void iPlay() {
+        playButton.setStyle("-fx-background-color:red");
         System.out.println("test interface play");
         mainModel.playSong(this.getClass());
         if ("Pause".equals(playButton.getText())) {
@@ -308,8 +326,85 @@ public void doThreadStuff(){
         return;
     }
     }
+/**********************************************************************************************************************/
+    /**
+     * threadInputController methods
+     * */
+    public synchronized void inputControlSwitch(int whatToDo, String msg) {
+        switch (whatToDo) {
+            case 1:
+                ControllerGetSongs();
+                break;
+            case 2:
+                ControllerAddSong(msg);
+                break;
+            case 3:
+                ControllerGetDJComments(msg);
+                break;
+            case 4:
+                ControllerSkipSong();
+                break;
+            case 5:
+                ControllerEchoSharedPreferencesSongs(msg);
+                break;
+            case 6:
+                break;
+            case 7:
+                break;
+            case 8:
+                break;
+        }
+    }
 
-/*******************************************************************/
+    public synchronized void ControllerGetSongs(){
+        Platform.runLater(() -> {
+            System.out.print("\n ControllerGetSongs\n");
+          //  iSkip();
+        });
+    }
+
+    public synchronized void ControllerAddSong(String songs){
+        Platform.runLater(() -> {
+            System.out.print("\n ControllerAddSong");
+            iSkip();
+        });
+    }
+
+    public synchronized void ControllerGetDJComments(String songs){
+        Platform.runLater(() -> {
+            //1- update DJ comment on GUI
+            //2- get updated comment list and put it into JSON DJ comments bean
+            System.out.print("\n test 3");
+            iSkip();
+        });
+    }
+
+    public synchronized void ControllerSkipSong(){
+        Platform.runLater(() -> {
+            System.out.print("\n test 4");
+            iSkip();
+        });
+    }
+
+    public synchronized void ControllerEchoSharedPreferencesSongs(String songs) {
+        Platform.runLater(() -> {
+            System.out.print("\n test 5");
+            iSkip();
+        });
+    }
+
+    public synchronized void ControllerAddBlobSong(String [] songs){
+        Platform.runLater(() -> {
+            System.out.print("\n test 6");
+            iSkip();
+        });
+    }
+
+/**********************************************************************************************************************/
+
+    /**
+     * Server Connection Thread
+     * */
     public class ProcessConnectionThread implements Runnable, MusicHostInterface {
     private volatile StreamConnection mConnection;
     private volatile Thread volatileThread;
@@ -339,13 +434,21 @@ public void doThreadStuff(){
         {
             dataInputStream = new DataInputStream(mConnection.openInputStream());
             dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
-            System.out.println("waiting for input");
+           // System.out.println("sending options");
+           // sendMessageByBluetooth("b",0);
             int whatToDo = 0;
 
             try {
+                whatToDo = dataInputStream.readInt();
+                System.out.print("\nread  " + whatToDo);
+                thisThread.sleep(100);
+                if (dataInputStream.available() > 0) {
+                    whatToDo(whatToDo);
+                }
                 while (volatileThread == thisThread) {
                     try {
                         whatToDo = dataInputStream.readInt();
+                        System.out.print("\nread  " + whatToDo);
                         thisThread.sleep(100);
                     } catch (InterruptedException e) {
                         System.out.print("\nexited through here");
@@ -369,64 +472,88 @@ public void doThreadStuff(){
     {
         switch(whatToDo)
         {
-            case -1:
-                System.out.print("\n got -1");
-                procInput();
-                sendMessageByBluetooth("response -1", -1);
-                break;
             case 0:
                 System.out.print("\n got 0");
-                procInput();
-                sendMessageByBluetooth("response 0", 0);
+                String msg0 = procInput();
+
+//                if(msg0!=null)
+//                    ControllerGetSongs();
+                //sendMessageByBluetooth("response 1", 1);
+                //String strings = Boolean.toString(boolArray[0]);
+                String strings = Arrays.toString(boolArray);
+                sendMessageByBluetooth(strings, 0);
+                // start timeout
                 break;
-            case 1:
+            case SONG_SELECT:
                 System.out.print("\n got 1");
-                procInput();
-                sendMessageByBluetooth("End connection", 1);
-                myStop();
+                String msg1 = procInput();
+
+//                if(msg1!=null)
+//                    ControllerGetSongs();
+                //sendMessageByBluetooth("response 1", 1);
+                System.out.print(mainModel.Json());
+                sendMessageByBluetooth(mainModel.Json(), 1);
+               // myStop();
                 break;
-            case 3:
+            case SONG_SELECTED:
                 System.out.print("\n got 2");
-                procInput();
-                sendMessageByBluetooth(mainModel.Json(),2);
+                String msg2 = procInput();
+                if(msg2!=null)
+                    ControllerAddSong(msg2);
+                sendMessageByBluetooth("The song" + msg2 + "has been added to the queue", 2);
+               // myStop();
                 break;
-            case 4:
-                System.out.print("\n got -1");
-                procInput();
-                sendMessageByBluetooth("response -1", -1);
+            case DJ_COMMENT:
+                System.out.print("\n got 3");
+                String msg3 = procInput();
+                if(msg3!=null)
+                    ControllerGetDJComments(msg3);
+                sendMessageByBluetooth("response 3", 3);
                 break;
-            case 5:
-                System.out.print("\n got 0");
-                procInput();
-                sendMessageByBluetooth("response 0", 0);
+            case SKIP_SONG:
+                System.out.print("\n got 4");
+                String msg4 = procInput();
+                if(msg4!=null)
+                    ControllerSkipSong();
+                sendMessageByBluetooth("response 4", 4);
                 break;
-            case 1:
-                System.out.print("\n got 1");
-                procInput();
-                sendMessageByBluetooth("End connection", 1);
-                myStop();
+            case ECHO_SHARED_PREF_SONGS:
+                System.out.print("\n got 5");
+                String msg5 = procInput();
+                if(msg5!=null)
+                    ControllerEchoSharedPreferencesSongs(msg5);
+                sendMessageByBluetooth("response 5", 5);
                 break;
-            case 2:
-                System.out.print("\n got 2");
+            case 6:
+                System.out.print("\n got 6");
+                String msg6 = procInput();
+                if(msg6!=null)
+                    sendMessageByBluetooth("response 6",6);
+                break;
+            case 7:
+                System.out.print("\n got 7");
                 procInput();
-                sendMessageByBluetooth(mainModel.Json(),2);
+                sendMessageByBluetooth("response 7",7);
+                break;
+            case 8:
+                System.out.print("\n got 8");
+                procInput();
+                sendMessageByBluetooth("response 8",8);
                 break;
         }
     }
 
-    public synchronized void respondOK(){
-
-    }
-
-    public synchronized void procInput(){
+    public synchronized String procInput(){
         try {
             byte[] msg = new byte[dataInputStream.available()];
             dataInputStream.read(msg, 0, dataInputStream.available());
             String msgstring = new String(msg);
             writeSongRequest(msgstring);
+            return msgstring;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public synchronized boolean sendMessageByBluetooth(String msg,int whatToDo)

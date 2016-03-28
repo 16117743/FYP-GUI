@@ -33,6 +33,7 @@ public class MusicHostFramework extends Application {
         root.getChildren().addAll(mainContainer);/*Gets the list of children of this {Group}. return the list of children of this {Group}.*/
         Scene scene = new Scene(root);//add children to the scene
 
+        primaryStage.setMaximized(true);
         primaryStage.setScene(scene);//Specify the scene to be used on this stage.
         primaryStage.show();
     }

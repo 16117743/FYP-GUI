@@ -124,7 +124,7 @@ public class Model implements MainInterface{
                 String test = rs.getString(1);
                 System.out.println(test);
                 selection.add(new Song(test, selection.size()));//call 2 arg song constructor
-                System.out.println("\nselection size =" + selection.size());
+              //  System.out.println("\nselection size =" + selection.size());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -238,7 +238,7 @@ public class Model implements MainInterface{
             beanList.add(sb);
         }
         JSONArray jsonAraay = new JSONArray(beanList);
-        System.out.print( jsonAraay.toString());
+       // System.out.print( jsonAraay.toString());
 
         return  jsonAraay.toString();
     }
