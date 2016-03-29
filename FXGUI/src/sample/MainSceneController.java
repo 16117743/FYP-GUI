@@ -4,11 +4,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.ResourceBundle;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import Browser.MyBrowser;
 import Interface.MusicHostInterface;
 import javafx.application.Platform;
@@ -17,7 +15,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
 import javafx.scene.control.Button;
 /************************/
 import model.*;
@@ -36,7 +33,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ProcessConnectionThread processThread;
     private ReadWriteLock rwlock;
     volatile String input;
-    BitSet bitSet = new BitSet(5);
     Boolean[] boolArray = new Boolean[5];
 
     @FXML
@@ -65,15 +61,22 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     Button javascript;
 
-//    @FXML
-//    ListView DJComments;
-//
-//    @FXML
-//    Button boolDJComment;
-//
-//    @FXML
-//    Button boolSkip;
+    @FXML
+    ListView DJComments;
 
+    @FXML
+    Button boolRequest;
+
+    @FXML
+    Button boolDJComment;
+
+    @FXML
+    Button boolSkip;
+
+    @FXML
+    Button boolEcho;
+    @FXML
+    Button boolBlob;
 
     @FXML
     private Button skipButton; // value will be injected by the FXMLLoader
@@ -114,11 +117,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
             }
         };
      //  new Thread(threadInputController).start();
-
         for(int i =0;i<5;i++)
-            boolArray[i] = true;
+            boolArray[i] = false;
 
-        boolArray[2]=false;
     }
 
     @Override
@@ -130,6 +131,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert progBar != null : "songrequest not injected!";
         assert javascript != null : "songrequest not injected!";
        // assert DJComments != null : "songrequest not injected!";
+        boolRequest.setStyle("-fx-background-color:red");
+        boolDJComment.setStyle("-fx-background-color:red");
+        boolSkip.setStyle("-fx-background-color:red");
+        boolEcho.setStyle("-fx-background-color:red");
+        boolBlob.setStyle("-fx-background-color:red");
         progBar.setProgress(0);
 
     }
@@ -147,7 +153,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      private void add(ActionEvent event) {
         Task task = new Task<Void>() {
             @Override public Void call() {
-                final int max = mainModel.getSelectionSize() - 1;;
+                final int max = mainModel.getSelectionSize() - 1;
                 for (int i=1; i<=max ; i++) {
                     try {
                         mainModel.downloadSong(i);//step 1
@@ -164,14 +170,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     }
                 }
 
-                Platform.runLater(new Runnable() {
-                    @Override public void run() {
+                Platform.runLater( () -> {
                         for (int i = 0; i < max; i++) {
                             songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                             queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
                             songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                         }
-                    }
                 });
                 return null;
             }
@@ -227,8 +231,74 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     private void startServer(ActionEvent event) {
-        skipButton.setStyle("-fx-background-color:blue");
+       // skipButton.setStyle("-fx-background-color:green");
           doThreadStuff();
+    }
+
+    /****************************************************/
+    @FXML
+    private void setBool1(){
+        if ("ON".equals(boolRequest.getText())) {
+            boolRequest.setStyle("-fx-background-color:red");
+            boolRequest.setText("OFF");
+            boolArray[0] = false;
+        } else {
+            boolRequest.setStyle("-fx-background-color:green");
+            boolRequest.setText("ON");
+            boolArray[0] = true;
+        }
+    }
+
+    @FXML
+    private void setBool2(){
+        if ("ON".equals(boolDJComment.getText())) {
+            boolDJComment.setStyle("-fx-background-color:red");
+            boolDJComment.setText("OFF");
+            boolArray[1] = false;
+        } else {
+            boolDJComment.setStyle("-fx-background-color:green");
+            boolDJComment.setText("ON");
+            boolArray[1] = true;
+        }
+    }
+
+    @FXML
+    private void setBool3(){
+        if ("ON".equals(boolSkip.getText())) {
+            boolSkip.setStyle("-fx-background-color:red");
+            boolSkip.setText("OFF");
+            boolArray[2] = false;
+        } else {
+            boolSkip.setStyle("-fx-background-color:green");
+            boolSkip.setText("ON");
+            boolArray[2] = true;
+        }
+    }
+
+    @FXML
+    private void setBool4(){
+        if ("ON".equals(boolEcho.getText())) {
+            boolEcho.setStyle("-fx-background-color:red");
+            boolEcho.setText("OFF");
+            boolArray[3] = false;
+        } else {
+            boolEcho.setStyle("-fx-background-color:green");
+            boolEcho.setText("ON");
+            boolArray[3] = true;
+        }
+    }
+
+    @FXML
+    private void setBool5(){
+        if ("ON".equals(boolBlob.getText())) {
+            boolBlob.setStyle("-fx-background-color:red");
+            boolBlob.setText("OFF");
+            boolArray[4] = false;
+        } else {
+            boolBlob.setStyle("-fx-background-color:green");
+            boolBlob.setText("ON");
+            boolArray[4] = true;
+        }
     }
 
     /***************************************************/
@@ -359,14 +429,17 @@ public void doThreadStuff(){
     public synchronized void ControllerGetSongs(){
         Platform.runLater(() -> {
             System.out.print("\n ControllerGetSongs\n");
-          //  iSkip();
+          //  return json string of songs
+            //return mainmodel.getSongSelection();
         });
     }
 
-    public synchronized void ControllerAddSong(String songs){
+    public synchronized void ControllerAddSong(String song){
         Platform.runLater(() -> {
-            System.out.print("\n ControllerAddSong");
-            iSkip();
+            System.out.print("\n ControllerAddSong\n");
+            //search DB selection for song matching song string
+            //mainmodel.addsong(song);
+            //songQueue.add(mainmodel.addsong(song))
         });
     }
 
@@ -441,10 +514,14 @@ public void doThreadStuff(){
             try {
                 whatToDo = dataInputStream.readInt();
                 System.out.print("\nread  " + whatToDo);
-                thisThread.sleep(100);
+                thisThread.sleep(300);
                 if (dataInputStream.available() > 0) {
+                    System.out.print("\ninit data available  " + whatToDo);
                     whatToDo(whatToDo);
                 }
+                thisThread.sleep(300);
+                whatToDo = dataInputStream.readInt();
+                System.out.print("\nread  " + whatToDo);
                 while (volatileThread == thisThread) {
                     try {
                         whatToDo = dataInputStream.readInt();
@@ -473,34 +550,13 @@ public void doThreadStuff(){
         switch(whatToDo)
         {
             case 0:
-                System.out.print("\n got 0");
-                String msg0 = procInput();
-
-//                if(msg0!=null)
-//                    ControllerGetSongs();
-                //sendMessageByBluetooth("response 1", 1);
-                //String strings = Boolean.toString(boolArray[0]);
-                String strings = Arrays.toString(boolArray);
-                sendMessageByBluetooth(strings, 0);
-                // start timeout
+                send0(recv0());
                 break;
             case SONG_SELECT:
-                System.out.print("\n got 1");
-                String msg1 = procInput();
-
-//                if(msg1!=null)
-//                    ControllerGetSongs();
-                //sendMessageByBluetooth("response 1", 1);
-                System.out.print(mainModel.Json());
-                sendMessageByBluetooth(mainModel.Json(), 1);
-               // myStop();
+                send1(recv1());
                 break;
             case SONG_SELECTED:
-                System.out.print("\n got 2");
-                String msg2 = procInput();
-                if(msg2!=null)
-                    ControllerAddSong(msg2);
-                sendMessageByBluetooth("The song" + msg2 + "has been added to the queue", 2);
+                send2(recv2());
                // myStop();
                 break;
             case DJ_COMMENT:
@@ -566,6 +622,7 @@ public void doThreadStuff(){
                 dataOutputStream.flush();
                 dataOutputStream.write(msg.getBytes());
                 dataOutputStream.flush();
+                System.out.print("sending here: " + msg);
                 return true;
             }else{
                 return false;
@@ -585,35 +642,56 @@ public void doThreadStuff(){
     }
     /*************************************************************************/
     /**
+     * Send options selecting to client
+     */
+    @Override
+    public void send0(String msg) {
+        System.out.print(msg);
+        sendMessageByBluetooth(msg, 0);
+    }
+
+    /**
+     * Received a Music Host Client
+     */
+    @Override
+    public String recv0() {
+        String strings = Arrays.toString(boolArray);
+        System.out.print(strings);
+        return strings;
+    }
+    /**
      * Send song selecting to client
      */
     @Override
-    public void send1() {
-
+    public void send1(String msg) {
+        sendMessageByBluetooth(mainModel.Json(), 1);
     }
 
     /**
      * Received view song selection request from client
      */
     @Override
-    public void recv1() {
-
+    public String recv1() {
+        return procInput();
     }
 
     /**
      * Send song request ok to client
      */
     @Override
-    public void send2() {
-
+    public void send2(String msg) {
+        sendMessageByBluetooth("The song" + msg + "has been added to the queue", 2);
     }
 
     /**
      * Received selected song from client
      */
     @Override
-    public void recv2() {
-
+    public String recv2() {
+        String msg2 = procInput();
+        if(msg2!=null)
+            ControllerAddSong(msg2);
+        return msg2;
     }
 
     /**

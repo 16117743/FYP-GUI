@@ -4,11 +4,14 @@ package Interface;
  * Created by user on 27/03/2016.
  */
 public interface MusicHostInterface {
-    void send1();
-    void recv1();
+    void send0(String msg);
+    String recv0();
 
-    void send2();
-    void recv2();
+    void send1(String msg);
+    String recv1();
+
+    void send2(String msg);
+    String recv2();
 
     void send3();
     void recv3();

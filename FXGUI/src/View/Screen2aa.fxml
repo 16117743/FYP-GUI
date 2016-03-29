@@ -13,12 +13,11 @@
 <?import javafx.scene.layout.*?>
 <?import Browser.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="532.0" prefWidth="939.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+<AnchorPane id="AnchorPane" fx:id="theRoot" prefHeight="716.0" prefWidth="1337.0" style="-fx-background-color: pink;" stylesheets="@MainSceneStyle.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
   <children>
-      <HBox prefHeight="254.0" prefWidth="358.0">
+      <HBox layoutX="354.0" layoutY="184.0" prefHeight="398.0" prefWidth="600.0">
          <children>
-            <ListView fx:id="songList" prefHeight="254.0" prefWidth="123.0" />
-            <ListView fx:id="queueList" blendMode="DARKEN" prefHeight="257.0" prefWidth="129.0">
+            <ListView fx:id="queueList" blendMode="DARKEN" prefHeight="318.0" prefWidth="193.0">
                <effect>
                   <Glow />
                </effect>
@@ -26,49 +25,45 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ListView>
-            <ListView prefHeight="243.0" prefWidth="128.0" />
+            <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" />
+            <ListView fx:id="DJComments" prefHeight="372.0" prefWidth="205.0" />
          </children>
       </HBox>
-      <HBox layoutX="14.0" layoutY="266.0" prefHeight="52.0" prefWidth="393.0">
+      <HBox layoutX="441.0" layoutY="620.0" prefHeight="64.0" prefWidth="453.0">
          <children>
             <Button fx:id="playButton" mnemonicParsing="false" onAction="#play" prefHeight="47.0" prefWidth="55.0" text="Play" />
             <Button fx:id="skipButton" mnemonicParsing="false" onAction="#iSkip" prefHeight="47.0" prefWidth="55.0" text="Skip" />
             <Button fx:id="initbtn" mnemonicParsing="false" onAction="#init" prefHeight="47.0" prefWidth="59.0" text="init" />
-            <Button fx:id="addbtn" mnemonicParsing="false" onAction="#add" prefHeight="48.0" prefWidth="63.0" text="add" />
-            <Button fx:id="removebtn" mnemonicParsing="false" prefHeight="48.0" prefWidth="85.0" text="remove" />
+            <Button fx:id="addbtn" mnemonicParsing="false" onAction="#add" prefHeight="46.0" prefWidth="61.0" text="add" />
+            <Button fx:id="removebtn" mnemonicParsing="false" prefHeight="45.0" prefWidth="67.0" text="remove" />
             <ProgressBar fx:id="progBar" blendMode="DIFFERENCE" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
          </children>
       </HBox>
-      <AnchorPane fx:id="anchorRegion" layoutX="679.0" layoutY="46.0" prefHeight="131.0" prefWidth="193.0">
+      <HBox layoutX="1126.0" layoutY="14.0" prefHeight="47.0" prefWidth="172.0">
          <children>
-            <MyBrowser fx:id="region" />
-         </children>
-         <effect>
-            <Blend />
-         </effect>
-      </AnchorPane>
-      <HBox layoutX="368.0" layoutY="14.0" prefHeight="32.0" prefWidth="153.0">
-         <children>
-        <Button mnemonicParsing="false" onAction="#goToScreen3" text="Disk Jockey" />
-            <Button fx:id="javascript" mnemonicParsing="false" onAction="#testing" text="javascript" />
+        <Button mnemonicParsing="false" onAction="#goToScreen3" prefHeight="52.0" prefWidth="82.0" text="Disk Jockey" />
+            <Button fx:id="javascript" mnemonicParsing="false" onAction="#testing" prefHeight="53.0" prefWidth="86.0" text="logout" />
          </children>
       </HBox>
-      <HBox layoutX="223.0" layoutY="396.0" prefHeight="32.0" prefWidth="176.0">
+      <HBox layoutX="42.0" layoutY="631.0" prefHeight="38.0" prefWidth="208.0">
          <children>
-            <Button fx:id="loadButton" blendMode="RED" contentDisplay="CENTER" mnemonicParsing="false" onAction="#startServer" text="Start Server" textFill="#ab44bf" textOverrun="CLIP">
-               <effect>
-                  <Shadow blurType="ONE_PASS_BOX" color="#120b0b">
-                     <input>
-                        <Shadow blurType="ONE_PASS_BOX" />
-                     </input>
-                  </Shadow>
-               </effect>
+            <Button fx:id="loadButton" contentDisplay="CENTER" mnemonicParsing="false" onAction="#startServer" prefHeight="36.0" prefWidth="96.0" text="Start Server" textOverrun="CLIP">
                <cursor>
                   <Cursor fx:constant="WAIT" />
-               </cursor></Button>
-        <Button fx:id="refreshButton" mnemonicParsing="false" text="Refresh" />
+               </cursor>
+            </Button>
+        <Button fx:id="refreshButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="62.0" text="Refresh" />
             <ProgressIndicator fx:id="prog" progress="0.0" />
          </children>
       </HBox>
+      <VBox layoutX="1270.0" layoutY="122.0" prefHeight="224.0" prefWidth="69.0">
+         <children>
+            <Button fx:id="boolRequest" mnemonicParsing="false" onAction="#setBool1" prefHeight="45.0" prefWidth="72.0" text="OFF" />
+            <Button fx:id="boolDJComment" mnemonicParsing="false" prefHeight="45.0" prefWidth="69.0" text="OFF" />
+            <Button fx:id="boolSkip" mnemonicParsing="false" prefHeight="52.0" prefWidth="70.0" text="OFF" />
+            <Button fx:id="boolEcho" mnemonicParsing="false" prefHeight="47.0" prefWidth="69.0" text="OFF" />
+            <Button fx:id="boolBlob" mnemonicParsing="false" prefHeight="48.0" prefWidth="69.0" text="OFF" />
+         </children>
+      </VBox>
   </children>
 </AnchorPane>
