@@ -15,7 +15,8 @@ import java.io.OutputStream;
  * Created by user on 29/03/2016.
  */
 public class QueueSong implements SongInterfaceForModel{
-    /**data*/
+
+/**data*/
     private MediaPlayer player;
     private String artist;
     private String songName;
@@ -204,7 +205,7 @@ private StringProperty songName1;
     public void setArtist(String artist) {this.artist = artist;}
     public void setByteArray(byte[]fileBytes){songByte = fileBytes;}
     public void setVotes(int votes) {this.votes = votes;}
-
+    public void setPlayer(MediaPlayer player) {this.player = player;}
 //    @Override
 //    public void changed(ObservableValue observable, Object oldValue, Object newValue) {
 //

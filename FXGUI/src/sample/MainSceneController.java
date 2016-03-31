@@ -10,6 +10,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import Browser.MyBrowser;
 import Interface.MusicHostInterface;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -22,7 +24,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 /************************/
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.util.Callback;
+import javafx.util.Duration;
 import model.*;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -70,6 +75,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
     ObservableList<SelectionSong> SongSelectionObservableList;
 
     @FXML
+    MediaView mediaView;
+
+    @FXML
+    ProgressBar songProgressBar;
+
+    @FXML
+    Slider volumeSlider;
+
+    @FXML
     Button javascript;
 
     @FXML
@@ -94,6 +108,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     private TextArea songRequest;
+
+    @FXML
+    Slider slider;
+
+    @FXML
+    Label timeLabel;
+
+    final ProgressBar progress = new ProgressBar();
+    private ChangeListener<Duration> progressChangeListener;
 
     public MainSceneController()
     {
@@ -192,51 +215,101 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void testing(){
-        //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
-        //  System.out.print(region.test());
-        //  mainModel.stopConnection();
-        //region.script();
+       // mediaView = new MediaView(SongQueueObservableList.get(0).getPlayer());
+        mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
+            @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
+                setCurrentlyPlaying(newPlayer);
+            }
+        });
+
+        mediaView.setMediaPlayer(SongQueueObservableList.get(0).getPlayer());
+
+        // play each audio file in turn.
+        for (int i = 0; i < SongQueueObservableList.size(); i++) {
+            final MediaPlayer player     = SongQueueObservableList.get(i).getPlayer();
+            final MediaPlayer nextPlayer = SongQueueObservableList.get((i + 1) % SongQueueObservableList.size()).getPlayer();
+            player.setOnEndOfMedia(new Runnable() {
+                @Override public void run() {
+                    player.currentTimeProperty().removeListener(progressChangeListener);
+                    player.stop();
+                    mediaView.setMediaPlayer(nextPlayer);
+                    nextPlayer.play();
+                }
+            });
+        }
+
+        slider.valueProperty().addListener(new InvalidationListener() {
+            public void invalidated(Observable ov) {
+                if (slider.isValueChanging()) {
+                    final MediaPlayer player     = SongQueueObservableList.get(0).getPlayer();
+// multiply duration by percentage calculated by slider position
+                    if (progressChangeListener != null) {
+                        player.seek(player.getTotalDuration().multiply(slider.getValue() / 100.0));
+                    }
+                  //  updateValues();
+
+                }
+            }
+        });
+
+        volumeSlider.valueProperty().addListener(new InvalidationListener() {
+            public void invalidated(Observable ov) {
+                if (volumeSlider.isValueChanging()) {
+                    final MediaPlayer player     = SongQueueObservableList.get(0).getPlayer();
+                    player.setVolume(volumeSlider.getValue() / 100.0);
+                }
+            }
+        });
+
+        mediaView.getMediaPlayer().play();
+        setCurrentlyPlaying(mediaView.getMediaPlayer());
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void removeSong(){
-       // System.out.print("\n " + mainModel.getSongQueue());
-        Platform.runLater( () -> {
-            //queueList.getItems().remove(0);
-            SongQueueObservableList.remove(0);
-        });
 
-       // queueList.getSelectionModel().clearSelection();
+        final MediaPlayer curPlayer = mediaView.getMediaPlayer();
+        curPlayer.currentTimeProperty().removeListener(progressChangeListener);
+       // curPlayer.getMedia().getMetadata().removeListener(metadataChangeListener);
+        curPlayer.stop();
 
-//        QueueSong sq = (QueueSong) queueList.getSelectionModel().getSelectedItem();
-//        System.out.println(sq.getSong());
-       // SongQueueObservableList.remove(queueList.getSelectionModel().getSelectedItem());
+        MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
+        mediaView.setMediaPlayer(nextPlayer);
+        nextPlayer.play();
 
-      //  System.out.println(queueList.getCellFactory());
 
-       // System.out.println(queueList.getItems());
-      //  queueList.setItems(SongQueueObservableList);
+    }
+
+    /** sets the currently playing label to the label of the new media player and updates the progress monitor. */
+    private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
+        newPlayer.seek(Duration.ZERO);
+
+        songProgressBar.setProgress(0);
+        progressChangeListener = new ChangeListener<Duration>() {
+            @Override public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+                songProgressBar.setProgress(1.0 * newPlayer.getCurrentTime().toMillis() / newPlayer.getTotalDuration().toMillis());
+                timeLabel.setText(formatTime(newPlayer.getCurrentTime(),  newPlayer.getTotalDuration()));
+            }
+        };
+        newPlayer.currentTimeProperty().addListener(progressChangeListener);
+
+
+
+    //        String source = newPlayer.getMedia().getSource();
+    //        source = source.substring(0, source.length() - FILE_EXTENSION_LEN);
+        // source = source.substring(source.lastIndexOf("/") + 1).replaceAll("%20", " ");
+        System.out.println("Now Playing: ");
+
+        //setMetaDataDisplay(newPlayer.getMedia().getMetadata());
     }
 
     /*******************MUSIC button methods **************************************************/
     @FXML
      private void add(ActionEvent event) {
-
-//        SongQueueObservableList.add(new QueueSong("song 1", "artist 1"));
-//        SongQueueObservableList.add(new QueueSong("song 2", "artist 2"));
-//        SongQueueObservableList.add(new QueueSong("song 3", "artist 3"));
-//        SongQueueObservableList.add(new QueueSong("song 4", "artist 4"));
-//        queueList.getItems().add("1");
-//        queueList.getItems().add("2");
-//        queueList.getItems().add("3");
-   //     queueList.setItems(SongQueueObservableList);
-
         Task task = new Task<Void>() {
             @Override public Void call() {
-                QueueSong qs = mainModel.addSongToQueue(2);
-                Platform.runLater( () -> {
-                    SongQueueObservableList.add(qs);
-                });
+                SongQueueObservableList.add(mainModel.addSongToQueue(0));
+                SongQueueObservableList.add(mainModel.addSongToQueue(1));
                 return null;
             }
         };
@@ -249,9 +322,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     {
         SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
         queueList.setItems(SongQueueObservableList);
-
-//        SongSelectionObservableList = FXCollections.observableList(mainModel.getSelection());
-//        songList.setItems(SongSelectionObservableList);
 
         Task task = new Task<Void>()
         {
@@ -290,7 +360,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
           doThreadStuff();
     }
 
-    /****************************************************/
+    /************************************************************************************************/
     @FXML
     private void setBool1(){
         if ("ON".equals(boolRequest.getText())) {
@@ -829,4 +899,43 @@ public void doThreadStuff(){
 
     }
 }//end connection thread class
+
+private static String formatTime(Duration elapsed, Duration duration) {
+    int intElapsed = (int)Math.floor(elapsed.toSeconds());
+    int elapsedHours = intElapsed / (60 * 60);
+    if (elapsedHours > 0) {
+        intElapsed -= elapsedHours * 60 * 60;
+    }
+    int elapsedMinutes = intElapsed / 60;
+    int elapsedSeconds = intElapsed - elapsedHours * 60 * 60
+        - elapsedMinutes * 60;
+
+    if (duration.greaterThan(Duration.ZERO)) {
+        int intDuration = (int)Math.floor(duration.toSeconds());
+        int durationHours = intDuration / (60 * 60);
+        if (durationHours > 0) {
+            intDuration -= durationHours * 60 * 60;
+        }
+        int durationMinutes = intDuration / 60;
+        int durationSeconds = intDuration - durationHours * 60 * 60 -
+            durationMinutes * 60;
+        if (durationHours > 0) {
+            return String.format("%d:%02d:%02d/%d:%02d:%02d",
+                elapsedHours, elapsedMinutes, elapsedSeconds,
+                durationHours, durationMinutes, durationSeconds);
+        } else {
+            return String.format("%02d:%02d/%02d:%02d",
+                elapsedMinutes, elapsedSeconds,durationMinutes,
+                durationSeconds);
+        }
+    } else {
+        if (elapsedHours > 0) {
+            return String.format("%d:%02d:%02d", elapsedHours,
+                elapsedMinutes, elapsedSeconds);
+        } else {
+            return String.format("%02d:%02d",elapsedMinutes,
+                elapsedSeconds);
+        }
+    }
+}
 }
