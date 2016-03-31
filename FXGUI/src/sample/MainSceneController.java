@@ -1,4 +1,5 @@
 package sample;
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -24,6 +25,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 /************************/
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Callback;
@@ -181,17 +184,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
         });
 
         try {
-            queueList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<QueueSong>() {
-                @Override
-                public void changed(ObservableValue<? extends QueueSong> observable, QueueSong oldValue, QueueSong newValue) {
-                    QueueSong old = (QueueSong)oldValue;
-                    QueueSong newv = (QueueSong)newValue;
-                    System.out.println("ListView selection changed from oldValue = "
-                        + old.getSong() + " to newValue = " + newv.getSong());
-                    queueList.getSelectionModel().clearSelection();
-                }
-            });
-
             songList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<SelectionSong>() {
                 @Override
                 public void changed(ObservableValue<? extends SelectionSong> observable, SelectionSong oldValue, SelectionSong newValue) {
@@ -199,6 +191,56 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
                     System.out.println("ListView selection changed from oldValue = "
                          + " to newValue = " + newValue);
+                }
+            });
+
+            queueList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<QueueSong>() {
+                @Override
+                public void changed(ObservableValue<? extends QueueSong> observable, QueueSong oldValue, QueueSong newValue) {
+                    System.out.println("queueList selection changed from oldValue = "
+                        + " to newValue = " + newValue);
+                }
+            });
+
+//            queueList.getItems().addListener(new ChangeListener<QueueSong>() {
+//                @Override
+//                public void changed(ObservableValue<? extends QueueSong> observable, QueueSong oldValue, QueueSong newValue) {
+//                    System.out.println("queueList selection changed from oldValue = "
+//                        + " to newValue = " + newValue);
+//                }
+//            });
+
+            SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
+                public void onChanged(ListChangeListener.Change<? extends QueueSong> c) {
+                    while (c.next()) {
+                        if (c.wasPermutated()) {
+                            if(c.wasAdded()) {
+                                System.out.println(" added!");
+                                //List added =  c.getAddedSubList();
+                                //add those elements to your data
+                            }
+                            if(c.wasRemoved()) {
+                                System.out.println(" removed!");
+                               // List removed = c.getRemoved();
+                                //remove those elements from your data
+                            }
+                            /*
+                            for (int i = c.getFrom(); i < c.getTo(); ++i) {
+                                //permutate
+                            }
+                        } else if (c.wasUpdated()) {
+                            //update item
+                        } else {
+                            for (QueueSong remitem : c.getRemoved()) {
+                                System.out.println(remitem.getSong()  + " removed!");
+                               // remitem.remove(Outer.this);
+                            }
+                            for (QueueSong additem : c.getAddedSubList()) {
+                                System.out.println(additem.getSong() + " added!");
+                                //additem.add(Outer.this);
+                            }*/
+                        }
+                    }
                 }
             });
         } catch (Exception e) {
@@ -234,6 +276,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     player.stop();
                     mediaView.setMediaPlayer(nextPlayer);
                     nextPlayer.play();
+                    SongQueueObservableList.remove(0);
                 }
             });
         }
@@ -270,14 +313,13 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         final MediaPlayer curPlayer = mediaView.getMediaPlayer();
         curPlayer.currentTimeProperty().removeListener(progressChangeListener);
-       // curPlayer.getMedia().getMetadata().removeListener(metadataChangeListener);
         curPlayer.stop();
 
         MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
         mediaView.setMediaPlayer(nextPlayer);
         nextPlayer.play();
 
-
+        SongQueueObservableList.remove(0);
     }
 
     /** sets the currently playing label to the label of the new media player and updates the progress monitor. */
@@ -293,14 +335,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         };
         newPlayer.currentTimeProperty().addListener(progressChangeListener);
 
-
-
-    //        String source = newPlayer.getMedia().getSource();
-    //        source = source.substring(0, source.length() - FILE_EXTENSION_LEN);
-        // source = source.substring(source.lastIndexOf("/") + 1).replaceAll("%20", " ");
         System.out.println("Now Playing: ");
-
-        //setMetaDataDisplay(newPlayer.getMedia().getMetadata());
     }
 
     /*******************MUSIC button methods **************************************************/
@@ -308,8 +343,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
      private void add(ActionEvent event) {
         Task task = new Task<Void>() {
             @Override public Void call() {
-                SongQueueObservableList.add(mainModel.addSongToQueue(0));
-                SongQueueObservableList.add(mainModel.addSongToQueue(1));
+                QueueSong sq1 = mainModel.addSongToQueue(0);
+                QueueSong sq2 = mainModel.addSongToQueue(2);
+                QueueSong sq3 = mainModel.addSongToQueue(3);
+                Platform.runLater( () -> {
+                    SongQueueObservableList.add(sq1);
+                    SongQueueObservableList.add(sq2);
+                    SongQueueObservableList.add(sq3);
+                });
+
                 return null;
             }
         };
@@ -322,6 +364,26 @@ public class MainSceneController implements Initializable , ControlledScreen {
     {
         SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
         queueList.setItems(SongQueueObservableList);
+
+        SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
+            public void onChanged(ListChangeListener.Change<? extends QueueSong> change) {
+                while (change.next()) {
+                    if (change.wasUpdated()) {
+                        for (QueueSong qs : change.getList()) {
+                            System.out.println(qs.getSong() + "updated");
+                        }
+                    } else {
+                        for (QueueSong qs : change.getRemoved()) {
+                            System.out.println(qs.getSong() + "removed");
+                        }
+
+                        for (QueueSong qs : change.getAddedSubList()) {
+                            System.out.println(qs.getSong() + "added");
+                        }
+                    }
+                }
+            }
+        });
 
         Task task = new Task<Void>()
         {
