@@ -8,10 +8,5 @@ import model.Model;
  */
 public interface SongInterfaceForModel {
     public void initMe();
-    public void downloadMe();
-    public void prepareMe();
-    public void deleteMe();
-    public int getProgress();
 
-    public void iSkip();
 }

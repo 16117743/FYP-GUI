@@ -59,9 +59,11 @@ import javafx.scene.control.*;
 
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.util.Callback;
 import model.AzureDB;
 import model.Model;
-
+import model.QueueSong;
+import model.SelectionSong;
 
 
 public class DJScreenController implements Initializable, ControlledScreen, InterfaceDJ, MainInterface {
@@ -121,6 +123,10 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
     @FXML
     TextArea songRequest2;
 
+    ObservableList<QueueSong> SongQueueObservableList;
+
+    ObservableList<SelectionSong> SongSelectionObservableList;
+
     /**
      * Initializes the controller class.
      */
@@ -136,7 +142,47 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
         assert songRequest2 != null : "DJRequests not injected!";
         bool1 = true;
 
+        songList2.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>(){
 
+            @Override
+            public ListCell<SelectionSong> call(ListView<SelectionSong> p) {
+
+                ListCell<SelectionSong> cell = new ListCell<SelectionSong>(){
+
+                    @Override
+                    protected void updateItem(SelectionSong t, boolean bln) {
+                        super.updateItem(t, bln);
+                        if (t != null) {
+                            // setText(t.getDay() + ":" + t.getNumber());
+                            setText(t.getSong() + " by " + t.getArtist());
+                        }
+                    }
+                };
+
+                return cell;
+            }
+        });
+
+        queueList2.setCellFactory(new Callback<ListView<QueueSong>, ListCell<QueueSong>>() {
+
+            @Override
+            public ListCell<QueueSong> call(ListView<QueueSong> p) {
+
+                ListCell<QueueSong> cell = new ListCell<QueueSong>() {
+
+                    @Override
+                    protected void updateItem(QueueSong t, boolean bln) {
+                        super.updateItem(t, bln);
+                        if (t != null) {
+                            // setText(t.getDay() + ":" + t.getNumber());
+                            setText(t.getSong() + " votes= " + t.getVotes());
+                        }
+                    }
+                };
+
+                return cell;
+            }
+        });
     }
 
 
@@ -153,26 +199,18 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
 
     /********************************************************/
     public void iPlay() {
-        Platform.runLater(() -> {
-            mainModel.doThreadStuff();
-            songRequest2.appendText("\ntests");
-        });
-//        bool1 = false;
-//        System.out.println("test interface play");
-//        mainModel.playSong(this.getClass());
-//        if ("skipBtn".equals(playBtn.getText())) {
-//            playBtn.setText("PlayBtn");
-//        }
-//        else if ("*****".equals(skipBtn.getText())) {
-//            playBtn.setText("skipBtn");
-//        }
+
     }
 
     public void iSkip() {
         System.out.println("test interface skip");
-        mainModel.stopConnection();
+        SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
+        queueList2.setItems(SongQueueObservableList);
+        System.out.print(SongQueueObservableList);
 
-      //  mainModel.skipSong();
+        SongSelectionObservableList = FXCollections.observableList(mainModel.getSelection());
+        System.out.print(SongSelectionObservableList);
+        songList2.setItems(SongSelectionObservableList);
     }
 
     public void iAddToQueue() {

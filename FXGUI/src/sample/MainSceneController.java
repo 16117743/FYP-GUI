@@ -10,6 +10,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import Browser.MyBrowser;
 import Interface.MusicHostInterface;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,6 +22,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 /************************/
+import javafx.util.Callback;
 import model.*;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -46,6 +52,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     Button initbtn;
+
     @FXML
     Button addbtn;
 
@@ -55,8 +62,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     ListView queueList;
 
+    ObservableList<QueueSong> SongQueueObservableList;
+
     @FXML
     ListView songList;
+
+    ObservableList<SelectionSong> SongSelectionObservableList;
 
     @FXML
     Button javascript;
@@ -88,38 +99,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
     {
         rwlock = new ReentrantReadWriteLock();
 
-        Task threadInputController = new Task<Void>() {
-            @Override public Void call() {
-                int switcher =0;
-                while(true)
-                {
-                    try {
-                        Thread.sleep(1000);
-                        //prevent compilation error
-                        if (mainModel != null)
-                        {
-                            final String message = readSongRequest();
-                            /*****************/
-                            /*******************/
-                            //System.out.print("\n Main returned " + message);
-                            if (message != null && !message.equals("")) {
-                                /***/
-                                Platform.runLater(() -> {
-                                    songRequest.appendText("\n" + message);
-                                    iSkip();
-                                });
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-     //  new Thread(threadInputController).start();
         for(int i =0;i<5;i++)
             boolArray[i] = false;
-
     }
 
     @Override
@@ -138,44 +119,123 @@ public class MainSceneController implements Initializable , ControlledScreen {
         boolBlob.setStyle("-fx-background-color:red");
         progBar.setProgress(0);
 
+        queueList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        songList.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>(){
+
+            @Override
+            public ListCell<SelectionSong> call(ListView<SelectionSong> p) {
+
+                ListCell<SelectionSong> cell = new ListCell<SelectionSong>(){
+
+                    @Override
+                    protected void updateItem(SelectionSong t, boolean bln) {
+                        super.updateItem(t, bln);
+                        if (t != null) {
+                            setText(t.getSong() + " by " + t.getArtist());
+                        }
+                        else
+                            setText("\r");
+                    }
+                };
+
+                return cell;
+            }
+        });
+
+        queueList.setCellFactory(new Callback<ListView<QueueSong>, ListCell<QueueSong>>() {
+            @Override
+            public ListCell<QueueSong> call(ListView<QueueSong> myObjectListView) {
+                ListCell<QueueSong> cell = new ListCell<QueueSong>(){
+                    @Override
+                    protected void updateItem(QueueSong myObject, boolean empty) {
+                        super.updateItem(myObject, empty);
+                        setText((empty || myObject == null) ? null : myObject.getSong());
+                    }
+                };
+                return cell;
+            }
+        });
+
+        try {
+            queueList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<QueueSong>() {
+                @Override
+                public void changed(ObservableValue<? extends QueueSong> observable, QueueSong oldValue, QueueSong newValue) {
+                    QueueSong old = (QueueSong)oldValue;
+                    QueueSong newv = (QueueSong)newValue;
+                    System.out.println("ListView selection changed from oldValue = "
+                        + old.getSong() + " to newValue = " + newv.getSong());
+                    queueList.getSelectionModel().clearSelection();
+                }
+            });
+
+            songList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<SelectionSong>() {
+                @Override
+                public void changed(ObservableValue<? extends SelectionSong> observable, SelectionSong oldValue, SelectionSong newValue) {
+
+
+                    System.out.println("ListView selection changed from oldValue = "
+                         + " to newValue = " + newValue);
+                }
+            });
+        } catch (Exception e) {
+
+        }
+
+//                SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
+//            @Override
+//            public void onChanged(Change<? extends QueueSong> c) {
+//                System.out.print("\n SQ changed");
+//            }
+//        });
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void testing(){
         //webEngine.executeScript( " updateHello(' " + "testing" + " ') " );
-      //  System.out.print(region.test());
-      //  mainModel.stopConnection();
+        //  System.out.print(region.test());
+        //  mainModel.stopConnection();
         //region.script();
+    }
+
+    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+    private void removeSong(){
+       // System.out.print("\n " + mainModel.getSongQueue());
+        Platform.runLater( () -> {
+            //queueList.getItems().remove(0);
+            SongQueueObservableList.remove(0);
+        });
+
+       // queueList.getSelectionModel().clearSelection();
+
+//        QueueSong sq = (QueueSong) queueList.getSelectionModel().getSelectedItem();
+//        System.out.println(sq.getSong());
+       // SongQueueObservableList.remove(queueList.getSelectionModel().getSelectedItem());
+
+      //  System.out.println(queueList.getCellFactory());
+
+       // System.out.println(queueList.getItems());
+      //  queueList.setItems(SongQueueObservableList);
     }
 
     /*******************MUSIC button methods **************************************************/
     @FXML
      private void add(ActionEvent event) {
+
+//        SongQueueObservableList.add(new QueueSong("song 1", "artist 1"));
+//        SongQueueObservableList.add(new QueueSong("song 2", "artist 2"));
+//        SongQueueObservableList.add(new QueueSong("song 3", "artist 3"));
+//        SongQueueObservableList.add(new QueueSong("song 4", "artist 4"));
+//        queueList.getItems().add("1");
+//        queueList.getItems().add("2");
+//        queueList.getItems().add("3");
+   //     queueList.setItems(SongQueueObservableList);
+
         Task task = new Task<Void>() {
             @Override public Void call() {
-                final int max = mainModel.getSelectionSize() - 1;
-                for (int i=1; i<=max ; i++) {
-                    try {
-                        mainModel.downloadSong(i);//step 1
-                        System.out.print("\n DL song " + i);
-                        mainModel.addSong(i);//step 2
-                        System.out.print("\n added song " + i + "to queue");
-                        updateProgress(i, max);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        System.out.print("\n cancelled");
-                    }
-                    if (isCancelled()) {
-                        break;
-                    }
-                }
-
+                QueueSong qs = mainModel.addSongToQueue(2);
                 Platform.runLater( () -> {
-                        for (int i = 0; i < max; i++) {
-                            songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
-                            queueList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
-                            songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                        }
+                    SongQueueObservableList.add(qs);
                 });
                 return null;
             }
@@ -187,21 +247,25 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void init(ActionEvent event)
     {
+        SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
+        queueList.setItems(SongQueueObservableList);
+
+//        SongSelectionObservableList = FXCollections.observableList(mainModel.getSelection());
+//        songList.setItems(SongSelectionObservableList);
+
         Task task = new Task<Void>()
         {
             @Override public Void call() {
                 try
                 {
-                    final int max = mainModel.getSelectionSize();
                     mainModel.initSongs();//read from database and initialize selection list with song & artist names
-                    for (int i = 0; i < max; i++) {//for the amount of songs in the selection
-                        songList.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
-                        songList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                    }
-                   // mainModel.setChanged(true);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                SongSelectionObservableList = FXCollections.observableList(mainModel.getSelection());
+                songList.setItems(SongSelectionObservableList);
+
                 return null;
             }
         };
@@ -210,19 +274,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     @FXML
-    private void play(ActionEvent event){
-        mainModel.playSong(this.getClass());
-//        if ("Pause".equals(playButton.getText())) {
-//            mainModel.Pause();
-//            playButton.setText("Play");
-//        } else {
-//            mainModel.Play();
-//            playButton.setText("Pause");
-//        }
+    private void goToScreen1(ActionEvent event) {
+        SongQueueObservableList.remove(0);
+        SongQueueObservableList.get(0).playMe();
     }
-
-    @FXML
-    private void goToScreen1(ActionEvent event) {}
 
     @FXML
     private void goToScreen3(ActionEvent event){
@@ -302,22 +357,31 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /***************************************************/
+    @FXML
     public void iPlay() {
         playButton.setStyle("-fx-background-color:red");
         System.out.println("test interface play");
-        mainModel.playSong(this.getClass());
+       // mainModel.playSong(this.getClass());
         if ("Pause".equals(playButton.getText())) {
-            mainModel.pauseSong();
+            SongQueueObservableList.get(0).pauseMe();
             playButton.setText("Play");
         } else {
-            mainModel.playSong(this.getClass());
+            SongQueueObservableList.get(0).playMe();
+           // mainModel.playSong(this.getClass());
             playButton.setText("Pause");
         }
     }
 
+    @FXML
     public void iSkip() {
-        queueList.getItems().remove(0);
-        mainModel.skipSong();
+        if(SongQueueObservableList.size()>0) {
+            SongQueueObservableList.get(0).pauseMe();
+            SongQueueObservableList.remove(0);
+        }
+
+        if(SongQueueObservableList.size()>0)
+            SongQueueObservableList.get(0).playMe();
+
         if ("Play".equals(playButton.getText())) {
             playButton.setText("Pause");
         }
@@ -386,7 +450,6 @@ public void doThreadStuff(){
                     }
                 }
                 /***&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&***/
-                //sendmsgbyblut(json,2);
             }
         }.start();//end new Thread();
     }//end try 1
@@ -400,31 +463,6 @@ public void doThreadStuff(){
     /**
      * threadInputController methods
      * */
-    public synchronized void inputControlSwitch(int whatToDo, String msg) {
-        switch (whatToDo) {
-            case 1:
-                ControllerGetSongs();
-                break;
-            case 2:
-                ControllerAddSong(msg);
-                break;
-            case 3:
-                ControllerGetDJComments(msg);
-                break;
-            case 4:
-                ControllerSkipSong();
-                break;
-            case 5:
-                ControllerEchoSharedPreferencesSongs(msg);
-                break;
-            case 6:
-                break;
-            case 7:
-                break;
-            case 8:
-                break;
-        }
-    }
 
     public synchronized void ControllerGetSongs(){
         Platform.runLater(() -> {
@@ -438,7 +476,8 @@ public void doThreadStuff(){
         Platform.runLater(() -> {
             System.out.print("\n ControllerAddSong\n");
             //search DB selection for song matching song string
-            //mainmodel.addsong(song);
+            mainModel.addSongToQueue(0);
+            mainModel.addSongToQueue(0);
             //songQueue.add(mainmodel.addsong(song))
         });
     }

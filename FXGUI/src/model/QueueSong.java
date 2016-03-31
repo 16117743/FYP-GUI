@@ -1,56 +1,81 @@
 package model;
 
-import Interface.InterfaceDJ;
-import Interface.MainInterface;
 import Interface.SongInterfaceForModel;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-
-public class Song implements SongInterfaceForModel {
+/**
+ * Created by user on 29/03/2016.
+ */
+public class QueueSong implements SongInterfaceForModel{
     /**data*/
     private MediaPlayer player;
     private String artist;
-    private String song;
+    private String songName;
     private byte[] songByte;
-    private Boolean bool = true;
+    private Boolean upNextFlag;
     private int id = 0;
-    private String name = "0";
+    private int votes;
+
+public String getSongName1() {
+    return songName1.get();
+}
+
+public StringProperty songName1Property() {
+    return songName1;
+}
+
+public void setSongName1(String songName1) {
+    this.songName1.set(songName1);
+}
+
+public String getArtistName() {
+    return artistName.get();
+}
+
+public StringProperty artistNameProperty() {
+    return artistName;
+}
+
+public void setArtistName(String artistName) {
+    this.artistName.set(artistName);
+}
+
+private StringProperty songName1;
+    private StringProperty artistName;
 
     /**Constructor*/
-    public Song(String name, int id)
+    public QueueSong(SelectionSong selectionSong, byte[] songBytes)
     {
-    this.id = id;
-    this.song = name;
-    this.name = name;
-    this.bool = false;
+        this.id = selectionSong.getId();
+        this.songName = selectionSong.getSong();
+        this.artist = selectionSong.getArtist();
+        this.songByte = songBytes;
+        this.upNextFlag = false;
+        this.votes = 2;
+        prepareMe();
     }
 
-    public Song(byte[] bytes, int id, String iSong){
-    songByte = bytes;
-    bool = false;
-    this.id = id;
-    this.name = Integer.toString(id);
-    song = iSong;
+    public QueueSong(String name, String artist)
+    {
+        this.songName = name;
+        this.artist = artist;
+        this.votes = 2;
     }
-
-    public Song(byte[] bytes, int id){
-        songByte = bytes;
-        bool = false;
-        this.id = id;
-        this.name = Integer.toString(id);
-    }
-
 
     /**Common Interface*/
-    public void createPlayer2() {
-        try {
-            OutputStream targetFile=
-                new FileOutputStream(
-                    "C:\\test\\fromDB" + Integer.toString(id) + ".mp3");
+    public void createPlayer() {
+    try {
+        OutputStream targetFile=
+            new FileOutputStream(
+                "C:\\test\\"+songName+".mp3");
 
         String name = "fromDB" + Integer.toString(id) + ".mp3";
         targetFile.write(songByte);
@@ -64,10 +89,10 @@ public class Song implements SongInterfaceForModel {
             }
         });
     } catch (IOException e)
-        {
-    e.printStackTrace();
+    {
+        e.printStackTrace();
     }
-    }
+}
 
     // initialise song with everything but the byte array data from the Azure database
     @Override
@@ -76,39 +101,36 @@ public class Song implements SongInterfaceForModel {
     }
 
     // initialise song with everything but the byte array data from the Azure database
-    @Override
+
     public void downloadMe() {
     }
 
-    @Override
     public void prepareMe() {
-        try {
+        try
+        {
             OutputStream targetFile=
                 new FileOutputStream(
-                    "C:\\test\\fromDB" + Integer.toString(id) + ".mp3");
+                    "C:\\test\\"+songName+".mp3");
 
-            String name = "fromDB" + Integer.toString(id) + ".mp3";
+            String name = songName + ".mp3";
             targetFile.write(songByte);
             targetFile.close();
             String path = "file:///" + ("C:\\test\\" + "\\" + name).replace("\\", "/").replaceAll(" ", "%20");
             player = new MediaPlayer(new Media(path));
-            player.setOnError(new Runnable() {
-                @Override
-                public void run() {
+            player.setOnError( ()->
+            {
                     System.out.println("Media error occurred: " + player.getError());
-                }
             });
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             e.printStackTrace();
         }
     }
 
-    @Override
     public void deleteMe() {
 
     }
 
-    @Override
     public int getProgress() {
         return 0;
     }
@@ -166,21 +188,26 @@ public class Song implements SongInterfaceForModel {
 
     }
 
-    @Override
     public void iSkip() {
 
     }
 
-/**Accessors*/
-    public String getSong(){return song;}
+    /**Accessors*/
+    public String getSong(){return songName;}
     public MediaPlayer getPlayer(){return player;}
-    public boolean getBool(){return bool;}
+    public boolean getBool(){return upNextFlag;}
     public String getArtist(){return artist;}
-
+    public int getVotes() {return votes;}
     /**Mutators*/
-    public void setBool(boolean bool1){bool = bool1;}
-    public void setBool(Boolean bool) {this.bool = bool;}
-    public void setSong(String song) {this.song = song;}
+    public void setBool(boolean bool1){upNextFlag = bool1;}
+    public void setSong(String song) {this.songName = song;}
     public void setArtist(String artist) {this.artist = artist;}
     public void setByteArray(byte[]fileBytes){songByte = fileBytes;}
+    public void setVotes(int votes) {this.votes = votes;}
+
+//    @Override
+//    public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+//
+//    }
+
 }

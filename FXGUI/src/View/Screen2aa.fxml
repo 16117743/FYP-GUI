@@ -31,11 +31,11 @@
       </HBox>
       <HBox layoutX="441.0" layoutY="620.0" prefHeight="64.0" prefWidth="453.0">
          <children>
-            <Button fx:id="playButton" mnemonicParsing="false" onAction="#play" prefHeight="47.0" prefWidth="55.0" text="Play" />
+            <Button fx:id="playButton" mnemonicParsing="false" onAction="#iPlay" prefHeight="47.0" prefWidth="55.0" text="Play" />
             <Button fx:id="skipButton" mnemonicParsing="false" onAction="#iSkip" prefHeight="47.0" prefWidth="55.0" text="Skip" />
             <Button fx:id="initbtn" mnemonicParsing="false" onAction="#init" prefHeight="47.0" prefWidth="59.0" text="init" />
             <Button fx:id="addbtn" mnemonicParsing="false" onAction="#add" prefHeight="46.0" prefWidth="61.0" text="add" />
-            <Button fx:id="removebtn" mnemonicParsing="false" prefHeight="45.0" prefWidth="67.0" text="remove" />
+            <Button fx:id="removebtn" mnemonicParsing="false" onAction="#removeSong" prefHeight="45.0" prefWidth="67.0" text="remove" />
             <ProgressBar fx:id="progBar" blendMode="DIFFERENCE" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
          </children>
       </HBox>
@@ -59,10 +59,10 @@
       <VBox layoutX="1270.0" layoutY="122.0" prefHeight="224.0" prefWidth="69.0">
          <children>
             <Button fx:id="boolRequest" mnemonicParsing="false" onAction="#setBool1" prefHeight="45.0" prefWidth="72.0" text="OFF" />
-            <Button fx:id="boolDJComment" mnemonicParsing="false" prefHeight="45.0" prefWidth="69.0" text="OFF" />
-            <Button fx:id="boolSkip" mnemonicParsing="false" prefHeight="52.0" prefWidth="70.0" text="OFF" />
-            <Button fx:id="boolEcho" mnemonicParsing="false" prefHeight="47.0" prefWidth="69.0" text="OFF" />
-            <Button fx:id="boolBlob" mnemonicParsing="false" prefHeight="48.0" prefWidth="69.0" text="OFF" />
+            <Button fx:id="boolDJComment" mnemonicParsing="false" onAction="#setBool2" prefHeight="45.0" prefWidth="69.0" text="OFF" />
+            <Button fx:id="boolSkip" mnemonicParsing="false" onAction="#setBool3" prefHeight="52.0" prefWidth="70.0" text="OFF" />
+            <Button fx:id="boolEcho" mnemonicParsing="false" onAction="#setBool4" prefHeight="47.0" prefWidth="69.0" text="OFF" />
+            <Button fx:id="boolBlob" mnemonicParsing="false" onAction="#setBool5" prefHeight="48.0" prefWidth="69.0" text="OFF" />
          </children>
       </VBox>
   </children>

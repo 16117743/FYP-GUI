@@ -27,8 +27,8 @@ public class Model implements MainInterface{
     final int DJ_STATE = 2;
 
     /**GUI related*/
-    List<Song> songQueue = new ArrayList<>();
-    List<Song> selection = new ArrayList<>();
+    List<QueueSong> songQueue = new ArrayList<>();
+    List<SelectionSong> selection = new ArrayList<>();
 
     /** Azure DB related*/
     private String con;
@@ -37,12 +37,9 @@ public class Model implements MainInterface{
 
     /** Server related */
     private ReadWriteLock rwlock;
-    private ServerModel serverModel;
     volatile String input = "";
 
-    List<String> songRequests;
     final BlockingQueue<String> messageQueue;
-    String jsonStr;
 
     /** Enum state */
     boolean[] boolArray;
@@ -50,7 +47,7 @@ public class Model implements MainInterface{
     ProcessConnectionThread processThread;
     boolean connectionThreadRunning = false;
 
-    private int UserID;
+    private int UserID = 2;
 
     /**Constructor*/
     public Model() {
@@ -68,7 +65,6 @@ public class Model implements MainInterface{
             String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
             Class.forName(driver);
             connection = DriverManager.getConnection(con);
-            serverModel = new ServerModel();
             boolArray = new boolean[3];
             boolArray[LOGIN_STATE] = true;
         } catch (ClassNotFoundException e) {
@@ -115,16 +111,16 @@ public class Model implements MainInterface{
     public void initSongs() {
         try
         {
-            final String query = "select songname from UserSongs";//where songName = 'song3'
+            final String query = "select S_Id , songname, artistname  from UserSongs where Id ="+ Integer.toString(UserID);//where songName = 'song3'
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
 
             while (rs.next())
             {
-                String test = rs.getString(1);
-                System.out.println(test);
-                selection.add(new Song(test, selection.size()));//call 2 arg song constructor
-              //  System.out.println("\nselection size =" + selection.size());
+                int sid = rs.getInt(1);
+                String songTitle = rs.getString(2);
+                String songArtist = rs.getString(3);
+                selection.add(new SelectionSong(songTitle,songArtist, sid));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -132,36 +128,29 @@ public class Model implements MainInterface{
         Json();
     }
 
-    public void downloadSong(int index1) // enum state 1
+    public QueueSong addSongToQueue(int index1) // enum state 1
     {
         try
         {
-            final String indexStr = Integer.toString(index1);
-            final String query = "select data from UserSongs where S_Id = " + indexStr;
+            int songForeignKey = selection.get(index1).getId();
+            final String query = "select data from UserSongs where S_Id = " + Integer.toString(songForeignKey);
 
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
-            System.out.println("\nselection size =" + selection.size());
 
             if (rs.next()) {
                 byte[] fileBytes = rs.getBytes(1);
-                selection.get(index1).setByteArray(fileBytes);
+                //songQueue.add(new QueueSong(selection.get(index1),fileBytes));
+                return new QueueSong(selection.get(index1),fileBytes);
             }
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+        return null;
     }
 
-    public void addSong(int index) {
-        if (!selection.get(index).getBool())
-        {
-            selection.get(index).createPlayer2();
-            selection.get(index).setBool(true);
-            songQueue.add(selection.get(index));
-        }
-    }
     /*******Database related *****************************************************************************/
 
     /**Main Interface*/
@@ -217,6 +206,10 @@ public class Model implements MainInterface{
     public boolean getBoolArray(int arg) {
         return boolArray[arg];
     }
+
+    public List<QueueSong> getSongQueue() {return songQueue;}
+
+    public List<SelectionSong> getSelection() {return selection;}
 
     public void setBoolArray(int arg,boolean bool) {
         for(int i=0;i<3;i++)
