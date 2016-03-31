@@ -1,12 +1,14 @@
 package model;
 
 import Interface.SongInterfaceForModel;
+import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +26,8 @@ public class QueueSong implements SongInterfaceForModel{
     private Boolean upNextFlag;
     private int id = 0;
     private int votes;
+    private String myFilePath;
+    private String myFilePath2;
 
 public String getSongName1() {
     return songName1.get();
@@ -103,7 +107,39 @@ private StringProperty songName1;
 
     // initialise song with everything but the byte array data from the Azure database
 
-    public void downloadMe() {
+    public void deleteMyPlayer() {
+        Platform.runLater( () ->
+        {
+         //   player.stop();
+        //    player.dispose();//release file handle
+            player = null;
+        });
+    }
+
+    public void deleteMyFile() {
+        Platform.runLater( () ->
+        {
+            File file = new File(myFilePath2);
+
+
+            try {
+                OutputStream targetFile=
+                    new FileOutputStream(
+                        "C:\\test\\"+songName+".mp3");
+
+                String name = songName + ".mp3";
+                targetFile.write(0);
+                targetFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if(file.delete()){
+                System.out.println(file.getName() + " is deleted!");
+            }else{
+                System.out.println(file.getName() + " Delete operation failed.");
+            }
+        });
     }
 
     public void prepareMe() {
@@ -116,8 +152,9 @@ private StringProperty songName1;
             String name = songName + ".mp3";
             targetFile.write(songByte);
             targetFile.close();
-            String path = "file:///" + ("C:\\test\\" + "\\" + name).replace("\\", "/").replaceAll(" ", "%20");
-            player = new MediaPlayer(new Media(path));
+            myFilePath = "file:///" + ("C:\\test\\" + "\\" + name).replace("\\", "/").replaceAll(" ", "%20");
+            myFilePath2 = "C:\\test\\"+songName+".mp3";
+            player = new MediaPlayer(new Media(myFilePath));
             player.setOnError( ()->
             {
                     System.out.println("Media error occurred: " + player.getError());
@@ -126,71 +163,6 @@ private StringProperty songName1;
         {
             e.printStackTrace();
         }
-    }
-
-    public void deleteMe() {
-
-    }
-
-    public int getProgress() {
-        return 0;
-    }
-
-    /**Main Interface*/
-
-    public void playMe() {
-        player.play();
-    }
-
-
-    public void skipMe() {
-        player.stop();
-        //garbage collect player and byte array
-    }
-
-
-    public void pauseMe() {
-        player.stop();
-    }
-
-    /**DJ Interface*/
-    public void DJfadeMeOut(float deltaTime) {
-        float volume = 1;
-        float speed = 0.05f;
-        player.setVolume(volume);
-        volume += speed* deltaTime;
-    }
-
-
-    public void DJfadeMeIn(float deltaTime) {
-        float volume = 1;
-        float speed = 0.05f;
-        player.setVolume(volume);
-        volume -= speed* deltaTime;
-    }
-
-
-    public void DJDoSomething() {
-
-    }
-
-
-    public void DJplayMe() {
-
-    }
-
-
-    public void DJskipMe() {
-
-    }
-
-
-    public void DJpauseMe() {
-
-    }
-
-    public void iSkip() {
-
     }
 
     /**Accessors*/

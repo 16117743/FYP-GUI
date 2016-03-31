@@ -111,7 +111,7 @@ public class Model implements MainInterface{
     public void initSongs() {
         try
         {
-            final String query = "select S_Id , songname, artistname  from UserSongs where Id ="+ Integer.toString(UserID);//where songName = 'song3'
+            final String query = "select S_Id , songname, artistname  from UserSongs"; // where Id ="+ Integer.toString(UserID);
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
 
@@ -161,7 +161,7 @@ public class Model implements MainInterface{
         }
         else if(instance.equals(sample.MainSceneController.class)) {
             System.out.print("\nMain\n");
-            songQueue.get(0).playMe();
+          //  songQueue.get(0).playMe();
         }
     }
 
@@ -169,8 +169,8 @@ public class Model implements MainInterface{
     public void skipSong() {
         try {
             if (songQueue.size() > 0) {
-                songQueue.get(0).skipMe();
-                songQueue.get(1 % songQueue.size()).playMe();
+            //    songQueue.get(0).skipMe();
+            //    songQueue.get(1 % songQueue.size()).playMe();
             }
             else
                 System.out.print("\n no songs in queue");
@@ -183,7 +183,7 @@ public class Model implements MainInterface{
 
     @Override
     public void pauseSong() {
-        songQueue.get(0).pauseMe();
+        //songQueue.get(0).pauseMe();
     }
 
     /**DJ interface**/
