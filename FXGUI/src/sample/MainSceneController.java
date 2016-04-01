@@ -180,6 +180,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         });
     }
 
+    private void addMediaViewPropertyListener(){
+        mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
+            @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
+                setCurrentlyPlaying(newPlayer);
+            }
+        });
+    }
+
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void testing(){
        // mediaView = new MediaView(SongQueueObservableList.get(0).getPlayer());
@@ -191,20 +199,20 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         mediaView.setMediaPlayer(SongQueueObservableList.get(0).getPlayer());
 
-        // play each audio file in turn.
-        for (int i = 0; i < SongQueueObservableList.size(); i++) {
-            final MediaPlayer player     = SongQueueObservableList.get(i).getPlayer();
-            final MediaPlayer nextPlayer = SongQueueObservableList.get((i + 1) % SongQueueObservableList.size()).getPlayer();
-            player.setOnEndOfMedia(new Runnable() {
-                @Override public void run() {
-                    player.currentTimeProperty().removeListener(progressChangeListener);
-                    player.stop();
-                    mediaView.setMediaPlayer(nextPlayer);
-                    nextPlayer.play();
-                    SongQueueObservableList.remove(0);
-                }
-            });
-        }
+//        // play each audio file in turn.
+//        for (int i = 0; i < SongQueueObservableList.size(); i++) {
+//            final MediaPlayer player     = SongQueueObservableList.get(i).getPlayer();
+//            final MediaPlayer nextPlayer = SongQueueObservableList.get((i + 1) % SongQueueObservableList.size()).getPlayer();
+//            player.setOnEndOfMedia(new Runnable() {
+//                @Override public void run() {
+//                    player.currentTimeProperty().removeListener(progressChangeListener);
+//                    player.stop();
+//                    mediaView.setMediaPlayer(nextPlayer);
+//                    nextPlayer.play();
+//                    SongQueueObservableList.remove(0);
+//                }
+//            });
+//        }
 
         slider.valueProperty().addListener(new InvalidationListener() {
             public void invalidated(Observable ov) {
@@ -231,6 +239,22 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         mediaView.getMediaPlayer().play();
         setCurrentlyPlaying(mediaView.getMediaPlayer());
+    }
+
+    private void addListenersToNewlyAdded(MediaPlayer current, MediaPlayer next){
+            final MediaPlayer player     = current;
+            final MediaPlayer nextPlayer = next;
+            //set listener for end of current song
+            player.setOnEndOfMedia(new Runnable() {
+                @Override public void run() {
+                    player.currentTimeProperty().removeListener(progressChangeListener);
+                    player.stop();
+                    player.dispose();//release filestream link
+                    mediaView.setMediaPlayer(nextPlayer);
+                    nextPlayer.play();
+                    SongQueueObservableList.remove(0);
+                }
+            });
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
@@ -267,34 +291,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
     /*******************MUSIC button methods **************************************************/
     @FXML
      private void add(ActionEvent event) {
+      //  int test =  queueList.getSelectionModel().getSelectedIndex();
+      //  QueueSong sq0 = mainModel.addSongToQueue(queueList.getSelectionModel().getSelectedIndex());
         Task task = new Task<Void>() {
             @Override public Void call() {
-                QueueSong sq0 = mainModel.addSongToQueue(0);
-                QueueSong sq1 = mainModel.addSongToQueue(1);
-                QueueSong sq2 = mainModel.addSongToQueue(2);
-                QueueSong sq3 = mainModel.addSongToQueue(3);
-                QueueSong sq4 = mainModel.addSongToQueue(4);
-                QueueSong sq5 = mainModel.addSongToQueue(5);
-                QueueSong sq6 = mainModel.addSongToQueue(6);
-                QueueSong sq7 = mainModel.addSongToQueue(7);
-                //QueueSong sq4 = mainModel.addSongToQueue(4);
+                QueueSong sq0 = mainModel.addSongToQueue(songList.getSelectionModel().getSelectedIndex());
                 Platform.runLater( () -> {
                     SongQueueObservableList.add(sq0);
-                    SongQueueObservableList.add(sq1);
-                    SongQueueObservableList.add(sq2);
-                    SongQueueObservableList.add(sq3);
-                    SongQueueObservableList.add(sq4);
-                    SongQueueObservableList.add(sq5);
-                    SongQueueObservableList.add(sq6);
-                    SongQueueObservableList.add(sq7);
-                 //   SongQueueObservableList.add(sq4);
                 });
-
                 return null;
             }
         };
         progBar.progressProperty().bind(task.progressProperty());
-        new Thread(task).start();
+        //if valid selection
+        if(songList.getSelectionModel().getSelectedIndex()>-1)
+            new Thread(task).start();
     }
 
     /**
@@ -315,16 +326,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
                             System.out.println(qs.getSong() + " updated");
                         }
                     } else {
+                        //song is skipped or has ended
                         for (QueueSong qs : change.getRemoved()) {
-                            System.out.println(qs.getSong() + " removed");
-                            //delete file associated
-                            qs.deleteMyFile();
+                            if(SongQueueObservableList.size()>1) {
+                                addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), SongQueueObservableList.get(1).getPlayer());
+                                System.out.println(SongQueueObservableList.get(0).getSong() + "  uns  " + SongQueueObservableList.get(1).getSong());
+                            }
                             qs.deleteMyPlayer();
+                            qs.deleteMyFile();
                         }
 
                         for (QueueSong qs : change.getAddedSubList()) {
-                            System.out.println(qs.getSong() + " added");
-                            //qs.createMyFile();
+                            if(change.getFrom() == 1) {
+                                System.out.println(SongQueueObservableList.get(0).getSong() + " and " + qs.getSong());
+                                addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), qs.getPlayer());
+                            }
                         }
                     }
                 }
