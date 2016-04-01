@@ -128,7 +128,7 @@ public class Model implements MainInterface{
         Json();
     }
 
-    public QueueSong addSongToQueue(int index1) // enum state 1
+    public QueueSong createQueueSong(int index1) // enum state 1
     {
         try
         {

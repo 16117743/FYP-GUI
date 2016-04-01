@@ -38,66 +38,25 @@
  * holder.
  */
 package sample;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-
-import Browser.MyBrowser;
 import Interface.InterfaceDJ;
 import Interface.MainInterface;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 import javafx.util.Callback;
-import model.AzureDB;
 import model.Model;
 import model.QueueSong;
 import model.SelectionSong;
 
-
 public class DJScreenController implements Initializable, ControlledScreen, InterfaceDJ, MainInterface {
-
     ScreensController myController;
     Model mainModel;
-    AzureDB db;
-    public boolean  bool1;
-
-    public DJScreenController()
-    {
-        Task animate2 = new Task<Void>() {
-            @Override public Void call() {
-                while(true) {
-                    try {
-                        Thread.sleep(1000);
-                        if (mainModel != null) {
-                            final String message = mainModel.readSongRequest();
-                            System.out.print("\n DJ returned " );
-                            if (message != null && !message.equals("")) {
-                                Platform.runLater(() -> {
-                                    songRequest2.appendText("\n" + message);
-                                });
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        System.out.print("\n interrupted");
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-      //  new Thread(animate2).start();
-    }
 
     @FXML
     Button playBtn;
@@ -140,7 +99,6 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
         assert songList2 != null : "DJSelection not injected!";
         assert queueList2 != null : "DJSongQueue not injected!";
         assert songRequest2 != null : "DJRequests not injected!";
-        bool1 = true;
 
         songList2.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>(){
 
@@ -282,13 +240,9 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
     }
 
     /***??????????????????????????????????????????????????***/
-    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+    public void setScreenParent(ScreensController screenParent, Model model){
         myController = screenParent;
         mainModel = model;
-        db = database;
     }
 
-    public void setBrowser(MyBrowser myBrowser){
-
-    }
 }

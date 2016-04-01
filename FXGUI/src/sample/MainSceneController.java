@@ -1,5 +1,4 @@
 package sample;
-import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,7 +7,7 @@ import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import Browser.MyBrowser;
+import java.util.stream.IntStream;
 import Interface.MusicHostInterface;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -24,7 +23,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
-/************************/
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.media.MediaPlayer;
@@ -41,13 +39,14 @@ import javax.microedition.io.StreamConnectionNotifier;
 
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
-    AzureDB db;
     ScreensController myController;
     /****************/
     ProcessConnectionThread processThread;
-    private ReadWriteLock rwlock;
+    Thread server;
     volatile String input;
     Boolean[] boolArray = new Boolean[5];
+    volatile boolean stopFlag = false;
+    private volatile Thread volatileThread;
 
     @FXML
     ProgressBar progBar;
@@ -110,24 +109,18 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private Button skipButton; // value will be injected by the FXMLLoader
 
     @FXML
+    Button serverButton;
+
+    @FXML
     private TextArea songRequest;
 
     @FXML
-    Slider slider;
+    Slider timeSlider;
 
     @FXML
     Label timeLabel;
 
-    final ProgressBar progress = new ProgressBar();
     private ChangeListener<Duration> progressChangeListener;
-
-    public MainSceneController()
-    {
-        rwlock = new ReentrantReadWriteLock();
-
-        for(int i =0;i<5;i++)
-            boolArray[i] = false;
-    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -137,12 +130,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         assert prog != null : "songrequest not injected!";
         assert progBar != null : "songrequest not injected!";
         assert javascript != null : "songrequest not injected!";
-       // assert DJComments != null : "songrequest not injected!";
         boolRequest.setStyle("-fx-background-color:red");
         boolDJComment.setStyle("-fx-background-color:red");
         boolSkip.setStyle("-fx-background-color:red");
         boolEcho.setStyle("-fx-background-color:red");
         boolBlob.setStyle("-fx-background-color:red");
+        playButton.setStyle("-fx-background-color:red");
+        serverButton.setStyle("-fx-background-color:red");
+        initbtn.setStyle("-fx-background-color:green");
         progBar.setProgress(0);
 
         queueList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -178,67 +173,24 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 return cell;
             }
         });
-    }
 
-    private void addMediaViewPropertyListener(){
         mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
             @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
                 setCurrentlyPlaying(newPlayer);
             }
         });
+
+        for(int i =0;i<5;i++)
+            boolArray[i] = false;
+    }
+
+    private void addMediaViewPropertyListener(){
+
     }
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void testing(){
-       // mediaView = new MediaView(SongQueueObservableList.get(0).getPlayer());
-        mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
-            @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
-                setCurrentlyPlaying(newPlayer);
-            }
-        });
 
-        mediaView.setMediaPlayer(SongQueueObservableList.get(0).getPlayer());
-
-//        // play each audio file in turn.
-//        for (int i = 0; i < SongQueueObservableList.size(); i++) {
-//            final MediaPlayer player     = SongQueueObservableList.get(i).getPlayer();
-//            final MediaPlayer nextPlayer = SongQueueObservableList.get((i + 1) % SongQueueObservableList.size()).getPlayer();
-//            player.setOnEndOfMedia(new Runnable() {
-//                @Override public void run() {
-//                    player.currentTimeProperty().removeListener(progressChangeListener);
-//                    player.stop();
-//                    mediaView.setMediaPlayer(nextPlayer);
-//                    nextPlayer.play();
-//                    SongQueueObservableList.remove(0);
-//                }
-//            });
-//        }
-
-        slider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (slider.isValueChanging()) {
-                    final MediaPlayer player     = SongQueueObservableList.get(0).getPlayer();
-// multiply duration by percentage calculated by slider position
-                    if (progressChangeListener != null) {
-                        player.seek(player.getTotalDuration().multiply(slider.getValue() / 100.0));
-                    }
-                  //  updateValues();
-
-                }
-            }
-        });
-
-        volumeSlider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (volumeSlider.isValueChanging()) {
-                    final MediaPlayer player     = SongQueueObservableList.get(0).getPlayer();
-                    player.setVolume(volumeSlider.getValue() / 100.0);
-                }
-            }
-        });
-
-        mediaView.getMediaPlayer().play();
-        setCurrentlyPlaying(mediaView.getMediaPlayer());
     }
 
     private void addListenersToNewlyAdded(MediaPlayer current, MediaPlayer next){
@@ -259,7 +211,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     private void removeSong(){
-
         final MediaPlayer curPlayer = mediaView.getMediaPlayer();
         curPlayer.currentTimeProperty().removeListener(progressChangeListener);
         curPlayer.stop();
@@ -290,12 +241,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     /*******************MUSIC button methods **************************************************/
     @FXML
-     private void add(ActionEvent event) {
-      //  int test =  queueList.getSelectionModel().getSelectedIndex();
-      //  QueueSong sq0 = mainModel.addSongToQueue(queueList.getSelectionModel().getSelectedIndex());
+     private void addSongButtonFunc(ActionEvent event) {
         Task task = new Task<Void>() {
             @Override public Void call() {
-                QueueSong sq0 = mainModel.addSongToQueue(songList.getSelectionModel().getSelectedIndex());
+                QueueSong sq0 = mainModel.createQueueSong(songList.getSelectionModel().getSelectedIndex());
                 Platform.runLater( () -> {
                     SongQueueObservableList.add(sq0);
                 });
@@ -308,6 +257,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
             new Thread(task).start();
     }
 
+    public void addSongTask(int selectionSongIndex){
+        Task task = new Task<Void>() {
+            @Override public Void call() {
+                final int index = selectionSongIndex;
+                QueueSong sq0 = mainModel.createQueueSong(index);
+                Platform.runLater( () -> {
+                    SongQueueObservableList.add(sq0);
+                });
+                return null;
+            }
+        };
+        progBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
+    }
+
     /**
      *
      * @param event sets up the requirements for running the application that could not be run at compile time due to null pointer exceptions
@@ -315,9 +279,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void init(ActionEvent event)
     {
+        //init button can only be pressed once
+        if("-fx-background-color:green".equals(initbtn.getStyle())) {
+            initbtn.setStyle("-fx-background-color:red");
+            //this cannot be called in initialize because mainmodel throws a null pointer exception
+            addObservableSongQueueListener();
+            addVolumeAndTimeSliderListeners();
+            initSongSelection();
+        }
+    }
+
+    public void addObservableSongQueueListener(){
         SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
         queueList.setItems(SongQueueObservableList);
-
         SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
             public void onChanged(ListChangeListener.Change<? extends QueueSong> change) {
                 while (change.next()) {
@@ -328,17 +302,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     } else {
                         //song is skipped or has ended
                         for (QueueSong qs : change.getRemoved()) {
-                            if(SongQueueObservableList.size()>1) {
+                            if (SongQueueObservableList.size() > 1) {
                                 addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), SongQueueObservableList.get(1).getPlayer());
-                                System.out.println(SongQueueObservableList.get(0).getSong() + "  uns  " + SongQueueObservableList.get(1).getSong());
                             }
                             qs.deleteMyPlayer();
                             qs.deleteMyFile();
                         }
 
                         for (QueueSong qs : change.getAddedSubList()) {
-                            if(change.getFrom() == 1) {
-                                System.out.println(SongQueueObservableList.get(0).getSong() + " and " + qs.getSong());
+                            if (change.getFrom() == 1) {
                                 addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), qs.getPlayer());
                             }
                         }
@@ -346,7 +318,32 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 }
             }
         });
+    }
 
+    public void addVolumeAndTimeSliderListeners(){
+        timeSlider.valueProperty().addListener(new InvalidationListener() {
+            public void invalidated(Observable ov) {
+                if (timeSlider.isValueChanging()) {
+                    final MediaPlayer player = SongQueueObservableList.get(0).getPlayer();
+                    if (progressChangeListener != null) {
+                        // multiply duration by percentage calculated by timeSlider position
+                        player.seek(player.getTotalDuration().multiply(timeSlider.getValue() / 100.0));
+                    }
+                }
+            }
+        });
+
+        volumeSlider.valueProperty().addListener(new InvalidationListener() {
+            public void invalidated(Observable ov) {
+                if (volumeSlider.isValueChanging()) {
+                    final MediaPlayer player = SongQueueObservableList.get(0).getPlayer();
+                    player.setVolume(volumeSlider.getValue() / 100.0);
+                }
+            }
+        });
+    }
+
+    public void initSongSelection(){
         Task task = new Task<Void>()
         {
             @Override public Void call() {
@@ -369,8 +366,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     private void goToScreen1(ActionEvent event) {
-        SongQueueObservableList.remove(0);
-       // SongQueueObservableList.get(0).playMe();
+       // myController.setScreen(MusicHostFramework.screen1ID);
+        //reset logged in user ID
     }
 
     @FXML
@@ -378,185 +375,88 @@ public class MainSceneController implements Initializable , ControlledScreen {
         myController.setScreen(MusicHostFramework.screen3ID);
     }
 
-    @FXML
-    private void startServer(ActionEvent event) {
-       // skipButton.setStyle("-fx-background-color:green");
-          doThreadStuff();
-    }
 
     /************************************************************************************************/
-    @FXML
-    private void setBool1(){
-        if ("ON".equals(boolRequest.getText())) {
-            boolRequest.setStyle("-fx-background-color:red");
-            boolRequest.setText("OFF");
-            boolArray[0] = false;
-        } else {
-            boolRequest.setStyle("-fx-background-color:green");
-            boolRequest.setText("ON");
-            boolArray[0] = true;
-        }
-    }
 
-    @FXML
-    private void setBool2(){
-        if ("ON".equals(boolDJComment.getText())) {
-            boolDJComment.setStyle("-fx-background-color:red");
-            boolDJComment.setText("OFF");
-            boolArray[1] = false;
-        } else {
-            boolDJComment.setStyle("-fx-background-color:green");
-            boolDJComment.setText("ON");
-            boolArray[1] = true;
-        }
-    }
 
-    @FXML
-    private void setBool3(){
-        if ("ON".equals(boolSkip.getText())) {
-            boolSkip.setStyle("-fx-background-color:red");
-            boolSkip.setText("OFF");
-            boolArray[2] = false;
-        } else {
-            boolSkip.setStyle("-fx-background-color:green");
-            boolSkip.setText("ON");
-            boolArray[2] = true;
-        }
-    }
-
-    @FXML
-    private void setBool4(){
-        if ("ON".equals(boolEcho.getText())) {
-            boolEcho.setStyle("-fx-background-color:red");
-            boolEcho.setText("OFF");
-            boolArray[3] = false;
-        } else {
-            boolEcho.setStyle("-fx-background-color:green");
-            boolEcho.setText("ON");
-            boolArray[3] = true;
-        }
-    }
-
-    @FXML
-    private void setBool5(){
-        if ("ON".equals(boolBlob.getText())) {
-            boolBlob.setStyle("-fx-background-color:red");
-            boolBlob.setText("OFF");
-            boolArray[4] = false;
-        } else {
-            boolBlob.setStyle("-fx-background-color:green");
-            boolBlob.setText("ON");
-            boolArray[4] = true;
-        }
-    }
-
-    /***************************************************/
     @FXML
     public void iPlay() {
-        playButton.setStyle("-fx-background-color:red");
-        System.out.println("test interface play");
-       // mainModel.playSong(this.getClass());
         if ("Pause".equals(playButton.getText())) {
-          //  SongQueueObservableList.get(0).pauseMe();
+            mediaView.getMediaPlayer().pause();
             playButton.setText("Play");
-        } else {
-          //  SongQueueObservableList.get(0).playMe();
-           // mainModel.playSong(this.getClass());
+            playButton.setStyle("-fx-background-color:green");
+        } else if (SongQueueObservableList.size()>0){
+            mediaView.setMediaPlayer(SongQueueObservableList.get(0).getPlayer());
+            mediaView.getMediaPlayer().play();
             playButton.setText("Pause");
+            playButton.setStyle("-fx-background-color:red");
         }
     }
 
     @FXML
     public void iSkip() {
-        if(SongQueueObservableList.size()>0) {
-          //  SongQueueObservableList.get(0).pauseMe();
+        //can't skip unless there is a song to follow
+        if(SongQueueObservableList.size()>1) {
+            final MediaPlayer curPlayer = mediaView.getMediaPlayer();
+            curPlayer.currentTimeProperty().removeListener(progressChangeListener);
+            curPlayer.stop();
+            curPlayer.dispose();//remove file stream
+
+            MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
+            mediaView.setMediaPlayer(nextPlayer);
+            nextPlayer.play();
             SongQueueObservableList.remove(0);
-        }
 
-        if(SongQueueObservableList.size()>0)
-          //  SongQueueObservableList.get(0).playMe();
-
-        if ("Play".equals(playButton.getText())) {
-            playButton.setText("Pause");
+            //play button has to beupdated with "pause" to the user because skip "plays" a song
+            if ("Play".equals(playButton.getText())) {
+                playButton.setText("Pause");
+                playButton.setStyle("-fx-background-color:green");
+            }
         }
     }
 
     //interface injection of screenParent and main model for songs and DB
-    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+    public void setScreenParent(ScreensController screenParent, Model model){
         myController = screenParent;
         mainModel = model;
-        db = database;
-    }
-
-    public void setBrowser(MyBrowser myBrowser){
-
     }
 
     /**??????????????????????????????????????????????????????????????????????????????***/
 
-    public synchronized String readSongRequest(){
-        rwlock.readLock().lock();
-        try {
-            if(input !=null) {
-                String temp = input;
-                input = null;
-                return temp;
-            }
-            else
-                return null;
-        } finally {
-            rwlock.readLock().unlock();
-        }
-    }
 
-public void doThreadStuff(){
-    try
-    {
-        new Thread(){
-            public void run() {
-                Boolean flag = false;
-                StreamConnectionNotifier notifier = null;
-                StreamConnection connection = null;
 
-                try {
-                    LocalDevice local = null;
-                    local = LocalDevice.getLocalDevice();
-                    local.setDiscoverable(DiscoveryAgent.GIAC);
-                    UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
-                    String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
-                    notifier = (StreamConnectionNotifier) Connector.open(url);
-                    System.out.print("stop");;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                connection = null;
-
-                while (flag == false) {
-                    try {
-                        System.out.println("waiting for connectionsssssss...");
-                        connection = notifier.acceptAndOpen();
-                        System.out.println("connected!");
-                        processThread = new ProcessConnectionThread(connection);
-                        processThread.run();
-                        System.out.print("\n exited!");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                /***&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&***/
-            }
-        }.start();//end new Thread();
-    }//end try 1
-    catch(Exception e)
-    {
-        Thread.currentThread().interrupt();
-        return;
-    }
+    public void stopServer(){
+        volatileThread = null;
     }
 /**********************************************************************************************************************/
     /**
      * threadInputController methods
      * */
+    public void searchSelectionForMatch(String songToSearch){
+        //java 8 stream API replacement of for each
+        int [] indices = IntStream.range(0, SongSelectionObservableList.size())
+            .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
+            .toArray();
+
+        if(indices.length == 1)
+        {
+            addSongTask(indices[0]);
+        }
+    }
+
+    public int searchQueueForMatch(String songToSearch){
+        //java 8 stream API replacement of for each
+        int [] indices = IntStream.range(0, SongSelectionObservableList.size())
+            .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
+            .toArray();
+
+        if(indices.length == 1)
+        {
+            return indices[0];
+        }
+        else
+            return -1;
+    }
 
     public synchronized void ControllerGetSongs(){
         Platform.runLater(() -> {
@@ -568,11 +468,7 @@ public void doThreadStuff(){
 
     public synchronized void ControllerAddSong(String song){
         Platform.runLater(() -> {
-            System.out.print("\n ControllerAddSong\n");
-            //search DB selection for song matching song string
-            mainModel.addSongToQueue(0);
-            mainModel.addSongToQueue(0);
-            //songQueue.add(mainmodel.addsong(song))
+            searchSelectionForMatch(song);
         });
     }
 
@@ -608,6 +504,85 @@ public void doThreadStuff(){
 
 /**********************************************************************************************************************/
 
+    @FXML
+    private void startServer(ActionEvent event) {
+        if("ON".equals(serverButton.getText())) {
+            serverButton.setStyle("-fx-background-color:red");
+            serverButton.setText("OFF");
+            stopServer();
+        }
+        else{
+            serverButton.setStyle("-fx-background-color:green");
+            serverButton.setText("ON");
+            startServer();
+        }
+    }
+public void startServer(){
+    try
+    {
+
+        new Thread(){
+            public void run() {
+                volatileThread = Thread.currentThread();
+                Thread thisThread = Thread.currentThread();
+                Boolean flag = false;
+                StreamConnectionNotifier notifier = null;
+                StreamConnection connection = null;
+
+                try {
+                    LocalDevice local = null;
+                    local = LocalDevice.getLocalDevice();
+                    local.setDiscoverable(DiscoveryAgent.GIAC);
+                    UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
+                    String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
+                    notifier = (StreamConnectionNotifier) Connector.open(url);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                try
+                {
+                    while (volatileThread == thisThread) {
+                        thisThread.sleep(1000);
+                        System.out.println("waiting for connectionsssssss...");
+                        connection = notifier.acceptAndOpen();
+                        System.out.println("connected!");
+                        processThread = new ProcessConnectionThread(connection);
+                        if (volatileThread == thisThread)
+                            processThread.run();
+                        System.out.print("\n exited!");
+                    }
+                }
+                    catch (InterruptedException e) {
+                        processThread.myStop();
+                        Thread.currentThread().interrupt();
+                    }
+                    catch (NullPointerException e) {
+                        System.out.print("\nexited through here 2 ");
+                    }
+                    catch (IOException e) {
+                        System.out.print("\nexited through here 3");
+                    }
+                finally {
+
+                    try {
+                        notifier.close();
+                        connection = null;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.print("\n finished!");
+                return;
+            }
+        }.start();//end new Thread();
+    }//end try 1
+    catch(Exception e)
+    {
+        Thread.currentThread().interrupt();
+        return;
+    }
+}
     /**
      * Server Connection Thread
      * */
@@ -616,7 +591,9 @@ public void doThreadStuff(){
     private volatile Thread volatileThread;
     DataInputStream dataInputStream;
     DataOutputStream dataOutputStream;
-    /*****CONSTANTS ****************************/
+    /**
+     * CONSTANTS
+     * */
     final int SONG_SELECT = 1;
     final int SONG_SELECTED = 2;
     final int DJ_COMMENT = 3;
@@ -625,8 +602,10 @@ public void doThreadStuff(){
     final int ECHO_BLOB_SONGS = 6;
     final int REMOTE_SELECT = 7;
     final int WANT_END = 8;
-    /********************************************/
 
+    /**
+     * Constructor
+     * */
     public ProcessConnectionThread(StreamConnection connection)
     {
         mConnection = connection;
@@ -640,12 +619,9 @@ public void doThreadStuff(){
         {
             dataInputStream = new DataInputStream(mConnection.openInputStream());
             dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
-           // System.out.println("sending options");
-           // sendMessageByBluetooth("b",0);
-            int whatToDo = 0;
 
             try {
-                whatToDo = dataInputStream.readInt();
+                int whatToDo = dataInputStream.readInt();
                 System.out.print("\nread  " + whatToDo);
                 thisThread.sleep(300);
                 if (dataInputStream.available() > 0) {
@@ -663,7 +639,6 @@ public void doThreadStuff(){
                     } catch (InterruptedException e) {
                         System.out.print("\nexited through here");
                     }
-                    /****************/
                     if (dataInputStream.available() > 0) {
                         whatToDo(whatToDo);
                     }
@@ -737,7 +712,6 @@ public void doThreadStuff(){
             byte[] msg = new byte[dataInputStream.available()];
             dataInputStream.read(msg, 0, dataInputStream.available());
             String msgstring = new String(msg);
-            writeSongRequest(msgstring);
             return msgstring;
         } catch (IOException e) {
             e.printStackTrace();
@@ -750,7 +724,6 @@ public void doThreadStuff(){
         try
         {
             if(dataOutputStream != null){
-                /********************/
                 dataOutputStream.writeInt(whatToDo);
                 dataOutputStream.flush();
                 dataOutputStream.write(msg.getBytes());
@@ -765,14 +738,6 @@ public void doThreadStuff(){
         }
     }
 
-    public synchronized void writeSongRequest(String request){
-        rwlock.writeLock().lock();
-        try {
-            input = request;
-        } finally {
-           rwlock.writeLock().unlock();
-        }
-    }
     /*************************************************************************/
     /**
      * Send options selecting to client
@@ -923,6 +888,72 @@ public void doThreadStuff(){
 
     }
 }//end connection thread class
+
+    /** Boolean button options*/
+    @FXML
+    private void setBool1(){
+        if ("ON".equals(boolRequest.getText())) {
+            boolRequest.setStyle("-fx-background-color:red");
+            boolRequest.setText("OFF");
+            boolArray[0] = false;
+        } else {
+            boolRequest.setStyle("-fx-background-color:green");
+            boolRequest.setText("ON");
+            boolArray[0] = true;
+        }
+    }
+
+    @FXML
+    private void setBool2(){
+        if ("ON".equals(boolDJComment.getText())) {
+            boolDJComment.setStyle("-fx-background-color:red");
+            boolDJComment.setText("OFF");
+            boolArray[1] = false;
+        } else {
+            boolDJComment.setStyle("-fx-background-color:green");
+            boolDJComment.setText("ON");
+            boolArray[1] = true;
+        }
+    }
+
+    @FXML
+    private void setBool3(){
+        if ("ON".equals(boolSkip.getText())) {
+            boolSkip.setStyle("-fx-background-color:red");
+            boolSkip.setText("OFF");
+            boolArray[2] = false;
+        } else {
+            boolSkip.setStyle("-fx-background-color:green");
+            boolSkip.setText("ON");
+            boolArray[2] = true;
+        }
+    }
+
+    @FXML
+    private void setBool4(){
+        if ("ON".equals(boolEcho.getText())) {
+            boolEcho.setStyle("-fx-background-color:red");
+            boolEcho.setText("OFF");
+            boolArray[3] = false;
+        } else {
+            boolEcho.setStyle("-fx-background-color:green");
+            boolEcho.setText("ON");
+            boolArray[3] = true;
+        }
+    }
+
+    @FXML
+    private void setBool5(){
+        if ("ON".equals(boolBlob.getText())) {
+            boolBlob.setStyle("-fx-background-color:red");
+            boolBlob.setText("OFF");
+            boolArray[4] = false;
+        } else {
+            boolBlob.setStyle("-fx-background-color:green");
+            boolBlob.setText("ON");
+            boolArray[4] = true;
+        }
+    }
 
 private static String formatTime(Duration elapsed, Duration duration) {
     int intElapsed = (int)Math.floor(elapsed.toSeconds());

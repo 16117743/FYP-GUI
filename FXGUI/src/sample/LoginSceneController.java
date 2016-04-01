@@ -37,12 +37,8 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         assert passwordField != null : "login not injected!";
     }
 
-    public void setScreenParent(ScreensController screenParent, Model model, AzureDB database){
+    public void setScreenParent(ScreensController screenParent, Model model){
     myController = screenParent;
-    mainModel = model;
-    }
-
-    public void setModel(Model model){
     mainModel = model;
     }
 
@@ -94,7 +90,4 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         myController.setScreen(MusicHostFramework.screen3ID);
     }
 
-    public void setBrowser(MyBrowser myBrowser){
-      //  region = myBrowser;
-    }
 }

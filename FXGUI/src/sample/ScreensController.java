@@ -42,18 +42,14 @@ public class ScreensController  extends StackPane {
     //finally injects the screenPane to the controller.
     public boolean loadScreen(String name, String resource) {
         try {                            //fxml file
-            AzureDB db = new AzureDB();
             Model mainmodel = new Model();
             FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
-           // System.out.println(resource);
             Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
 
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
             //inject screen controllers to myscreencontroller
-            myScreenControler.setScreenParent(this,mainmodel,db);// inject screen controllers to each screen here
+            myScreenControler.setScreenParent(this,mainmodel);// inject screen controllers to each screen here
 
-           // SongInterfaceForModel myModel = ((SongInterfaceForModel) myLoader.getController());
-           // myModel.setModel(this.model);
             addScreen(name, loadScreen);
             return true;
         } catch (Exception e) {
@@ -70,7 +66,6 @@ public class ScreensController  extends StackPane {
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
 
             MyBrowser myBrowser = new MyBrowser();
-            myScreenControler.setBrowser(myBrowser);
             return true;
         } catch (IOException e) {
             System.out.println(e.getMessage());

@@ -29,33 +29,6 @@ public class QueueSong implements SongInterfaceForModel{
     private String myFilePath;
     private String myFilePath2;
 
-public String getSongName1() {
-    return songName1.get();
-}
-
-public StringProperty songName1Property() {
-    return songName1;
-}
-
-public void setSongName1(String songName1) {
-    this.songName1.set(songName1);
-}
-
-public String getArtistName() {
-    return artistName.get();
-}
-
-public StringProperty artistNameProperty() {
-    return artistName;
-}
-
-public void setArtistName(String artistName) {
-    this.artistName.set(artistName);
-}
-
-private StringProperty songName1;
-    private StringProperty artistName;
-
     /**Constructor*/
     public QueueSong(SelectionSong selectionSong, byte[] songBytes)
     {

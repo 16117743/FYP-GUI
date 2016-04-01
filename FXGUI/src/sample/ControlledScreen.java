@@ -7,7 +7,6 @@ import Browser.MyBrowser;
 public interface ControlledScreen {
 
     //This method will allow the injection of the Parent ScreenPane
-    public void setScreenParent(ScreensController screenPage, Model model, AzureDB database);
+    public void setScreenParent(ScreensController screenPage, Model model);
 
-    public void setBrowser(MyBrowser myBrowser);
 }
