@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
@@ -40,10 +41,7 @@ import javax.microedition.io.StreamConnectionNotifier;
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
     ScreensController myController;
-    /****************/
     ProcessConnectionThread processThread;
-    Thread server;
-    volatile String input;
     Boolean[] boolArray = new Boolean[5];
     volatile boolean stopFlag = false;
     private volatile Thread volatileThread;
@@ -301,12 +299,32 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         }
                     } else {
                         //song is skipped or has ended
-                        for (QueueSong qs : change.getRemoved()) {
-                            if (SongQueueObservableList.size() > 1) {
-                                addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), SongQueueObservableList.get(1).getPlayer());
+                        for (QueueSong removedSong : change.getRemoved()) {
+                            ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+                            System.out.print("\n future media player started");
+                            Future<MediaPlayer> futureMediaPlayer = null;
+                            if(SongQueueObservableList.size()>1)
+                                futureMediaPlayer = executorService.submit(new HandleFileIO(SongQueueObservableList.get(1).getSongByte(),SongQueueObservableList.get(1).getSong()));
+
+                            try {
+                                if (SongQueueObservableList.size() > 1) {
+                                    MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                                    System.out.print("\n future media player finished");
+                                    SongQueueObservableList.get(1).setPlayer(nextSongPlayer);
+                                    addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), SongQueueObservableList.get(1).getPlayer());
+                                    executorService.shutdown();
+                                    executorService.awaitTermination(7, TimeUnit.SECONDS);
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            } catch (ExecutionException e) {
+                                e.printStackTrace();
                             }
-                            qs.deleteMyPlayer();
-                            qs.deleteMyFile();
+                            finally {
+                                removedSong.deleteMyPlayer();
+                                removedSong.deleteMyFile();
+                            }
                         }
 
                         for (QueueSong qs : change.getAddedSubList()) {

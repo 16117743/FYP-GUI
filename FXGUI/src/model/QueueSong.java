@@ -18,7 +18,7 @@ import java.io.OutputStream;
  */
 public class QueueSong implements SongInterfaceForModel{
 
-/**data*/
+    /**data*/
     private MediaPlayer player;
     private String artist;
     private String songName;
@@ -26,6 +26,7 @@ public class QueueSong implements SongInterfaceForModel{
     private Boolean upNextFlag;
     private int id = 0;
     private int votes;
+
     private String myFilePath;
     private String myFilePath2;
 
@@ -38,6 +39,7 @@ public class QueueSong implements SongInterfaceForModel{
         this.songByte = songBytes;
         this.upNextFlag = false;
         this.votes = 2;
+        this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
         prepareMe();
     }
 
@@ -49,29 +51,6 @@ public class QueueSong implements SongInterfaceForModel{
     }
 
     /**Common Interface*/
-    public void createPlayer() {
-    try {
-        OutputStream targetFile=
-            new FileOutputStream(
-                "C:\\test\\"+songName+".mp3");
-
-        String name = "fromDB" + Integer.toString(id) + ".mp3";
-        targetFile.write(songByte);
-        targetFile.close();
-        String path = "file:///" + ("C:\\test\\" + "\\" + name).replace("\\", "/").replaceAll(" ", "%20");
-        player = new MediaPlayer(new Media(path));
-        player.setOnError(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("Media error occurred: " + player.getError());
-            }
-        });
-    } catch (IOException e)
-    {
-        e.printStackTrace();
-    }
-}
-
     // initialise song with everything but the byte array data from the Azure database
     @Override
     public void initMe() {
@@ -144,6 +123,11 @@ public class QueueSong implements SongInterfaceForModel{
     public boolean getBool(){return upNextFlag;}
     public String getArtist(){return artist;}
     public int getVotes() {return votes;}
+    public byte[] getSongByte(){return songByte;}
+
+    public String getMyFilePath() {return myFilePath;}
+
+    public void setMyFilePath(String myFilePath) {this.myFilePath = myFilePath;}
     /**Mutators*/
     public void setBool(boolean bool1){upNextFlag = bool1;}
     public void setSong(String song) {this.songName = song;}
