@@ -14,69 +14,69 @@
 <?import Browser.*?>
 
 <AnchorPane id="AnchorPane" fx:id="theRoot" prefHeight="716.0" prefWidth="1337.0" style="-fx-background-color: pink;" stylesheets="@MainSceneStyle.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
-  <children>
-      <HBox layoutX="353.0" layoutY="234.0" prefHeight="398.0" prefWidth="600.0">
-         <children>
-            <ListView fx:id="queueList" blendMode="DARKEN" prefHeight="318.0" prefWidth="193.0">
-               <effect>
-                  <Glow />
-               </effect>
-               <cursor>
-                  <Cursor fx:constant="HAND" />
-               </cursor>
-            </ListView>
-            <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" />
-            <ListView fx:id="DJComments" prefHeight="372.0" prefWidth="205.0" />
-         </children>
-      </HBox>
-      <HBox layoutX="443.0" layoutY="650.0" prefHeight="64.0" prefWidth="453.0">
-         <children>
-            <Button fx:id="playButton" mnemonicParsing="false" onAction="#iPlay" prefHeight="47.0" prefWidth="55.0" text="Play" />
-            <Button fx:id="skipButton" mnemonicParsing="false" onAction="#iSkip" prefHeight="47.0" prefWidth="55.0" text="Skip" />
-            <Button fx:id="initbtn" mnemonicParsing="false" onAction="#init" prefHeight="47.0" prefWidth="59.0" text="init" />
-            <Button fx:id="addbtn" mnemonicParsing="false" onAction="#addSongButtonFunc" prefHeight="46.0" prefWidth="61.0" text="add" />
-            <Button fx:id="removebtn" mnemonicParsing="false" onAction="#removeSong" prefHeight="45.0" prefWidth="67.0" text="remove" />
-            <ProgressBar fx:id="progBar" blendMode="DIFFERENCE" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
-         </children>
-      </HBox>
-      <HBox layoutX="1126.0" layoutY="14.0" prefHeight="47.0" prefWidth="172.0">
-         <children>
-        <Button mnemonicParsing="false" onAction="#goToScreen3" prefHeight="52.0" prefWidth="82.0" text="Disk Jockey" />
-            <Button fx:id="javascript" mnemonicParsing="false" onAction="#goToScreen1" prefHeight="53.0" prefWidth="86.0" text="logout" />
-         </children>
-      </HBox>
-      <HBox layoutX="42.0" layoutY="631.0" prefHeight="38.0" prefWidth="208.0">
-         <children>
-            <Button fx:id="serverButton" contentDisplay="CENTER" mnemonicParsing="false" onAction="#startServer" prefHeight="36.0" prefWidth="96.0" text="OFF" textOverrun="CLIP">
-               <cursor>
-                  <Cursor fx:constant="WAIT" />
-               </cursor>
-            </Button>
-        <Button fx:id="refreshButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="62.0" text="Refresh" />
-            <ProgressIndicator fx:id="prog" progress="0.0" />
-         </children>
-      </HBox>
-      <VBox layoutX="1270.0" layoutY="122.0" prefHeight="224.0" prefWidth="69.0">
-         <children>
-            <Button fx:id="boolRequest" mnemonicParsing="false" onAction="#setBool1" prefHeight="45.0" prefWidth="72.0" text="OFF" />
-            <Button fx:id="boolDJComment" mnemonicParsing="false" onAction="#setBool2" prefHeight="45.0" prefWidth="69.0" text="OFF" />
-            <Button fx:id="boolSkip" mnemonicParsing="false" onAction="#setBool3" prefHeight="52.0" prefWidth="70.0" text="OFF" />
-            <Button fx:id="boolEcho" mnemonicParsing="false" onAction="#setBool4" prefHeight="47.0" prefWidth="69.0" text="OFF" />
-            <Button fx:id="boolBlob" mnemonicParsing="false" onAction="#setBool5" prefHeight="48.0" prefWidth="69.0" text="OFF" />
-         </children>
-      </VBox>
-      <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="400.0" layoutX="443.0" layoutY="14.0">
-          <mediaPlayer>
-              <MediaPlayer autoPlay="false">
-                  <media>
-                      <Media source="http://download.oracle.com/otndocs/products/javafx/oow2010-2.flv" />
-                  </media>
-              </MediaPlayer>
-          </mediaPlayer>
-      </MediaView>
-      <Slider fx:id="timeSlider" layoutX="534.0" layoutY="212.0" prefHeight="14.0" prefWidth="218.0" />
-      <ProgressBar fx:id="songProgressBar" layoutX="853.0" layoutY="194.0" prefWidth="200.0" progress="0.0" />
-      <Slider fx:id="volumeSlider" layoutX="383.0" layoutY="61.0" orientation="VERTICAL" />
-      <Label fx:id="timeLabel" layoutX="896.0" layoutY="152.0" text="Label" />
-  </children>
+    <children>
+        <HBox layoutX="353.0" layoutY="234.0" prefHeight="398.0" prefWidth="600.0">
+            <children>
+                <ListView fx:id="queueList" blendMode="DARKEN" prefHeight="318.0" prefWidth="193.0">
+                    <effect>
+                        <Glow />
+                    </effect>
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                </ListView>
+                <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" />
+                <ListView fx:id="DJComments" prefHeight="372.0" prefWidth="205.0" />
+            </children>
+        </HBox>
+        <HBox layoutX="443.0" layoutY="650.0" prefHeight="64.0" prefWidth="453.0">
+            <children>
+                <Button fx:id="playButton" mnemonicParsing="false" onAction="#iPlay" prefHeight="47.0" prefWidth="55.0" text="Pause" />
+                <Button fx:id="skipButton" mnemonicParsing="false" onAction="#iSkip" prefHeight="47.0" prefWidth="55.0" text="Skip" />
+                <Button fx:id="initbtn" mnemonicParsing="false" onAction="#init" prefHeight="47.0" prefWidth="59.0" text="init" />
+                <Button fx:id="addbtn" mnemonicParsing="false" onAction="#addSongButtonFunc" prefHeight="46.0" prefWidth="61.0" text="add" />
+                <Button fx:id="removebtn" mnemonicParsing="false" onAction="#removeSong" prefHeight="45.0" prefWidth="67.0" text="remove" />
+                <ProgressBar fx:id="progBar" blendMode="DIFFERENCE" prefHeight="23.0" prefWidth="144.0" progress="0.0" />
+            </children>
+        </HBox>
+        <HBox layoutX="1126.0" layoutY="14.0" prefHeight="47.0" prefWidth="172.0">
+            <children>
+                <Button mnemonicParsing="false" onAction="#goToScreen3" prefHeight="52.0" prefWidth="82.0" text="Disk Jockey" />
+                <Button fx:id="javascript" mnemonicParsing="false" onAction="#goToScreen1" prefHeight="53.0" prefWidth="86.0" text="logout" />
+            </children>
+        </HBox>
+        <HBox layoutX="42.0" layoutY="631.0" prefHeight="38.0" prefWidth="208.0">
+            <children>
+                <Button fx:id="serverButton" contentDisplay="CENTER" mnemonicParsing="false" onAction="#startServer" prefHeight="36.0" prefWidth="96.0" text="OFF" textOverrun="CLIP">
+                    <cursor>
+                        <Cursor fx:constant="WAIT" />
+                    </cursor>
+                </Button>
+                <Button fx:id="refreshButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="62.0" text="Refresh" />
+                <ProgressIndicator fx:id="prog" progress="0.0" />
+            </children>
+        </HBox>
+        <VBox layoutX="1270.0" layoutY="122.0" prefHeight="224.0" prefWidth="69.0">
+            <children>
+                <Button fx:id="boolRequest" mnemonicParsing="false" onAction="#setBool1" prefHeight="45.0" prefWidth="72.0" text="OFF" />
+                <Button fx:id="boolDJComment" mnemonicParsing="false" onAction="#setBool2" prefHeight="45.0" prefWidth="69.0" text="OFF" />
+                <Button fx:id="boolSkip" mnemonicParsing="false" onAction="#setBool3" prefHeight="52.0" prefWidth="70.0" text="OFF" />
+                <Button fx:id="boolEcho" mnemonicParsing="false" onAction="#setBool4" prefHeight="47.0" prefWidth="69.0" text="OFF" />
+                <Button fx:id="boolBlob" mnemonicParsing="false" onAction="#setBool5" prefHeight="48.0" prefWidth="69.0" text="OFF" />
+            </children>
+        </VBox>
+        <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="400.0" layoutX="443.0" layoutY="14.0">
+            <mediaPlayer>
+                <MediaPlayer autoPlay="false">
+                    <media>
+                        <Media source="http://download.oracle.com/otndocs/products/javafx/oow2010-2.flv" />
+                    </media>
+                </MediaPlayer>
+            </mediaPlayer>
+        </MediaView>
+        <Slider fx:id="timeSlider" layoutX="534.0" layoutY="212.0" prefHeight="14.0" prefWidth="218.0" />
+        <ProgressBar fx:id="songProgressBar" layoutX="853.0" layoutY="194.0" prefWidth="200.0" progress="0.0" />
+        <Slider fx:id="volumeSlider" layoutX="383.0" layoutY="61.0" orientation="VERTICAL" />
+        <Label fx:id="timeLabel" layoutX="896.0" layoutY="152.0" text="Label" />
+    </children>
 </AnchorPane>

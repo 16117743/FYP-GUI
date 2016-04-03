@@ -4,8 +4,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
@@ -45,6 +48,22 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Boolean[] boolArray = new Boolean[5];
     volatile boolean stopFlag = false;
     private volatile Thread volatileThread;
+    ExecutorService executorService1;
+    ExecutorService executorService2;
+    private final ReadWriteLock currentPlayerlock = new ReentrantReadWriteLock();
+    private final Lock CPReadLock = currentPlayerlock.readLock();
+    private final Lock CPWwriteLock = currentPlayerlock.writeLock();
+
+    private final ReadWriteLock nextPlayerlock = new ReentrantReadWriteLock();
+    private final Lock NPReadLock = nextPlayerlock.readLock();
+    private final Lock NPWriteLock = nextPlayerlock.writeLock();
+
+    private final ReadWriteLock nextNextPlayerlock = new ReentrantReadWriteLock();
+    private final Lock NNPReadLock = nextNextPlayerlock.readLock();
+    private final Lock NNPWwriteLock = nextNextPlayerlock.writeLock();
+
+    AtomicInteger queueSizeAtomic = new AtomicInteger();
+    volatile MediaPlayer currentPlayer,  nextPlayer, nextNextPlayer;
 
     @FXML
     ProgressBar progBar;
@@ -174,7 +193,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
             @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
-                setCurrentlyPlaying(newPlayer);
+                if(newPlayer!= null) {
+                    System.out.println("shifting media players\n");
+                    writeToCurrentPlayer(newPlayer);
+                    writeNextPlayer(nextNextPlayer);
+
+                    if(queueSizeAtomic.get() > 1)
+                        SongQueueObservableList.remove(0);//remove case event is fired
+
+                    Platform.runLater( () -> {
+                        setCurrentlyPlaying(currentPlayer);
+                        currentPlayer.play();
+                    });
+                }
             }
         });
 
@@ -191,37 +222,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     }
 
-    private void addListenersToNewlyAdded(MediaPlayer current, MediaPlayer next){
-            final MediaPlayer player     = current;
-            final MediaPlayer nextPlayer = next;
-            //set listener for end of current song
-            player.setOnEndOfMedia(new Runnable() {
-                @Override public void run() {
-                    player.currentTimeProperty().removeListener(progressChangeListener);
-                    player.stop();
-                    player.dispose();//release filestream link
-                    mediaView.setMediaPlayer(nextPlayer);
-                    nextPlayer.play();
-                    SongQueueObservableList.remove(0);
-                }
-            });
-    }
-
     @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-    private void removeSong(){
-        final MediaPlayer curPlayer = mediaView.getMediaPlayer();
-        curPlayer.currentTimeProperty().removeListener(progressChangeListener);
-        curPlayer.stop();
-        curPlayer.dispose();
+    private void removeSong(){}
 
-        MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
-        mediaView.setMediaPlayer(nextPlayer);
-        nextPlayer.play();
-
-        SongQueueObservableList.remove(0);
-    }
-
-    /** sets the currently playing label to the label of the new media player and updates the progress monitor. */
+    /**
+     *  sets the currently playing label to the label of the new media player and updates the progress monitor.
+     *  */
     private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
         newPlayer.seek(Duration.ZERO);
 
@@ -234,7 +240,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         };
         newPlayer.currentTimeProperty().addListener(progressChangeListener);
 
-        System.out.println("Now Playing: ");
+        System.out.println("nextPlayer set to progress change listener? \n");
     }
 
     /*******************MUSIC button methods **************************************************/
@@ -242,9 +248,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
      private void addSongButtonFunc(ActionEvent event) {
         Task task = new Task<Void>() {
             @Override public Void call() {
-                QueueSong sq0 = mainModel.createQueueSong(songList.getSelectionModel().getSelectedIndex());
+                int index1 = songList.getSelectionModel().getSelectedIndex();
+                QueueSong qs1 = new QueueSong(SongSelectionObservableList.get(index1), index1-1);
                 Platform.runLater( () -> {
-                    SongQueueObservableList.add(sq0);
+                    SongQueueObservableList.add(qs1);
                 });
                 return null;
             }
@@ -287,49 +294,92 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
+    /***???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????***/
     public void addObservableSongQueueListener(){
         SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
         queueList.setItems(SongQueueObservableList);
         SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
-            public void onChanged(ListChangeListener.Change<? extends QueueSong> change) {
+            public void onChanged(ListChangeListener.Change<? extends QueueSong> change)
+            {
                 while (change.next()) {
                     if (change.wasUpdated()) {
                         for (QueueSong qs : change.getList()) {
                             System.out.println(qs.getSong() + " updated");
                         }
                     } else {
-                        //song is skipped or has ended
                         for (QueueSong removedSong : change.getRemoved()) {
-                            ExecutorService executorService = Executors.newFixedThreadPool(1);
-
-                            System.out.print("\n future media player started");
-                            Future<MediaPlayer> futureMediaPlayer = null;
-                            if(SongQueueObservableList.size()>1)
-                                futureMediaPlayer = executorService.submit(new HandleFileIO(SongQueueObservableList.get(1).getSongByte(),SongQueueObservableList.get(1).getSong()));
-
-                            try {
-                                if (SongQueueObservableList.size() > 1) {
-                                    MediaPlayer nextSongPlayer = futureMediaPlayer.get();
-                                    System.out.print("\n future media player finished");
-                                    SongQueueObservableList.get(1).setPlayer(nextSongPlayer);
-                                    addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), SongQueueObservableList.get(1).getPlayer());
-                                    executorService.shutdown();
-                                    executorService.awaitTermination(7, TimeUnit.SECONDS);
-                                }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            } catch (ExecutionException e) {
-                                e.printStackTrace();
+                            queueSizeAtomic.decrementAndGet();
+                            /** Remove Case A: Song Ended and queue is empty
+                             * Step 1: Dispose of currentPlayer file association
+                             * Step 2: Perform file deletion IO
+                             * */
+                            //songRemovedfileIOFunc(removedSong);
+                           // removedSong.deleteMyPlayer();
+                            //removedSong.deleteMyFile();
+                            /** Remove Case B: Song Ended and next song available and queue is 1
+                             * Step 1: Get nextPlayer and setCurrently playing on mediaView
+                             * Step 2: Dispose of currentPlayer file association
+                             * Step 3: Perform file deletion IO
+                             * */
+                            if (queueSizeAtomic.get()== 1 ) {
+                                System.out.println("remove Case B Event fired! :\n");
+                                songRemovedfileIOFunc();
+                                System.out.println("songRemovedfileIOFunc finished! :\n");
+                               // addListenersWhenRemoved(currentPlayer,nextPlayer);
                             }
-                            finally {
-                                removedSong.deleteMyPlayer();
-                                removedSong.deleteMyFile();
+                            /** Remove Case C: Song Ended and next song available and queue is equal to 2
+                             * Step 1: SongQueueObservable.get(1).getFilePath
+                             * Step 2: performFileIO-> create nextNextPlayer
+                             * Step 3: addEndOfSongListeners(NextPlayer,nextNextPlayer)
+                             * Step 2: Dispose of currentPlayer file association
+                             * Step 3: Perform file deletion IO
+                             * */
+                            else if (queueSizeAtomic.get() == 2) {
+                                System.out.println("remove Case C Event fired:\n");
+                                songRemovedfileIOFunc();
+                            }
+                            else if (queueSizeAtomic.get() > 2) {
+                                System.out.println("remove Case D Event fired:\n");
+                                songRemovedfileIOFunc();
                             }
                         }
 
-                        for (QueueSong qs : change.getAddedSubList()) {
-                            if (change.getFrom() == 1) {
-                                addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), qs.getPlayer());
+                        for (QueueSong addedSong : change.getAddedSubList()) {
+                            System.out.println("Added event \n  Qsize = " + queueSizeAtomic.incrementAndGet()+"\n");
+                            /** Add Case A: First song to be added
+                             * Step 1: QueueSong downloads bytes from azure
+                             * Step 2: Perform file IO for the mediaPlayer
+                             * Step 3: Add mediaPlayer to currentPlayer
+                             * Step 4: Add currentPlayer to mediaView
+                             * */
+                            if (queueSizeAtomic.get()==1) {
+                                System.out.println("Add Case A event fired: \n Q size =  " + queueSizeAtomic.get());
+                                songAddedfileIOFunc();
+                            }
+                            /** Add Case B: Song added and queue is 2
+                             * Step 1: QueueSong downloads bytes from azure
+                             * Step 2: Perform file IO for the mediaPlayer
+                             * Step 3: Add mediaPlayer to currentPlayer
+                             * Step 3: Add nextPlayer to mediaView
+                             * Step 5: Add End of song listener for both the current and next Player*/
+                            else if (queueSizeAtomic.get()==2)
+                            {
+                                System.out.println("#Add Case B : event fired: \n Q size = " + queueSizeAtomic.get());/********************************* whole list requires read access ***********/
+                                songAddedfileIOFunc();
+                                //addedSong.deleteMyPlayer();
+                                //addedSong.deleteMyPlayer();
+                            }
+                            /** Add Case C: Song added and queue is greater than 2
+                             * Step 1: QueueSong downloads bytes from azure
+                             */
+                            else if (queueSizeAtomic.get()==3)
+                            {
+                                System.out.println("#Add Case C : event fired:  \n Q size = " + queueSizeAtomic.get());/********************************* whole list requires read access ***********/
+                                songAddedfileIOFunc();
+
+                                // addListenersToNewlyAdded(SongQueueObservableList.get(0).getPlayer(), addedSong.getPlayer());
+                                //addedSong.deleteMyPlayer();
+                                //addedSong.deleteMyPlayer();
                             }
                         }
                     }
@@ -338,26 +388,264 @@ public class MainSceneController implements Initializable , ControlledScreen {
         });
     }
 
-    public void addVolumeAndTimeSliderListeners(){
-        timeSlider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (timeSlider.isValueChanging()) {
-                    final MediaPlayer player = SongQueueObservableList.get(0).getPlayer();
-                    if (progressChangeListener != null) {
-                        // multiply duration by percentage calculated by timeSlider position
-                        player.seek(player.getTotalDuration().multiply(timeSlider.getValue() / 100.0));
+    /**
+     * shifts the media players
+     */
+    public synchronized void shiftMediaPlayers(MediaPlayer newestPlayer){
+        try{
+//                CPWwriteLock.lock();
+//            NPReadLock.lock();
+                currentPlayer = nextPlayer;
+//                CPWwriteLock.unlock();
+//            NPReadLock.unlock();
+
+//            NPWriteLock.lock();
+            nextPlayer = newestPlayer;
+        }finally{
+//            CPWwriteLock.unlock();
+//            NPReadLock.unlock();
+//            NPReadLock.unlock();
+        }
+    }
+
+    public void writeToCurrentPlayer(MediaPlayer newestPlayer){
+        CPWwriteLock.lock();
+        try{
+            currentPlayer = newestPlayer;
+        }finally{
+            CPWwriteLock.unlock();
+        }
+    }
+    public void writeNextPlayer(MediaPlayer newestPlayer){
+        NPWriteLock.lock();
+        try{
+            nextPlayer = newestPlayer;
+        }finally{
+            NPWriteLock.unlock();
+        }
+    }
+    public void writeToNextNextPlayer(MediaPlayer newestPlayer){
+        NNPWwriteLock.lock();
+        try{
+            nextNextPlayer = newestPlayer;
+        }finally{
+            NNPWwriteLock.unlock();
+        }
+    }
+
+    /**
+     * If the song added is the first or second one in the queue then call this function to create files for MediaPlayer objects
+     */
+    public void songAddedfileIOFunc(){
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        Future<MediaPlayer> futureMediaPlayer = null;
+
+        try
+        {
+            if (queueSizeAtomic.get() == 1 )
+            {
+                int index = SongQueueObservableList.get(0).getAzureForeignKey();
+                System.out.println("\n File IO Added Case A: \n future media player started added song 1");
+                //param1: song byte data                 , param2: song name for writing to file
+                futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(0).getSong()));
+                MediaPlayer freshPlayer = futureMediaPlayer.get();
+                System.out.println("File IO Added Case A: \n future media player finished for testing 1\n");
+                Platform.runLater( () ->
+                {
+                    writeToCurrentPlayer(freshPlayer);
+                   // addListenersToNewlyAdded2(currentPlayer);
+                    setCurrentlyPlaying(currentPlayer);
+                    mediaView.setMediaPlayer(currentPlayer);
+                });
+                executorService.shutdown();
+                executorService.awaitTermination(7, TimeUnit.SECONDS);
+            }
+            //prepare songQueue(1) with a file and a media player by using future Executor service
+            else if (queueSizeAtomic.get() == 2)
+            {
+                int index = SongQueueObservableList.get(1).getAzureForeignKey();
+                System.out.println("\n Added Case B: \n future media player started added song");
+                futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
+                MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                System.out.println("Added Case B: \n future media player finished for added song\n");
+
+               // addListenersToNewlyAdded2(currentPlayer, nextSongPlayer);
+                System.out.println("Added Case B: \n Assigning nextplayer a fresh player \n");
+                writeNextPlayer(nextSongPlayer);
+                addListenersToNewlyAdded2(currentPlayer, nextPlayer);
+                executorService.shutdown();
+                executorService.awaitTermination(7, TimeUnit.SECONDS);
+            }
+            else if (queueSizeAtomic.get() == 3)
+            {
+                int index = SongQueueObservableList.get(2).getAzureForeignKey();
+                System.out.println("\n Added Case C: \n future media player started added song");
+                futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(2).getSong()));
+                MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                System.out.println("Added Case C: \n future media player finished for added song\n");
+                //writeNextNextPlayer(nextSongPlayer);
+                writeToNextNextPlayer(nextSongPlayer);
+                addListenersToNewlyAdded2(nextPlayer, nextSongPlayer);
+                System.out.println("Added Case C: \n Assigning nextNextplayer a fresh player \n");
+               // nextNextPlayer = nextSongPlayer;
+                executorService.shutdown();
+                executorService.awaitTermination(7, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        finally {
+
+        }
+    }
+
+    /**
+     * Removes songQueue(0)
+     * Ensures songQueue(1) has a media player and a file
+     * Prepares songQueue(2) with a file and a media player by using future Executor service
+     */
+    public void songRemovedfileIOFunc(){
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+        //System.out.print("\n future media player started removed song");
+        Future<MediaPlayer> futureMediaPlayer = null;
+        try
+        {
+            System.out.println("songRemovedfileIOFunc() called, Q size = " + queueSizeAtomic.get());
+            /** Remove case B: song removed and next song available*/
+            if (queueSizeAtomic.get() == 1)
+            {
+                System.out.println("Remove case B: File IOFunction");
+               // currentPlayer = nextPlayer;
+            //    setCurrentlyPlaying(nextPlayer);
+            }
+            /** Remove case C: song removed and Queue is equal to 2 */
+            else if (queueSizeAtomic.get() == 2)
+            {
+                System.out.println("Remove case C: File IOFunction\"");
+                if(! SongQueueObservableList.get(1).getPreparedBool())
+                {
+                    SongQueueObservableList.get(1).setPreparedBool(true);
+                    int index = SongQueueObservableList.get(1).getAzureForeignKey();
+                    System.out.println("\n future media player started Remove case C: \n ");
+
+                    futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
+                    MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                    System.out.println("future media player finished for Remove case C: \n");
+                    Platform.runLater( () -> {
+                       // nextNextPlayer = nextSongPlayer;
+                    });
+                }
+            }
+            /** Remove case C: song removed and Queue is greater than 2 */
+            else if (queueSizeAtomic.get() > 2)
+            {
+                System.out.println("Remove case D: File IOFunction\"");
+                if(! SongQueueObservableList.get(2).getPreparedBool())
+                {
+                    SongQueueObservableList.get(2).setPreparedBool(true);
+                    int index = SongQueueObservableList.get(2).getAzureForeignKey();
+                    System.out.println("\n future media player started Remove case D: \n ");
+
+                    futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(2).getSong()));
+                    writeNextPlayer(nextNextPlayer);
+                    MediaPlayer newNextNextPlayer = futureMediaPlayer.get();
+                    addListenersToNewlyAdded2(nextPlayer,newNextNextPlayer);
+                    Platform.runLater( () ->
+                    {
+                        writeToNextNextPlayer(newNextNextPlayer);
+                    });
+                    System.out.println("future media player finished for Remove case D: \n");
+
+                   // nextNextPlayer = futureMediaPlayer.get();
+                    //shiftMediaPlayers(nextSongPlayer);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    /**
+     * Called after future returns a MediaPlayer object
+     * adds an end of media listener */
+    private void addListenersToNewlyAdded(MediaPlayer newlyMadePlayer){
+        nextPlayer = newlyMadePlayer;
+        nextPlayer.setOnEndOfMedia(() ->
+            {
+                currentPlayer.currentTimeProperty().removeListener(progressChangeListener);
+                currentPlayer.stop();
+                currentPlayer.dispose();//release file stream link
+                System.out.println("testing race condition removal 1\n");
+                /** Remove case B: next song available*/
+                if(queueSizeAtomic.get()>1){
+                    System.out.println("About to perform end of run later  for listenerfunc1\n");
+                        System.out.println("shifting media players player\n");
+                        shiftMediaPlayers(nextNextPlayer);
+                        mediaView.setMediaPlayer(currentPlayer);
+                    Platform.runLater( () -> {
+                        currentPlayer.play();
+                        SongQueueObservableList.remove(0);
+                    });
+                }
+            });
+    }
+
+/**
+ * Called after future returns a MediaPlayer object
+ * adds an end of media listener */
+private void addListenersToNewlyAdded2(MediaPlayer link1, MediaPlayer link2){
+    final MediaPlayer link1Final = link1;
+    final MediaPlayer link2Final = link2;
+    System.out.println("addListenersToNewlyAdded2 ()\n");
+    link1Final.setOnEndOfMedia(() ->
+    {
+        System.out.println("end of song triggered!\n");
+        link1Final.currentTimeProperty().removeListener(progressChangeListener);
+        link1Final.stop();
+        link1Final.dispose();//release file stream link
+
+        /** Remove case B: next song available*/
+        if(queueSizeAtomic.get()>1){
+           // writeToCurrentPlayer(link2Final);
+
+                //shiftMediaPlayers(nextPlayer);
+            Platform.runLater( () -> {
+                mediaView.setMediaPlayer(link2Final);
+                //mediaView.getMediaPlayer().play();
+              //  SongQueueObservableList.remove(0);
+            });
+        }
+    });
+}
+
+public void addVolumeAndTimeSliderListeners(){
+        Platform.runLater( () -> {
+            timeSlider.valueProperty().addListener(new InvalidationListener() {
+                public void invalidated(Observable ov) {
+                    if (timeSlider.isValueChanging()) {
+                        /********************************* song 0 requires read access ***********/
+                        final MediaPlayer player = mediaView.getMediaPlayer();
+                        if (progressChangeListener != null) {
+                            // multiply duration by percentage calculated by timeSlider position
+                            player.seek(player.getTotalDuration().multiply(timeSlider.getValue() / 100.0));
+                        }
                     }
                 }
-            }
-        });
-
-        volumeSlider.valueProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-                if (volumeSlider.isValueChanging()) {
-                    final MediaPlayer player = SongQueueObservableList.get(0).getPlayer();
-                    player.setVolume(volumeSlider.getValue() / 100.0);
+            });
+            volumeSlider.valueProperty().addListener(new InvalidationListener() {
+                public void invalidated(Observable ov) {
+                    if (volumeSlider.isValueChanging()) {
+                        /********************************* song 0 requires read access ***********/
+                        final MediaPlayer player = mediaView.getMediaPlayer();
+                        player.setVolume(volumeSlider.getValue() / 100.0);
+                    }
                 }
-            }
+            });
         });
     }
 
@@ -400,11 +688,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     public void iPlay() {
         if ("Pause".equals(playButton.getText())) {
-            mediaView.getMediaPlayer().pause();
-            playButton.setText("Play");
-            playButton.setStyle("-fx-background-color:green");
-        } else if (SongQueueObservableList.size()>0){
-            mediaView.setMediaPlayer(SongQueueObservableList.get(0).getPlayer());
+            Platform.runLater( () -> {
+                mediaView.getMediaPlayer().pause();
+                playButton.setText("Play");
+                playButton.setStyle("-fx-background-color:green");
+            });
+                 //if(queueSizeAtomic.get() > 0)
+        } else if (SongQueueObservableList.size()>0){/********************************* whole list requires read access ***********/
+            /********************************* song 0 requires read access ***********/
+            mediaView.setMediaPlayer(currentPlayer);
             mediaView.getMediaPlayer().play();
             playButton.setText("Pause");
             playButton.setStyle("-fx-background-color:red");
@@ -414,21 +706,23 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     public void iSkip() {
         //can't skip unless there is a song to follow
-        if(SongQueueObservableList.size()>1) {
+        if(queueSizeAtomic.get() > 1) {/********************************* whole list requires read access ***********/
             final MediaPlayer curPlayer = mediaView.getMediaPlayer();
             curPlayer.currentTimeProperty().removeListener(progressChangeListener);
             curPlayer.stop();
             curPlayer.dispose();//remove file stream
 
-            MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
-            mediaView.setMediaPlayer(nextPlayer);
-            nextPlayer.play();
-            SongQueueObservableList.remove(0);
+            //MediaPlayer nextPlayer = SongQueueObservableList.get(1).getPlayer();
+           // currentPlayer = nextPlayer;
+            if(nextPlayer!=null)
+                mediaView.setMediaPlayer(nextPlayer);
+            //nextPlayer.play();
+            //SongQueueObservableList.remove(0);
 
             //play button has to beupdated with "pause" to the user because skip "plays" a song
             if ("Play".equals(playButton.getText())) {
                 playButton.setText("Pause");
-                playButton.setStyle("-fx-background-color:green");
+                playButton.setStyle("-fx-background-color:red");
             }
         }
     }
@@ -535,71 +829,80 @@ public class MainSceneController implements Initializable , ControlledScreen {
             startServer();
         }
     }
-public void startServer(){
-    try
+public void startServer() {
+    /*****************************/
+    executorService1 = Executors.newSingleThreadExecutor();
+    executorService1.submit(() ->
     {
+        volatileThread = Thread.currentThread();
+        Thread thisThread = Thread.currentThread();
+        Boolean flag = false;
+        StreamConnectionNotifier notifier = null;
+        StreamConnection connection = null;
 
-        new Thread(){
-            public void run() {
-                volatileThread = Thread.currentThread();
-                Thread thisThread = Thread.currentThread();
-                Boolean flag = false;
-                StreamConnectionNotifier notifier = null;
-                StreamConnection connection = null;
+        try {
+            LocalDevice local = LocalDevice.getLocalDevice();
+
+            //set The inquiry access code for General/Unlimited Inquiry
+            local.setDiscoverable(DiscoveryAgent.GIAC);
+            //UUID uuid = new UUID("04c6093b-0000-1000-8000-00805f9b34fb", false);
+            UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
+            System.out.println(uuid.toString());
+
+            String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
+            notifier = (StreamConnectionNotifier) Connector.open(url);
+
+            thisThread.sleep(1000);
+            System.out.println("waiting for connections...");
+            connection = notifier.acceptAndOpen();
+            System.out.println("connected!");
+
+            while (volatileThread == thisThread)
+            {
+                executorService2 = Executors.newSingleThreadExecutor();
+                processThread = new ProcessConnectionThread(connection);
+                executorService2.execute(processThread);
 
                 try {
-                    LocalDevice local = null;
-                    local = LocalDevice.getLocalDevice();
-                    local.setDiscoverable(DiscoveryAgent.GIAC);
-                    UUID uuid = new UUID(80087355); // "04c6093b-0000-1000-8000-00805f9b34fb"
-                    String url = "btspp://localhost:" + uuid.toString() + ";name=RemoteBluetooth";
-                    notifier = (StreamConnectionNotifier) Connector.open(url);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("attempt to shutdown executor");
+                    executorService2.shutdown();
+                    executorService2.awaitTermination(20, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    System.err.println("exec 2 tasks interrupted");
+                } finally {
+                    if (!executorService2.isTerminated()) {
+                        System.err.println("cancel non-finished tasks exec 2");
+                    }
+                    executorService2.shutdownNow();
+                    System.out.println("\nshutdown finished ");
                 }
 
-                try
-                {
-                    while (volatileThread == thisThread) {
-                        thisThread.sleep(1000);
-                        System.out.println("waiting for connectionsssssss...");
-                        connection = notifier.acceptAndOpen();
-                        System.out.println("connected!");
-                        processThread = new ProcessConnectionThread(connection);
-                        if (volatileThread == thisThread)
-                            processThread.run();
-                        System.out.print("\n exited!");
-                    }
-                }
-                    catch (InterruptedException e) {
-                        processThread.myStop();
-                        Thread.currentThread().interrupt();
-                    }
-                    catch (NullPointerException e) {
-                        System.out.print("\nexited through here 2 ");
-                    }
-                    catch (IOException e) {
-                        System.out.print("\nexited through here 3");
-                    }
-                finally {
+                // thisThread.sleep(20000);
+                System.out.println("waiting for connections...");
+                //blocking call waiting for client to connect
+                connection = notifier.acceptAndOpen();
+                System.out.println("connected!");
 
-                    try {
-                        notifier.close();
-                        connection = null;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                System.out.print("\n finished!");
-                return;
+                /************************************/
             }
-        }.start();//end new Thread();
-    }//end try 1
-    catch(Exception e)
-    {
-        Thread.currentThread().interrupt();
+            System.out.print("\n exited main loop!");
+
+            return;
+        } catch (InterruptedException e) {
+            System.out.print("\nexited through here 1 ");
+            Thread.currentThread().interrupt();
+            return;
+        } catch (NullPointerException e) {
+            System.out.print("\nexited through here 2 ");
+        } catch (IOException e) {
+            System.out.print("\nexited through here 3");
+            e.printStackTrace();
+            return;
+        } finally {
+
+        }
         return;
-    }
+    });
 }
     /**
      * Server Connection Thread
@@ -629,49 +932,70 @@ public void startServer(){
         mConnection = connection;
     }
 
-    @Override
-    public void run() {
-        volatileThread = Thread.currentThread();
-        Thread thisThread = Thread.currentThread();
-        try
-        {
-            dataInputStream = new DataInputStream(mConnection.openInputStream());
-            dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
+        @Override
+        public void run() {
+            volatileThread = Thread.currentThread();
+            Thread thisThread = Thread.currentThread();
+
+            boolean endCom = false;
 
             try {
+                dataInputStream = new DataInputStream(mConnection.openInputStream());
+                dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
                 int whatToDo = dataInputStream.readInt();
                 System.out.print("\nread  " + whatToDo);
                 thisThread.sleep(300);
                 if (dataInputStream.available() > 0) {
                     System.out.print("\ninit data available  " + whatToDo);
-                    whatToDo(whatToDo);
+                    WhatToDoFunc(whatToDo);
                 }
-                thisThread.sleep(300);
-                whatToDo = dataInputStream.readInt();
-                System.out.print("\nread  " + whatToDo);
                 while (volatileThread == thisThread) {
                     try {
-                        whatToDo = dataInputStream.readInt();
-                        System.out.print("\nread  " + whatToDo);
+                        //prevent EOF exceptions
+                        thisThread.sleep(300);
+                        if (dataInputStream.available() > 0) {
+                            whatToDo = dataInputStream.readInt();
+                            // if readint is outside of com protocol
+                            if (whatToDo > 6)
+                                whatToDo = -1;
+                            System.out.print("\n# init data available  " + whatToDo);
+                        }
                         thisThread.sleep(100);
+                        if (dataInputStream.available() > 0) {
+                            //in case readint read number outside of communication protocol
+                            if (whatToDo > 0) {
+                                WhatToDoFunc(whatToDo);
+                                // "SONG_SELECT" is a special case in com protocol where client requests to see song selection
+                                // and needs com to stay open to pick a song
+                                if (whatToDo != 1)
+                                    endCom = true;
+                                whatToDo = -1;
+                            }
+                        }
+                        if (endCom) {
+                            volatileThread = null;
+                            return;
+                        }
+
                     } catch (InterruptedException e) {
-                        System.out.print("\nexited through here");
-                    }
-                    if (dataInputStream.available() > 0) {
-                        whatToDo(whatToDo);
+                        System.out.print("\nexited through here callable interrupted");
+                        //  Thread.currentThread().interrupt();
+                    } finally {
+//                    dataInputStream.close();
+//                    dataOutputStream.close();
+//                    mConnection.close();
                     }
                 }
-            } catch (Exception e) {}
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return ;
         }
-    }
     public synchronized void myStop(){
         volatileThread = null;
     }
 
-    public synchronized void whatToDo(int whatToDo)
+    public synchronized void WhatToDoFunc(int whatToDo)
     {
         switch(whatToDo)
         {
@@ -1012,3 +1336,31 @@ private static String formatTime(Duration elapsed, Duration duration) {
     }
 }
 }
+
+//    private void addListenersWhenRemoved(MediaPlayer current, MediaPlayer next){
+//        final MediaPlayer player     = current;
+//        final MediaPlayer nextPlayer = next;
+//
+//        /** Remove Case A: Song Ended and queue is empty */
+//        if(queueSizeAtomic.get()==0) {
+//            System.out.println("add listener song removed and queuesize = 0\n");
+//        }
+//        /** Remove Case B: Song Ended and queue is 1 */
+//        else if(queueSizeAtomic.get()==1){
+//            System.out.println("add listener when song removed and Q size = 1\n");
+//            player.setOnEndOfMedia(() ->
+//            {
+//                player.currentTimeProperty().removeListener(progressChangeListener);
+//                System.out.println("stopping end of song");
+//                player.stop();
+//                player.dispose();//release filestream link
+//                System.out.println("setting next player in Remove Case B");
+//                mediaView.setMediaPlayer(current);
+//                nextPlayer.play();
+//            });
+//        }
+//        /** Remove Case C: Song Ended and queue is greater than 1*/
+//        else if(queueSizeAtomic.get() >1){
+//            System.out.println("\nI should be prepping nextnextPlayer? \n");
+//        }
+//    }

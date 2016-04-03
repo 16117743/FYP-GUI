@@ -53,35 +53,35 @@
 <?import javafx.scene.text.*?>
 
 <AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="599.0" prefWidth="1021.0" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
-  <children>
-  <HBox alignment="CENTER" layoutX="250.0" layoutY="336.0" spacing="20.0">
     <children>
-        <Label id="loginTextID" text="Login">
-          <font>
-            <Font size="36.0" />
-          </font>
-               <effect>
-                  <Glow />
-               </effect>
+        <HBox alignment="CENTER" layoutX="250.0" layoutY="336.0" spacing="20.0">
+            <children>
+                <Label id="loginTextID" text="Login">
+                    <font>
+                        <Font size="36.0" />
+                    </font>
+                    <effect>
+                        <Glow />
+                    </effect>
+                </Label>
+                <HBox />
+                <TextField fx:id="userLogin" prefHeight="19.0" prefWidth="110.0" />
+                <PasswordField fx:id="passwordField" promptText="Password" />
+                <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
+            </children>
+            <effect>
+                <Glow level="0.46" />
+            </effect>
+        </HBox>
+        <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="236.0" layoutY="284.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
+            <font>
+                <Font size="18.0" />
+            </font>
         </Label>
-            <HBox />
-            <TextField fx:id="userLogin" prefHeight="19.0" prefWidth="110.0" />
-            <PasswordField fx:id="passwordField" promptText="Password" />
-      <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
+        <Label id="MusicHostLabel" contentDisplay="CENTER" layoutX="471.0" layoutY="154.0" prefHeight="72.0" prefWidth="285.0" text="Music Host " textAlignment="JUSTIFY">
+            <font>
+                <Font size="48.0" />
+            </font>
+        </Label>
     </children>
-         <effect>
-            <Glow level="0.46" />
-         </effect>
-  </HBox>
-      <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="236.0" layoutY="284.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
-         <font>
-            <Font size="18.0" />
-         </font>
-      </Label>
-      <Label id="MusicHostLabel" contentDisplay="CENTER" layoutX="471.0" layoutY="154.0" prefHeight="72.0" prefWidth="285.0" text="Music Host " textAlignment="JUSTIFY">
-         <font>
-            <Font size="48.0" />
-         </font>
-      </Label>
-  </children>
 </AnchorPane>

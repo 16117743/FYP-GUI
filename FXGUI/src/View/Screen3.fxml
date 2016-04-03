@@ -53,40 +53,40 @@
 <?import javafx.scene.text.*?>
 
 <AnchorPane id="AnchorPane" prefHeight="426.0" prefWidth="658.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.DJScreenController">
-  <children>
-      <SplitPane dividerPositions="0.5" layoutX="14.0" layoutY="102.0" prefHeight="167.0" prefWidth="359.0">
-         <items>
-            <Circle fx:id="deck1" fill="#ff321f" onMouseClicked="#iPlay" radius="100.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="deck2" fill="DODGERBLUE" onMouseClicked="#iSkip" radius="100.0" stroke="BLACK" strokeType="INSIDE">
-               <effect>
-                  <Glow />
-               </effect>
-            </Circle>
-         </items>
-      </SplitPane>
-      <Button fx:id="skipBtn" layoutX="78.0" layoutY="313.0" mnemonicParsing="false" onAction="#iSkip" text="skipBtn" />
-      <Button fx:id="playBtn" layoutX="14.0" layoutY="313.0" mnemonicParsing="false" onAction="#iPlay" text="playBtn" />
-      <HBox layoutX="201.0" layoutY="14.0" prefHeight="25.0" prefWidth="191.0">
-         <children>
-        <Button fx:id="logoutBtn" mnemonicParsing="false" onAction="#goToScreen1" text="Logout" />
-        <Button fx:id="switchBtn" mnemonicParsing="false" onAction="#goToScreen2" text="Switch to Main Screen" />
-         </children>
-      </HBox>
-      <Button fx:id="addBtn" layoutX="147.0" layoutY="313.0" mnemonicParsing="false" text="addBtn" />
-      <HBox layoutX="379.0" layoutY="27.0" maxWidth="300.0" prefHeight="100.0">
-         <children>
-            <ListView fx:id="songList2" prefHeight="92.0" prefWidth="114.0" />
-            <ListView fx:id="queueList2" blendMode="DARKEN" prefHeight="105.0" prefWidth="110.0">
-               <cursor>
-                  <Cursor fx:constant="HAND" />
-               </cursor>
-               <effect>
-                  <Glow />
-               </effect>
-            </ListView>
-            <TextArea fx:id="songRequest2" prefHeight="102.0" prefWidth="88.0" />
-         </children>
-      </HBox>
-      <WebView fx:id="webview" layoutX="429.0" layoutY="144.0" prefHeight="200.0" prefWidth="200.0" />
-  </children>
+    <children>
+        <SplitPane dividerPositions="0.5" layoutX="14.0" layoutY="102.0" prefHeight="167.0" prefWidth="359.0">
+            <items>
+                <Circle fx:id="deck1" fill="#ff321f" onMouseClicked="#iPlay" radius="100.0" stroke="BLACK" strokeType="INSIDE" />
+                <Circle fx:id="deck2" fill="DODGERBLUE" onMouseClicked="#iSkip" radius="100.0" stroke="BLACK" strokeType="INSIDE">
+                    <effect>
+                        <Glow />
+                    </effect>
+                </Circle>
+            </items>
+        </SplitPane>
+        <Button fx:id="skipBtn" layoutX="78.0" layoutY="313.0" mnemonicParsing="false" onAction="#iSkip" text="skipBtn" />
+        <Button fx:id="playBtn" layoutX="14.0" layoutY="313.0" mnemonicParsing="false" onAction="#iPlay" text="playBtn" />
+        <HBox layoutX="201.0" layoutY="14.0" prefHeight="25.0" prefWidth="191.0">
+            <children>
+                <Button fx:id="logoutBtn" mnemonicParsing="false" onAction="#goToScreen1" text="Logout" />
+                <Button fx:id="switchBtn" mnemonicParsing="false" onAction="#goToScreen2" text="Switch to Main Screen" />
+            </children>
+        </HBox>
+        <Button fx:id="addBtn" layoutX="147.0" layoutY="313.0" mnemonicParsing="false" text="addBtn" />
+        <HBox layoutX="379.0" layoutY="27.0" maxWidth="300.0" prefHeight="100.0">
+            <children>
+                <ListView fx:id="songList2" prefHeight="92.0" prefWidth="114.0" />
+                <ListView fx:id="queueList2" blendMode="DARKEN" prefHeight="105.0" prefWidth="110.0">
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                    <effect>
+                        <Glow />
+                    </effect>
+                </ListView>
+                <TextArea fx:id="songRequest2" prefHeight="102.0" prefWidth="88.0" />
+            </children>
+        </HBox>
+        <WebView fx:id="webview" layoutX="429.0" layoutY="144.0" prefHeight="200.0" prefWidth="200.0" />
+    </children>
 </AnchorPane>
