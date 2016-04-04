@@ -13,8 +13,8 @@ public interface MusicHostInterface {
     void send2(String msg);
     String recv2();
 
-    void send3();
-    void recv3();
+    void send3(String msg);
+    String recv3();
 
     void send4();
     void recv4();

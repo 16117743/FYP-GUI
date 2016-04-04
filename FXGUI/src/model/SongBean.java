@@ -8,6 +8,16 @@ public class SongBean {
     public String song;
     public String artist;
     public int votes;
+    public String DJComment;
+
+public String getDJComment() {
+    return DJComment;
+}
+
+public void setDJComment(String DJComment) {
+    this.DJComment = DJComment;
+}
+
 
     public String getSong() {
         return song;

@@ -1,17 +1,13 @@
 package model;
 
-import Interface.MainInterface;
 import ignore.Ignore;
 import org.json.JSONArray;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Model implements MainInterface{
+public class Model{
 
     final int LOGIN_STATE = 0;
     final int MAIN_STATE = 1;
@@ -20,6 +16,7 @@ public class Model implements MainInterface{
     /**GUI related*/
     List<QueueSong> songQueue = new ArrayList<>();
     List<SelectionSong> selection = new ArrayList<>();
+    List <String> DJCommentsData = new ArrayList<>();
 
     /** Azure DB related*/
     private String con;
@@ -30,17 +27,13 @@ public class Model implements MainInterface{
     private ReadWriteLock rwlock;
     volatile String input = "";
 
-    final BlockingQueue<String> messageQueue;
-
     /** Enum state */
     boolean[] boolArray;
 
-    private int UserID = 2;
+    private int userID = 1;
 
     /**Constructor*/
     public Model() {
-        messageQueue = new ArrayBlockingQueue<>(1);
-        rwlock = new ReentrantReadWriteLock();
         init();
     }
 
@@ -54,6 +47,8 @@ public class Model implements MainInterface{
             connection = DriverManager.getConnection(con);
             boolArray = new boolean[3];
             boolArray[LOGIN_STATE] = true;
+            DJCommentsData.add("Bob: I love this song!");
+            DJCommentsData.add("Jane: I hate this song!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (SQLException e) {
@@ -73,9 +68,9 @@ public class Model implements MainInterface{
             ResultSet rs = state.executeQuery(query);
 
             if (rs.next()) {
-                int test2 = rs.getInt(1);
-                System.out.println(test2);
-                return test2;
+                int id = rs.getInt(1);
+                userID = id;
+                return id;
             }
                 else
                     return -1;
@@ -99,7 +94,7 @@ public class Model implements MainInterface{
     public void initSongs() {
         try
         {
-            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " +"2"; // where Id ="+ Integer.toString(UserID);
+            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " +Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
 
@@ -113,7 +108,6 @@ public class Model implements MainInterface{
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Json();
     }
 
     /**
@@ -174,63 +168,17 @@ public class Model implements MainInterface{
 
     /*******Database related *****************************************************************************/
 
-    /**
-     *
-     * @param instance
-     */
-    @Override
-    public void playSong(Class instance) {
-        if(instance.equals(sample.DJScreenController.class)) {
-            System.out.print("DJ\n");
-        }
-        else if(instance.equals(sample.MainSceneController.class)) {
-            System.out.print("\nMain\n");
-        }
-    }
-
-    @Override
-    public void skipSong() {
-        try {
-            if (songQueue.size() > 0) {
-            }
-            else
-                System.out.print("\n no songs in queue");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            songQueue.remove(0);
-        }
-    }
-
-    @Override
-    public void pauseSong() {
-        //songQueue.get(0).pauseMe();
-    }
-
-    /**DJ interface**/
-
-
-
     /** Getters and setters*/
-    public BlockingQueue<String> getMessageQueue() {
-        return messageQueue;
-    }
 
     public String getSongInfo(int index) {
         return selection.get(index).getSong();
     }
 
-    public int getSelectionSize() {
-        return selection.size();
-    }
-
-    public boolean getBoolArray(int arg) {
-        return boolArray[arg];
-    }
-
     public List<QueueSong> getSongQueue() {return songQueue;}
 
     public List<SelectionSong> getSelection() {return selection;}
+
+    public List getDJCommentsData() {return DJCommentsData;}
 
     public void setBoolArray(int arg,boolean bool) {
         for(int i=0;i<3;i++)
@@ -239,20 +187,46 @@ public class Model implements MainInterface{
         this.boolArray[arg] = bool;
     }
 
-    public void setUserID(int userID) {UserID = userID;}
+    public void setUserID(int userID) {userID = userID;}
 
     /***********************SERVER CODE ********************************************************/
-    public String Json(){
+    public String songSelectionToJson(){
         ArrayList<SongBean> beanList = new ArrayList();
         for(int i =0; i<selection.size();i++){
             SongBean sb = new SongBean();
             sb.setSong(selection.get(i).getSong());
-            sb.setArtist("artist" + i);
-            sb.setVotes(i);
+            sb.setArtist(selection.get(i).getArtist());
+            sb.setVotes(0);
             beanList.add(sb);
         }
         JSONArray jsonAraay = new JSONArray(beanList);
-       // System.out.print( jsonAraay.toString());
+
+        return  jsonAraay.toString();
+    }
+
+    public String songQueueToJson(){
+        ArrayList<SongBean> beanList = new ArrayList();
+        for(int i =0; i<songQueue.size();i++){
+            SongBean sb = new SongBean();
+            sb.setSong(songQueue.get(i).getSong());
+            sb.setArtist(songQueue.get(i).getArtist());
+            sb.setVotes(songQueue.get(i).getVotes());
+            beanList.add(sb);
+        }
+        JSONArray jsonAraay = new JSONArray(beanList);
+
+        return  jsonAraay.toString();
+    }
+
+    public String DJCommentToJson(){
+        ArrayList<SongBean> beanList = new ArrayList();
+        for(int i =0; i<DJCommentsData.size();i++){
+            SongBean sb = new SongBean();
+            sb.setDJComment(DJCommentsData.get(i));
+            sb.setVotes(0);
+            beanList.add(sb);
+        }
+        JSONArray jsonAraay = new JSONArray(beanList);
 
         return  jsonAraay.toString();
     }

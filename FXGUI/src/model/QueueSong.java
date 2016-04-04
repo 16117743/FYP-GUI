@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -23,9 +24,10 @@ public class QueueSong implements SongInterfaceForModel{
     private byte[] songByte;
     private Boolean preparedBool;
     private int azureForeignKey = 0;
-    private int votes;
+   // private int votes;
     private String myFilePath;
     private String myFilePath2;
+    AtomicInteger votes = new AtomicInteger();
 
 
 private int songSelectionIndex;
@@ -38,7 +40,7 @@ private int songSelectionIndex;
         this.songName = selectionSong.getSong();
         this.artist = selectionSong.getArtist();
         this.songByte = songBytes;
-        this.votes = 2;
+        this.votes.set(2);
         this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
         prepareMe();
     }
@@ -50,7 +52,7 @@ private int songSelectionIndex;
         this.songName = selectionSong.getSong();
         this.artist = selectionSong.getArtist();
         this.songByte = songBytes;
-        this.votes = 2;
+        this.votes.set(2);
         this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
         this.preparedBool = false;
     }
@@ -61,7 +63,7 @@ private int songSelectionIndex;
         this.azureForeignKey = selectionSong.getId();
         this.songName = selectionSong.getSong();
         this.artist = selectionSong.getArtist();
-        this.votes = 2;
+        this.votes.set(2);
         this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
         this.songSelectionIndex = songSelectionIndex + 1;
         this.preparedBool = false;
@@ -137,7 +139,10 @@ private int songSelectionIndex;
     public String getSong(){return songName;}
     public MediaPlayer getPlayer(){return player;}
     public String getArtist(){return artist;}
-    public int getVotes() {return votes;}
+    public int getVotes() {return votes.get();}
+    public int decrementAndGetVotes(){
+        return votes.decrementAndGet();
+    }
     public byte[] getSongByte(){return songByte;}
     public int getAzureForeignKey() {return azureForeignKey;}
     public int getSongSelectionIndex() {return songSelectionIndex;}

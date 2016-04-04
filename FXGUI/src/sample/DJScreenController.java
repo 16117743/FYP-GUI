@@ -54,7 +54,7 @@ import model.Model;
 import model.QueueSong;
 import model.SelectionSong;
 
-public class DJScreenController implements Initializable, ControlledScreen, InterfaceDJ, MainInterface {
+public class DJScreenController implements Initializable, ControlledScreen{
     ScreensController myController;
     Model mainModel;
 
@@ -171,72 +171,12 @@ public class DJScreenController implements Initializable, ControlledScreen, Inte
         songList2.setItems(SongSelectionObservableList);
     }
 
-    public void iAddToQueue() {
-        System.out.println("test interface add");
-        Platform.runLater(new Runnable() {
-            @Override public void run() {
-                for (int i = 0; i < 5; i++) {
-                    songList2.getItems().add(mainModel.getSongInfo(i));//update gui with selection info
-                    songList2.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-                }
-            }
-        });
-    }
-
     public void iRemoveFromQueue() {
         System.out.println("test interface remove");
     }
 
     public void iLogout() {
         System.out.println("test interface logout");
-    }
-
-    /**DJ Interface*/
-    @Override
-    public void DJplayMe() {
-
-    }
-
-    @Override
-    public void DJskipMe() {
-        System.out.println("test interface skip");
-        mainModel.skipSong();
-    }
-
-    @Override
-    public void DJpauseMe() {
-
-    }
-
-    @Override
-    public void DJfadeMeIn(float deltaTime) {
-
-    }
-
-    @Override
-    public void DJfadeMeOut(float deltaTime) {
-
-    }
-
-    @Override
-    public void DJDoSomething() {
-
-    }
-    /******************/
-
-    @Override
-    public void playSong(Class instance) {
-      //  System.out
-    }
-
-    @Override
-    public void skipSong() {
-
-    }
-
-    @Override
-    public void pauseSong() {
-
     }
 
     /***??????????????????????????????????????????????????***/

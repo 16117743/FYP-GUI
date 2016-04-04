@@ -26,7 +26,7 @@
                     </cursor>
                 </ListView>
                 <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" />
-                <ListView fx:id="DJComments" prefHeight="372.0" prefWidth="205.0" />
+                <ListView fx:id="dJComments" prefHeight="372.0" prefWidth="205.0" />
             </children>
         </HBox>
         <HBox layoutX="443.0" layoutY="650.0" prefHeight="64.0" prefWidth="453.0">
