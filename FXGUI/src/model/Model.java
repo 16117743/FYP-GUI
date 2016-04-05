@@ -230,6 +230,17 @@ public class Model{
 
         return  jsonAraay.toString();
     }
+
+    public void clearValuesBeforeLogginOut(){
+        for(int i =0; i<selection.size(); i++)
+            selection.remove(0);
+
+        for(int i =0; i<songQueue.size(); i++)
+            songQueue.remove(0);
+
+        for(int i =0; i<DJCommentsData.size(); i++)
+            DJCommentsData.remove(0);
+    }
 }
 
 

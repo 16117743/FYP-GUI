@@ -1,7 +1,5 @@
 package sample;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.ResourceBundle;
@@ -165,11 +163,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
             public ListCell<SelectionSong> call(ListView<SelectionSong> p) {
                 ListCell<SelectionSong> cell = new ListCell<SelectionSong>(){
                     @Override
-                    protected void updateItem(SelectionSong t, boolean bln) {
-                        super.updateItem(t, bln);
-                        if (t != null) {
-                            setText(t.getSong() + " by " + t.getArtist());
-                        }
+                    protected void updateItem(SelectionSong selectionSong, boolean empty) {
+                        super.updateItem(selectionSong, empty);
+                        setText((empty || selectionSong == null) ? null : selectionSong.getSong() + " by " + selectionSong.getArtist());
                     }
                 };
                 return cell;
@@ -198,7 +194,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 if(newPlayer!= null) {
                     System.out.println("shifting media players\n");
                     writeToCurrentPlayer(newPlayer);
-                    writeNextPlayer(nextNextPlayer);
+                    writeToNextPlayer(nextNextPlayer);
 
                     if(queueSizeAtomic.get() > 1)
                         SongQueueObservableList.remove(0);//remove case event is fired
@@ -311,7 +307,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     } else {
                         for (QueueSong removedSong : change.getRemoved()) {
                             queueSizeAtomic.decrementAndGet();
-                            songRemovedfileIOFunc();
+                            songRemovedfileIOFunc(removedSong);
                         }
 
                         for (QueueSong addedSong : change.getAddedSubList()) {
@@ -351,7 +347,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
             CPWwriteLock.unlock();
         }
     }
-    public void writeNextPlayer(MediaPlayer newestPlayer){
+    public void writeToNextPlayer(MediaPlayer newestPlayer){
         NPWriteLock.lock();
         try{
             nextPlayer = newestPlayer;
@@ -386,6 +382,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 {
                     writeToCurrentPlayer(freshPlayer);
                     setCurrentlyPlaying(currentPlayer);
+                    addAmITheLastSong(currentPlayer);
+                    //when set, the mediaView listener kicks of the first song
                     mediaView.setMediaPlayer(currentPlayer);
                 });
                 executorService.shutdown();
@@ -397,8 +395,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 int index = SongQueueObservableList.get(1).getAzureForeignKey();
                 futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
                 MediaPlayer nextSongPlayer = futureMediaPlayer.get();
-                writeNextPlayer(nextSongPlayer);
+                Platform.runLater( () ->
+                {
+                writeToNextPlayer(nextSongPlayer);
+               // addAmITheLastSong(currentPlayer);
                 addListenersToNewlyAdded2(currentPlayer, nextPlayer);
+                });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
             }
@@ -408,8 +410,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 int index = SongQueueObservableList.get(2).getAzureForeignKey();
                 futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(2).getSong()));
                 MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                Platform.runLater( () ->
+                {
                 writeToNextNextPlayer(nextSongPlayer);
+               // addAmITheLastSong(currentPlayer);
                 addListenersToNewlyAdded2(nextPlayer, nextSongPlayer);
+                });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
             }
@@ -424,21 +430,27 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /** Called any time a song gets removed. It's operation depends on the state of the song queue*/
-    public void songRemovedfileIOFunc(){
+    public void songRemovedfileIOFunc(QueueSong removedSong){
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
         try
         {
-            /** Remove case B: song removed and next song available*/
-            if (queueSizeAtomic.get() == 1)
-            {}
-            /** Remove case C: song removed and Queue is equal to 2 */
-            else if (queueSizeAtomic.get() == 2)
-            {
-                if(! SongQueueObservableList.get(1).getPreparedBool())
-                {}
+            if (queueSizeAtomic.get() == 0){
+               // writeToCurrentPlayer(nextNextPlayer);
+               // addAmITheLastSong(currentPlayer);
+                deleteRemovedSongFile(removedSong.getSong());
             }
-            /** Remove case C: song removed and Queue is greater than 2 */
+            /** Remove case A: song removed and no next song available*/
+            else if (queueSizeAtomic.get() == 1){
+                addAmITheLastSong(currentPlayer);
+                deleteRemovedSongFile(removedSong.getSong());
+            }
+            /** Remove case A: song removed and no next song available*/
+            else if (queueSizeAtomic.get() == 2){
+                deleteRemovedSongFile(removedSong.getSong());
+            }
+
+            /** Remove case B: song removed and Queue is greater than 2 */
             else if (queueSizeAtomic.get() > 2)
             {
                 if(! SongQueueObservableList.get(2).getPreparedBool())
@@ -447,7 +459,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     int index = SongQueueObservableList.get(2).getAzureForeignKey();
 
                     futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(2).getSong()));
-                    writeNextPlayer(nextNextPlayer);
+
+                    deleteRemovedSongFile(removedSong.getSong());
+                    writeToNextPlayer(nextNextPlayer);
+
                     MediaPlayer newNextNextPlayer = futureMediaPlayer.get();
                     addListenersToNewlyAdded2(nextPlayer,newNextNextPlayer);
                     Platform.runLater( () ->
@@ -458,6 +473,27 @@ public class MainSceneController implements Initializable , ControlledScreen {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void deleteRemovedSongFile(String songName) {
+        String filePath = "C:\\test\\"+songName+".mp3";
+        File file = new File(filePath);
+        try {
+            OutputStream targetFile=
+                new FileOutputStream(
+                    "C:\\test\\"+songName+".mp3");
+
+            targetFile.write(0);
+            targetFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(file.delete()){
+            System.out.println(file.getName() + " is deleted!");
+        }else{
+            System.out.println(file.getName() + " Delete operation failed.");
         }
     }
 
@@ -478,6 +514,26 @@ public class MainSceneController implements Initializable , ControlledScreen {
             {
                 Platform.runLater( () -> {
                     mediaView.setMediaPlayer(link2Final);
+                });
+            }
+        });
+    }
+
+    private void addAmITheLastSong(MediaPlayer link1){
+        final MediaPlayer link1Final = link1;
+        link1Final.setOnEndOfMedia(() ->
+        {
+            link1Final.currentTimeProperty().removeListener(progressChangeListener);
+            link1Final.stop();
+            link1Final.dispose();//release file stream link
+
+            /** Remove case B: next song available*/
+            if(queueSizeAtomic.get()==1)
+            {
+                Platform.runLater( () -> {
+                    mediaView.getMediaPlayer().dispose();
+                    timeLabel.setText(null);
+                    SongQueueObservableList.remove(0);
                 });
             }
         });
@@ -529,7 +585,59 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     private void goToScreen1(ActionEvent event) {
-        myController.setScreen(MusicHostFramework.screen1ID);
+        synchronized(this) {
+            Platform.runLater( () -> {
+                initbtn.setStyle("-fx-background-color:green");
+                System.out.println("removing everything");
+                mediaView.getMediaPlayer().stop();
+                mediaView.getMediaPlayer().dispose();
+               // deleteRemovedSongFile(SongQueueObservableList.get(0).getSong());
+                clearValuesBeforeLogginOut();
+                myController.setScreen(MusicHostFramework.screen1ID);
+            });
+
+        }
+    }
+
+    public void clearValuesBeforeLogginOut(){
+        stopServer();
+        timeLabel.setText("");
+        setBoolOptionButtons();
+        synchronized(this) {
+            for (int i = 0; i < SongSelectionObservableList.size(); i++) {
+                Platform.runLater( () -> {
+                SongSelectionObservableList.remove(0);
+                });
+            }
+
+            for (int i = 0; i < observableDJComments.size(); i++)
+                Platform.runLater( () -> {
+                observableDJComments.remove(0);
+            });
+            }
+
+        for (int i = 0; i < SongQueueObservableList.size(); i++){
+            Platform.runLater( () -> {
+            SongQueueObservableList.remove(0);
+            });
+        }
+    }
+
+    public void setBoolOptionButtons(){
+        boolRequest.setText("OFF");
+        boolRequest.setStyle("-fx-background-color:red");
+
+        boolDJComment.setText("OFF");
+        boolDJComment.setStyle("-fx-background-color:red");
+
+        boolSkip.setText("OFF");
+        boolSkip.setStyle("-fx-background-color:red");
+
+        boolEcho.setText("OFF");
+        boolEcho.setStyle("-fx-background-color:red");
+
+        boolBlob.setText("OFF");
+        boolBlob.setStyle("-fx-background-color:red");
     }
 
     @FXML
