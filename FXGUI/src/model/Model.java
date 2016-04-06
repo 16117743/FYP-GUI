@@ -5,14 +5,16 @@ import org.json.JSONArray;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
 
+/***********************
+ * Author: Thomas Flynn
+ * date: 25/04/16
+ **********************/
+
+/**
+ * Holds data for the Application and connection to the Azure SQL database
+ */
 public class Model{
-
-    final int LOGIN_STATE = 0;
-    final int MAIN_STATE = 1;
-    final int DJ_STATE = 2;
-
     /**GUI related*/
     List<QueueSong> songQueue = new ArrayList<>();
     List<SelectionSong> selection = new ArrayList<>();
@@ -23,61 +25,62 @@ public class Model{
     private Ignore ignore;
     private Connection connection;
 
-    /** Server related */
-    private ReadWriteLock rwlock;
-    volatile String input = "";
+    private int userID = -1;
 
-    /** Enum state */
-    boolean[] boolArray;
-
-    private int userID = 1;
+    ResultSet rs = null;
+    Statement state = null;
 
     /**Constructor*/
     public Model() {
-        init();
-    }
-
-    /**Constructor methods*/
-    public void init() {
         try {
             ignore = new Ignore();
             con = ignore.getCon();
             String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
             Class.forName(driver);
-            connection = DriverManager.getConnection(con);
-            boolArray = new boolean[3];
-            boolArray[LOGIN_STATE] = true;
-            DJCommentsData.add("Bob: I love this song!");
-            DJCommentsData.add("Jane: I hate this song!");
+
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    /******Database related *****************************************************************************/
+    /**
+     * Confirms the user's login and password
+     * @param user username
+     * @param pw user password
+     * @return the user ID if it's valid, else return -1
+     */
     public int confirmLogin(String user, String pw){
         try
         {
+            connection = DriverManager.getConnection(con);
             final String query = "SELECT id from UserLogin " +
                 "WHERE userName = '" + user + "' " +
                 "AND password = '" + pw + "'";
 
-            Statement state = connection.createStatement();
-            ResultSet rs = state.executeQuery(query);
+            state = connection.createStatement();
+            rs = state.executeQuery(query);
 
             if (rs.next()) {
                 int id = rs.getInt(1);
                 userID = id;
                 return id;
             }
-                else
-                    return -1;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return -1;
+        finally {
+            try {
+                rs.close();
+            } catch (Exception e) { /* ignored */ }
+            try {
+                state.close();
+            } catch (Exception e) { /* ignored */ }
+            try {
+                connection.close();
+            } catch (Exception e) { /* ignored */ }
+        }
+       return -1;
     }
 
 /**
@@ -88,13 +91,17 @@ public class Model{
  songData VARBINARY(MAX),
  id INT NOT NULL FOREIGN KEY REFERENCES UserLogin1(id)
  */
+
     /**
-     * construct
+     * Compiles a list of SongSelection objects depending on forieng keys matching primary keys in the user login table
      */
     public void initSongs() {
         try
         {
-            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " +Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
+            connection = DriverManager.getConnection(con);
+
+            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = 1";
+                //+Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
 
@@ -107,48 +114,29 @@ public class Model{
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                rs.close();
+            } catch (Exception e) { /* ignored */ }
+            try {
+                state.close();
+            } catch (Exception e) { /* ignored */ }
+            try {
+                connection.close();
+            } catch (Exception e) { /* ignored */ }
         }
     }
 
     /**
-     *
-     * @param index1
-     * @return
-     */
-    public QueueSong createQueueSong(int index1) // enum state 1
-    {
-        try
-        {
-            int songForeignKey = selection.get(index1).getId();
-            final String query = "select data from UserSongs where S_Id = " + Integer.toString(songForeignKey);
-
-            Statement state = connection.createStatement();
-            ResultSet rs = state.executeQuery(query);
-
-            if (rs.next()) {
-                byte[] fileBytes = rs.getBytes(1);
-                //songQueue.add(new QueueSong(selection.get(index1),fileBytes));
-                return new QueueSong(selection.get(index1),fileBytes);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
-    /**
-     *
-     * @param index1
-     * @return
+     * Downloads the necessary bytes for creating an mp3 file
+     * @param index1 The foreign key
+     * @return the bytes for creating an mp3 file
      */
     public byte[] downloadSongBytes(int index1) // enum state 1
     {
         try
         {
-           // int songForeignKey = selection.get(index1).getId();
+            connection = DriverManager.getConnection(con);
             final String query = "select data from UserSongs where S_Id = " + Integer.toString(index1);
 
             Statement state = connection.createStatement();
@@ -166,30 +154,20 @@ public class Model{
         return null;
     }
 
-    /*******Database related *****************************************************************************/
-
     /** Getters and setters*/
-
-    public String getSongInfo(int index) {
-        return selection.get(index).getSong();
-    }
-
     public List<QueueSong> getSongQueue() {return songQueue;}
 
     public List<SelectionSong> getSelection() {return selection;}
 
     public List getDJCommentsData() {return DJCommentsData;}
 
-    public void setBoolArray(int arg,boolean bool) {
-        for(int i=0;i<3;i++)
-            boolArray[i] = false;
-
-        this.boolArray[arg] = bool;
-    }
-
     public void setUserID(int userID) {userID = userID;}
 
-    /***********************SERVER CODE ********************************************************/
+
+    /**
+     * Returns the JSON of the song selection list
+     * @return Returns the JSON of the song selection list
+     */
     public String songSelectionToJson(){
         ArrayList<SongBean> beanList = new ArrayList();
         for(int i =0; i<selection.size();i++){
@@ -204,6 +182,11 @@ public class Model{
         return  jsonAraay.toString();
     }
 
+
+    /**
+     * Returns the JSON of the song queue list
+     * @return Returns the JSON of the song queue list
+     */
     public String songQueueToJson(){
         ArrayList<SongBean> beanList = new ArrayList();
         for(int i =0; i<songQueue.size();i++){
@@ -218,6 +201,11 @@ public class Model{
         return  jsonAraay.toString();
     }
 
+
+    /**
+     * Returns the JSON of the DJ comments list
+     * @return Returns the JSON of the DJ comments list
+     */
     public String DJCommentToJson(){
         ArrayList<SongBean> beanList = new ArrayList();
         for(int i =0; i<DJCommentsData.size();i++){
@@ -231,16 +219,6 @@ public class Model{
         return  jsonAraay.toString();
     }
 
-    public void clearValuesBeforeLogginOut(){
-        for(int i =0; i<selection.size(); i++)
-            selection.remove(0);
-
-        for(int i =0; i<songQueue.size(); i++)
-            songQueue.remove(0);
-
-        for(int i =0; i<DJCommentsData.size(); i++)
-            DJCommentsData.remove(0);
-    }
 }
 
 

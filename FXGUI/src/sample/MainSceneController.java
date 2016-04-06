@@ -30,6 +30,7 @@ import javafx.scene.media.MediaView;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import model.*;
+import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.UUID;
@@ -37,14 +38,43 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
 
+/***********************
+ * Author: Thomas Flynn
+ * date: 25/04/16
+ **********************/
+
+
+/**
+ * MainSceneController that reacts to the user's interface control by changing the model and displaying that change in the view.
+ *
+ * Features:
+ * 1- Initialise button: Sets up the application for running.
+ * 2- Server button: Enables/disables bluetooth server connection thread using Bluecove for connecting Android application clients.
+ * 3- Song request button: Enables/disables client's ability to request a song.
+ * 4- DJ comment button: Enables/disables client's ability to make a comment to the DJ.
+ * 5- Skip Enable button: Enables/disables client's ability to skip the current song playing.
+ *
+ * 6- Add button: User can select a song to add to the queue.
+ * 7- Play button: Plays/pauses the current song.
+ * 8- Skip button: User can skip the current song.
+ * 9- Volume slider: Adjusts the volume of the song playing.
+ * 10- Time slider: Adjusts the progress of the song playing.
+ * 11- Song progress bar: Displays the progress of the song playing.
+ * 12- Time label: Displays the time left in the song playing.
+ * 13- MediaView displays audio spectrum of the song playing.
+ *
+ * 14- Logout button- Allows the user log out.
+ */
 public class MainSceneController implements Initializable , ControlledScreen {
     Model mainModel;
     ScreensController myController;
     ProcessConnectionThread processThread;
-    Boolean[] boolArray = new Boolean[5];
+    Boolean[] boolArray = new Boolean[3];
     private volatile Thread volatileThread;
     ExecutorService executorService1;
     ExecutorService executorService2;
+    boolean serverStartFlag = false;
+
     private final ReadWriteLock currentPlayerlock = new ReentrantReadWriteLock();
     private final Lock CPReadLock = currentPlayerlock.readLock();
     private final Lock CPWwriteLock = currentPlayerlock.writeLock();
@@ -54,17 +84,16 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private final Lock NPWriteLock = nextPlayerlock.writeLock();
 
     private final ReadWriteLock nextNextPlayerlock = new ReentrantReadWriteLock();
-    private final Lock NNPReadLock = nextNextPlayerlock.readLock();
     private final Lock NNPWwriteLock = nextNextPlayerlock.writeLock();
 
     AtomicInteger queueSizeAtomic = new AtomicInteger();
     volatile MediaPlayer currentPlayer,  nextPlayer, nextNextPlayer;
 
-    @FXML
-    ProgressBar progBar;
+//   @FXML
+//    ProgressBar progBar;
 
-    @FXML
-    ProgressIndicator prog;
+//    @FXML
+//    ProgressIndicator prog;
 
     @FXML
     Button playButton;
@@ -74,9 +103,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @FXML
     Button addbtn;
-
-    @FXML
-    Button removebtn;
 
     @FXML
     ListView queueList;
@@ -103,7 +129,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Slider volumeSlider;
 
     @FXML
-    Button javascript;
+    Button logOutButton;
 
     @FXML
     Button boolRequest;
@@ -115,12 +141,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Button boolSkip;
 
     @FXML
-    Button boolEcho;
-    @FXML
-    Button boolBlob;
-
-    @FXML
-    private Button skipButton; // value will be injected by the FXMLLoader
+    Button skipButton; // value will be injected by the FXMLLoader
 
     @FXML
     Button serverButton;
@@ -135,28 +156,39 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        assert skipButton != null : "fx:id=\"skipButton\" was not injected: check your FXML file 'simple.fxml'.";
-        assert playButton != null;
-        assert prog != null : "songrequest not injected!";
-        assert progBar != null : "songrequest not injected!";
-        assert javascript != null : "songrequest not injected!";
+        setGUIOptions();
+        setCellFactoryForListViews();
+        addMediaViewPropertyListener();
+       // progBar.setProgress(0);
+    }
+
+    /**
+     * for setting GUI properties upon initialization and logging out
+     */
+    public void setGUIOptions(){
+
+        for(int i =0;i<3;i++)
+            boolArray[i] = false;
+
+        boolRequest.setText("OFF");
         boolRequest.setStyle("-fx-background-color:red");
+
+        boolDJComment.setText("OFF");
         boolDJComment.setStyle("-fx-background-color:red");
+
+        boolSkip.setText("OFF");
         boolSkip.setStyle("-fx-background-color:red");
-        boolEcho.setStyle("-fx-background-color:red");
-        boolBlob.setStyle("-fx-background-color:red");
+
         playButton.setStyle("-fx-background-color:red");
         serverButton.setStyle("-fx-background-color:red");
         initbtn.setStyle("-fx-background-color:green");
-        progBar.setProgress(0);
 
-        setCellFactoryForListViews();
-        addMediaViewPropertyListener();
-
-        for(int i =0;i<5;i++)
-            boolArray[i] = false;
     }
 
+
+    /**
+     * The listView cells have to be customized for the individual SelectionSong and QueueSong objects
+     */
     private void setCellFactoryForListViews(){
         songList.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>(){
             @Override
@@ -188,6 +220,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     }
 
+    /**
+     * Add listener for the mediaView which acts as the container for playing songs
+     */
     private void addMediaViewPropertyListener(){
         mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
             @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
@@ -206,9 +241,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 }
             }
         });
+
+        mediaView.getEffect();
     }
 
-    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+    @FXML
     private void testing(){
 
     }
@@ -217,8 +254,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private void removeSong(){}
 
     /**
-     *  sets the currently playing label to the label of the new media player and updates the progress monitor.
-     *  */
+     * sets the currently playing label to the label of the new media player and updates the progress monitor.
+     * @param newPlayer the new player
+     */
     private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
         newPlayer.seek(Duration.ZERO);
 
@@ -234,45 +272,36 @@ public class MainSceneController implements Initializable , ControlledScreen {
         System.out.println("nextPlayer set to progress change listener? \n");
     }
 
-    /*******************MUSIC button methods **************************************************/
+    /**
+     * Grabs the index of the highlighted selection song in the Listview
+     * @param event user presses add song button
+     */
     @FXML
-     private void addSongButtonFunc(ActionEvent event) {
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-                int index1 = songList.getSelectionModel().getSelectedIndex();
-                QueueSong qs1 = new QueueSong(SongSelectionObservableList.get(index1), index1-1);
-                Platform.runLater( () -> {
-                    SongQueueObservableList.add(qs1);
-                });
-                return null;
-            }
-        };
-        progBar.progressProperty().bind(task.progressProperty());
-        //if valid selection
-        if(songList.getSelectionModel().getSelectedIndex()>-1)
-            new Thread(task).start();
-    }
-
-    public void addSongTask(int selectionSongIndex){
-        Task task = new Task<Void>() {
-            @Override public Void call() {
-                    final int index = selectionSongIndex;
-                    if(index >0) {
-                    QueueSong sq0 = mainModel.createQueueSong(index);
-                    Platform.runLater(() -> {
-                        SongQueueObservableList.add(sq0);
-                    });
-                }
-                return null;
-            }
-        };
-        progBar.progressProperty().bind(task.progressProperty());
-        new Thread(task).start();
+     private void addSongButtonFunc(ActionEvent event)
+    {
+        int index = songList.getSelectionModel().getSelectedIndex();
+        addSongTask(index);
     }
 
     /**
-     *
-     * @param event sets up the requirements for running the application that could not be run at compile time due to null pointer exceptions
+     * Creates a light weight QueueSong object by putting the SelectionSong into the QueueSong constructor
+     * @param selectionSongIndex index of selectionSong list
+     */
+    public void addSongTask(int selectionSongIndex)
+    {
+        if(selectionSongIndex != -1) {
+            final int index = selectionSongIndex;
+
+            QueueSong qs0 = new QueueSong(SongSelectionObservableList.get(index), index);
+            Platform.runLater(() -> {
+                SongQueueObservableList.add(qs0);
+            });
+        }
+    }
+
+    /**
+     * Sets up the requirements for running the application that could not be run at compile time due to null pointer exceptions
+     * @param event User initializes the application
      */
     @FXML
     private void init(ActionEvent event)
@@ -280,81 +309,93 @@ public class MainSceneController implements Initializable , ControlledScreen {
         //init button can only be pressed once
         if("-fx-background-color:green".equals(initbtn.getStyle())) {
             initbtn.setStyle("-fx-background-color:red");
-            //this cannot be called in initialize because mainmodel throws a null pointer exception
-            addObservableSongQueueListener();
+            //Listeners cannot be called in initialize because mainmodel throws a null pointer exception
+            addFXObservableListeners();
             addVolumeAndTimeSliderListeners();
+            observableDJComments.addAll("Bob: I love this song!", "Jane: I hate this song!");
+            // create a list of SelectionSong objects from the database
             initSongSelection();
         }
     }
 
-    public void addObservableSongQueueListener()
+
+    /**
+     * Add listeners for the observable song queue and DJ comments list view
+     */
+    public void addFXObservableListeners()
     {
-        SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
-        queueList.setItems(SongQueueObservableList);
+    SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
+    queueList.setItems(SongQueueObservableList);
 
-        observableDJComments =  FXCollections.observableList(mainModel.getDJCommentsData());
+    observableDJComments =  FXCollections.observableList(mainModel.getDJCommentsData());
 
-        dJComments.setItems(observableDJComments);
+    dJComments.setItems(observableDJComments);
 
-        SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
-            public void onChanged(ListChangeListener.Change<? extends QueueSong> change)
-            {
-                while (change.next()) {
-                    if (change.wasUpdated()) {
-                        for (QueueSong qs : change.getList()) {
-                            System.out.println(qs.getSong() + " updated");
-                        }
-                    } else {
-                        for (QueueSong removedSong : change.getRemoved()) {
-                            queueSizeAtomic.decrementAndGet();
-                            songRemovedfileIOFunc(removedSong);
-                        }
+    SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
+        public void onChanged(ListChangeListener.Change<? extends QueueSong> change)
+        {
+            while (change.next()) {
+                if (change.wasUpdated()) {
+                    for (QueueSong qs : change.getList()) {
+                        System.out.println(qs.getSong() + " updated");
+                    }
+                } else {
+                    for (QueueSong removedSong : change.getRemoved()) {
+                        queueSizeAtomic.decrementAndGet();
+                        songRemovedfileIOFunc(removedSong);
+                    }
 
-                        for (QueueSong addedSong : change.getAddedSubList()) {
-                            queueSizeAtomic.incrementAndGet();
-                            songAddedfileIOFunc();
-                        }
+                    for (QueueSong addedSong : change.getAddedSubList()) {
+                        queueSizeAtomic.incrementAndGet();
+                        songAddedfileIOFunc();
+                    }
+                }
+            }
+        }
+    });
+
+    observableDJComments.addListener(new ListChangeListener<String>() {
+        public void onChanged(ListChangeListener.Change<? extends String> change)
+        {
+            while (change.next()) {
+                    for (String comment : change.getAddedSubList()) {
+
                     }
                 }
             }
         });
-
-        observableDJComments.addListener(new ListChangeListener<String>() {
-            public void onChanged(ListChangeListener.Change<? extends String> change)
-            {
-                while (change.next()) {
-                        for (String comment : change.getAddedSubList()) {
-
-                        }
-                    }
-                }
-            });
     }
 
     /**
-     * shifts the media players
+     * Acquire lock for writing to the current player
+     * @param nextPlayer the next player
      */
-    public synchronized void shiftMediaPlayers(MediaPlayer newestPlayer){
-        currentPlayer = nextPlayer;
-        nextPlayer = newestPlayer;
-    }
-
-    public void writeToCurrentPlayer(MediaPlayer newestPlayer){
+    public void writeToCurrentPlayer(MediaPlayer nextPlayer){
         CPWwriteLock.lock();
         try{
-            currentPlayer = newestPlayer;
+            currentPlayer = nextPlayer;
         }finally{
             CPWwriteLock.unlock();
         }
     }
-    public void writeToNextPlayer(MediaPlayer newestPlayer){
+
+    /**
+     * Acquire lock for writing to the nextPlayer
+     * @param nextNextPlayer the nextNextPlayer
+     */
+    public void writeToNextPlayer(MediaPlayer nextNextPlayer){
         NPWriteLock.lock();
         try{
-            nextPlayer = newestPlayer;
+            nextPlayer = nextNextPlayer;
         }finally{
             NPWriteLock.unlock();
         }
     }
+
+    /**
+     * Acquire lock for writing to the nextNextPlayer
+     * @param newestPlayer the newest player
+     */
     public void writeToNextNextPlayer(MediaPlayer newestPlayer){
         NNPWwriteLock.lock();
         try{
@@ -365,14 +406,28 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /**
-     * Everytime a song is added in the queue this function is called. It's operation depends on the state of the song queue
+     * Called any time a song is added to the queue. It's operation depends on the state of the song queue.
+     *
+     * Song added case A:
+     * 1- Write to the current player
+     * 2- Add a special case end of media listener for last song in the queue
+     *
+     * Song added case B:
+     * 1- Write to the next player
+     * 2- Add normal end of media listener to the current player that links current player to the next player
+     *
+     * Song added case C:
+     * 1- Write to the nextNextPlayer
+     * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer
      */
     public void songAddedfileIOFunc(){
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
         try
         {
-            /** Song added case A: */
+            /** Song added case A:
+             * 1- Write to the current player
+             * 2- Add a special case end of media listener for last song in the queue*/
             if (queueSizeAtomic.get() == 1 )
             {
                 int index = SongQueueObservableList.get(0).getAzureForeignKey();
@@ -389,7 +444,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
             }
-            /** Song added case B: */
+            /** Song added case B:
+             * 1- Write to the next player
+             * 2- Add normal end of media listener to the current player that links current player to the next player*/
             else if (queueSizeAtomic.get() == 2)
             {
                 int index = SongQueueObservableList.get(1).getAzureForeignKey();
@@ -398,13 +455,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 Platform.runLater( () ->
                 {
                 writeToNextPlayer(nextSongPlayer);
-               // addAmITheLastSong(currentPlayer);
-                addListenersToNewlyAdded2(currentPlayer, nextPlayer);
+                addEndOfMediaListener(currentPlayer, nextPlayer);
                 });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
             }
-            /** Song added case C: */
+            /** Song added case C:
+             * 1- Write to the nextNextPlayer
+             * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer*/
             else if (queueSizeAtomic.get() == 3)
             {
                 int index = SongQueueObservableList.get(2).getAzureForeignKey();
@@ -413,8 +471,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 Platform.runLater( () ->
                 {
                 writeToNextNextPlayer(nextSongPlayer);
-               // addAmITheLastSong(currentPlayer);
-                addListenersToNewlyAdded2(nextPlayer, nextSongPlayer);
+                addEndOfMediaListener(nextPlayer, nextSongPlayer);
                 });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
@@ -429,28 +486,57 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
-    /** Called any time a song gets removed. It's operation depends on the state of the song queue*/
+    /**
+     * Called any time a song is removed from the queue. It's operation depends on the state of the song queue.
+     *
+     * Remove case A: song removed and no next song available.
+     * 1- Delete the file associated with the song removed.
+     *
+     * Remove case B: song removed and no next song available.
+     * 1- Add am I the last song listener to the current player.
+     * 2- Delete the file associated with the song removed.
+     *
+     * Remove case C: song removed and no next song available.
+     * 1- Delete the file associated with the song removed.
+     *
+     * Remove case D: song removed and Queue is greater than 2
+     * 1- Check the next next song in the queue to see if it has created a media player for itself
+     * 2- Executor service future creates the file required for the nextNextPlayer and returns a mediaPlayer object
+     * 3- While future is running, delete the file associated with the song removed
+     * 4- Get the future MediaPlayer and add end of media Player to it
+     * 5- Write the future MediaPlayer to the nextNextPlayer
+     *
+     * @param removedSong the song that has just end or skipped.
+     */
     public void songRemovedfileIOFunc(QueueSong removedSong){
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
         try
         {
+            /** Remove case A: song removed and no next song available
+             * 1- Delete the file associated with the song removed*/
             if (queueSizeAtomic.get() == 0){
-               // writeToCurrentPlayer(nextNextPlayer);
-               // addAmITheLastSong(currentPlayer);
                 deleteRemovedSongFile(removedSong.getSong());
             }
-            /** Remove case A: song removed and no next song available*/
+            /** Remove case B: song removed and no next song available
+             * 1- Add am I the last song listener to the current player
+             * 2- Delete the file associated with the song removed*/
             else if (queueSizeAtomic.get() == 1){
                 addAmITheLastSong(currentPlayer);
                 deleteRemovedSongFile(removedSong.getSong());
             }
-            /** Remove case A: song removed and no next song available*/
+            /** Remove case C: song removed and no next song available
+             * 1- Delete the file associated with the song removed*/
             else if (queueSizeAtomic.get() == 2){
                 deleteRemovedSongFile(removedSong.getSong());
             }
 
-            /** Remove case B: song removed and Queue is greater than 2 */
+            /** Remove case D: song removed and Queue is greater than 2
+             * 1- Check the next next song in the queue to see if it has created a media player for itself
+             * 2- Executor service future creates the file required for the nextNextPlayer and returns a mediaPlayer object
+             * 3- While future is running, delete the file associated with the song removed
+             * 4- Get the future MediaPlayer and add end of media Player to it
+             * 5- Write the future MediaPlayer to the nextNextPlayer*/
             else if (queueSizeAtomic.get() > 2)
             {
                 if(! SongQueueObservableList.get(2).getPreparedBool())
@@ -464,7 +550,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     writeToNextPlayer(nextNextPlayer);
 
                     MediaPlayer newNextNextPlayer = futureMediaPlayer.get();
-                    addListenersToNewlyAdded2(nextPlayer,newNextNextPlayer);
+                    addEndOfMediaListener(nextPlayer, newNextNextPlayer);
                     Platform.runLater( () ->
                     {
                         writeToNextNextPlayer(newNextNextPlayer);
@@ -476,6 +562,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
+    /**
+     * Deletes the file associated with the last song played
+     * @param songName name of the file
+     */
     public void deleteRemovedSongFile(String songName) {
         String filePath = "C:\\test\\"+songName+".mp3";
         File file = new File(filePath);
@@ -497,10 +587,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
+
     /**
-     * Called after future returns a MediaPlayer object
-     * adds an end of media listener */
-    private void addListenersToNewlyAdded2(MediaPlayer link1, MediaPlayer link2){
+     * Called after future returns a MediaPlayer object.
+     * Adds an end of media listener to the mediaPlayer.
+     * @param link1 the mediaPlayer that receives the end of media listener
+     * @param link2 the mediaPlayer that link1 goes to when it end's
+     */
+    private void addEndOfMediaListener(MediaPlayer link1, MediaPlayer link2){
         final MediaPlayer link1Final = link1;
         final MediaPlayer link2Final = link2;
         link1Final.setOnEndOfMedia(() ->
@@ -509,16 +603,20 @@ public class MainSceneController implements Initializable , ControlledScreen {
             link1Final.stop();
             link1Final.dispose();//release file stream link
 
-            /** Remove case B: next song available*/
             if(queueSizeAtomic.get()>1)
             {
                 Platform.runLater( () -> {
+                    //mediaView listener will be triggered which will remove it's old player in place for the new player
                     mediaView.setMediaPlayer(link2Final);
                 });
             }
         });
     }
 
+    /**
+     * Special case end of media listener for the last song in the queue
+     * @param link1 the last song in the queue
+     */
     private void addAmITheLastSong(MediaPlayer link1){
         final MediaPlayer link1Final = link1;
         link1Final.setOnEndOfMedia(() ->
@@ -527,18 +625,25 @@ public class MainSceneController implements Initializable , ControlledScreen {
             link1Final.stop();
             link1Final.dispose();//release file stream link
 
-            /** Remove case B: next song available*/
+            /** Remove case D: next song available
+             *  OR
+             *  Add case A: first song in the queue*/
             if(queueSizeAtomic.get()==1)
             {
                 Platform.runLater( () -> {
+                    //remove file association for deletion
                     mediaView.getMediaPlayer().dispose();
                     timeLabel.setText(null);
+                    //triggers remove case A: just delete the removed song
                     SongQueueObservableList.remove(0);
                 });
             }
         });
     }
 
+    /**
+     * adds Volume and Time Slider Listeners for the GUI controls
+     */
     public void addVolumeAndTimeSliderListeners(){
         Platform.runLater( () -> {
             timeSlider.valueProperty().addListener(new InvalidationListener() {
@@ -562,6 +667,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
         });
     }
 
+    /**
+     * Initialize the song selection listview with songs from the database
+     */
     public void initSongSelection(){
         Task task = new Task<Void>()
         {
@@ -579,30 +687,53 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 return null;
             }
         };
-        progBar.progressProperty().bind(task.progressProperty());
         new Thread(task).start();
     }
 
+    /**
+     * Logs the user out.
+     * @param event User hits the button to log out
+     */
     @FXML
-    private void goToScreen1(ActionEvent event) {
+    private void logOut(ActionEvent event) {
         synchronized(this) {
             Platform.runLater( () -> {
                 initbtn.setStyle("-fx-background-color:green");
                 System.out.println("removing everything");
                 mediaView.getMediaPlayer().stop();
                 mediaView.getMediaPlayer().dispose();
-               // deleteRemovedSongFile(SongQueueObservableList.get(0).getSong());
-                clearValuesBeforeLogginOut();
-                myController.setScreen(MusicHostFramework.screen1ID);
             });
 
+            Task task = new Task<Void>()
+            {
+                @Override public Void call() {
+                    try
+                    {
+                        deleteRemovedSongFile(SongQueueObservableList.get(0).getSong());
+                        clearValuesBeforeLogginOut();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                }
+            };
+            new Thread(task).start();
+
+            Platform.runLater( () -> {
+                myController.setScreen(MusicHostFramework.screen1ID);
+            });
         }
     }
 
+    /**
+     * clears GUI and model values before loggin out
+     */
     public void clearValuesBeforeLogginOut(){
-        stopServer();
-        timeLabel.setText("");
-        setBoolOptionButtons();
+
+       if(serverStartFlag == true)
+            stopServer();
+
+
         synchronized(this) {
             for (int i = 0; i < SongSelectionObservableList.size(); i++) {
                 Platform.runLater( () -> {
@@ -621,24 +752,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
             SongQueueObservableList.remove(0);
             });
         }
+
+        Platform.runLater( () -> {
+            timeLabel.setText("");
+            setGUIOptions();
+        });
+
     }
 
-    public void setBoolOptionButtons(){
-        boolRequest.setText("OFF");
-        boolRequest.setStyle("-fx-background-color:red");
 
-        boolDJComment.setText("OFF");
-        boolDJComment.setStyle("-fx-background-color:red");
-
-        boolSkip.setText("OFF");
-        boolSkip.setStyle("-fx-background-color:red");
-
-        boolEcho.setText("OFF");
-        boolEcho.setStyle("-fx-background-color:red");
-
-        boolBlob.setText("OFF");
-        boolBlob.setStyle("-fx-background-color:red");
-    }
 
     @FXML
     private void goToScreen3(ActionEvent event){
@@ -658,7 +780,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
             });
 
         } else if (queueSizeAtomic.get()>0){
-            /********************************* song 0 requires read access ***********/
             mediaView.setMediaPlayer(currentPlayer);
             mediaView.getMediaPlayer().play();
             playButton.setText("Pause");
@@ -688,18 +809,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
-    //interface injection of screenParent and main model for songs and DB
+    /**
+     * Interface injection of screenParent and main model for songs and DB
+     * @param screenParent set the current screen parent
+     * @param model set the reference to the model object
+     */
     public void setScreenParent(ScreensController screenParent, Model model){
         myController = screenParent;
         mainModel = model;
     }
-
-    public void stopServer(){
-        volatileThread = null;
-    }
-/**********************************************************************************************************************/
-
-    /**********************************************************************************************************************/
 
     /**
      * Start's the bluetooth server communicating with the android client
@@ -712,10 +830,32 @@ public class MainSceneController implements Initializable , ControlledScreen {
             serverButton.setText("OFF");
             stopServer();
         }
-        else{
+        else if(serverStartFlag==false && "OFF".equals(serverButton.getText())){
             serverButton.setStyle("-fx-background-color:green");
             serverButton.setText("ON");
             startServer();
+        }
+        else if("OFF".equals(serverButton.getText())){
+            try {
+                LocalDevice local = LocalDevice.getLocalDevice();
+                local.setDiscoverable(DiscoveryAgent.GIAC);
+            } catch (BluetoothStateException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /**
+     * Sets local bluetooth device not_discoverable
+     */
+    public void stopServer(){
+
+        try {
+            LocalDevice local = LocalDevice.getLocalDevice();
+            local.setDiscoverable(DiscoveryAgent.NOT_DISCOVERABLE);
+        } catch (BluetoothStateException e) {
+            e.printStackTrace();
         }
     }
 
@@ -723,7 +863,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Function called from the start server button
      */
     public void startServer() {
-        /*****************************/
         executorService1 = Executors.newSingleThreadExecutor();
         executorService1.submit(() ->
         {
@@ -755,7 +894,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
                     try {
                         executorService2.shutdown();
-                        executorService2.awaitTermination(20, TimeUnit.SECONDS);
+                        //time allocated for the android client to make a choice
+                        executorService2.awaitTermination(30, TimeUnit.SECONDS);
                     } catch (InterruptedException e) {
                         System.err.println("exec 2 tasks interrupted");
                     } finally {
@@ -798,16 +938,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private volatile Thread volatileThread;
     DataInputStream dataInputStream;
     DataOutputStream dataOutputStream;
+
     /**
      * Communication protocol CONSTANTS
      * */
+    final int OPTIONS = 0;
     final int SONG_SELECT = 1;
     final int SONG_SELECTED = 2;
     final int DJ_COMMENT = 3;
     final int SKIP_SONG  = 4;
-    final int ECHO_SHARED_PREF_SONGS = 5;
-    final int REMOTE_SELECT = 6;
-    final int WANT_END = 7;
 
     /** Constructor */
     public ProcessConnectionThread(StreamConnection connection)
@@ -815,6 +954,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         mConnection = connection;
     }
 
+        /** Runnable*/
         @Override
         public void run() {
             volatileThread = Thread.currentThread();
@@ -826,10 +966,9 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 dataInputStream = new DataInputStream(mConnection.openInputStream());
                 dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
                 int whatToDo = dataInputStream.readInt();
-                System.out.print("\nread  " + whatToDo);
+
                 thisThread.sleep(300);
                 if (dataInputStream.available() > 0) {
-                    System.out.print("\ninit data available  " + whatToDo);
                     WhatToDoFunc(whatToDo);
                 }
                 while (volatileThread == thisThread) {
@@ -839,9 +978,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         if (dataInputStream.available() > 0) {
                             whatToDo = dataInputStream.readInt();
                             // if readint is outside of com protocol
-                            if (whatToDo > 6)
+                            if (whatToDo > 4)
                                 whatToDo = -1;
-                            System.out.print("\n# data available  = " + whatToDo);
                         }
                         thisThread.sleep(100);
                         if (dataInputStream.available() > 0) {
@@ -861,69 +999,47 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         }
 
                     } catch (InterruptedException e) {
-                        System.out.print("\nexited through here callable interrupted");
-                        //  Thread.currentThread().interrupt();
-                    } finally {
-//                    dataInputStream.close();
-//                    dataOutputStream.close();
-//                    mConnection.close();
+
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return ;
+            return;
         }
 
+
+    /**
+     * Determines what functions should execute depending on the read int value from the connection thread
+     * @param whatToDo the read int value for the switch statement
+     */
     public synchronized void WhatToDoFunc(int whatToDo)
     {
         switch(whatToDo)
         {
-            case 0:
-                send0(recv0());
+            case OPTIONS:
+                AvailableOptionsTx(AvailableOptionsRx());
                 break;
             case SONG_SELECT:
-                send1(recv1());
+                SongSelectionTx(SongSelectionRx());
                 break;
             case SONG_SELECTED:
-                send2(recv2());
-               // myStop();
+                SongSelectedTx(SongSelectedRx());
                 break;
             case DJ_COMMENT:
-                System.out.print("\n got 3");
-                send3(recv3());
+                DJCommentTx(DJCommentRx());
                 break;
             case SKIP_SONG:
-                System.out.print("\n got 4");
-                recv4();
-                send4();
-                break;
-            case ECHO_SHARED_PREF_SONGS:
-                System.out.print("\n got 5");
-                String msg5 = procInput();
-                if(msg5!=null)
-                    ControllerEchoSharedPreferencesSongs(msg5);
-                sendMessageByBluetooth("response 5", 5);
-                break;
-            case 6:
-                System.out.print("\n got 6");
-                String msg6 = procInput();
-                if(msg6!=null)
-                    sendMessageByBluetooth("response 6",6);
-                break;
-            case 7:
-                System.out.print("\n got 7");
-                procInput();
-                sendMessageByBluetooth("response 7",7);
-                break;
-            case 8:
-                System.out.print("\n got 8");
-                procInput();
-                sendMessageByBluetooth("response 8",8);
+                SkipSongRx();
+                SkipSongTX();
                 break;
         }
     }
 
+    /**
+     * Reads data input stream
+     * @return Returns information read from the data input stream
+     */
     public synchronized String procInput(){
         try {
             byte[] msg = new byte[dataInputStream.available()];
@@ -936,7 +1052,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
         return null;
     }
 
-    public synchronized boolean sendMessageByBluetooth(String msg,int whatToDo)
+    /**
+     * Communication interface for transmission through the data output stream
+     * @param msg The message to send
+     * @param whatToDo What the receiver should do with the message
+     * @return
+     */
+    @Override
+    public boolean sendMessageByBluetooth(String msg,int whatToDo)
     {
         try
         {
@@ -945,7 +1068,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 dataOutputStream.flush();
                 dataOutputStream.write(msg.getBytes());
                 dataOutputStream.flush();
-                System.out.print("sending here: " + msg);
                 return true;
             }else{
                 return false;
@@ -955,68 +1077,58 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
-        /**
-         * searches selection for a match
-         * */
-        public void searchSelectionForMatch(String songToSearch){
-            //java 8 stream API replacement of for each
-            int [] indices = IntStream.range(0, SongSelectionObservableList.size())
-                .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
-                .toArray();
+    /**
+     * searches selection for a match using java 8 stream API replacement of for each
+     * @param songToSearch string of song to search
+     * @return the index of the matching song
+     */
+    public int searchSelectionForMatch(String songToSearch){
+        //java 8 stream API replacement of for each
+        int [] indices = IntStream.range(0, SongSelectionObservableList.size())
+            .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
+            .toArray();
 
-            if(indices.length == 1)
-            {
-                addSongTask(indices[0]);
-            }
+        if(indices.length == 1)
+        {
+            return indices[0];
         }
+        return -1;
+    }
 
-        public int searchQueueForMatch(String songToSearch){
-            //java 8 stream API replacement of for each
-            int [] indices = IntStream.range(0, SongSelectionObservableList.size())
-                .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
-                .toArray();
 
-            if(indices.length == 1)
-            {
-                return indices[0];
-            }
-            else
-                return -1;
+    /**
+     * searches song queue for a match using java 8 stream API replacement of for each
+     * @param songToSearch string of song to search
+     * @return the index of the matching song
+     */
+    public int searchQueueForMatch(String songToSearch)
+    {
+        //java 8 stream API replacement of for each
+        int [] indices = IntStream.range(0, SongSelectionObservableList.size())
+            .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
+            .toArray();
+
+        if(indices.length == 1)
+        {
+            return indices[0];
         }
+        else
+            return -1;
+    }
 
-        public synchronized void ControllerGetSongs(){
-            Platform.runLater(() -> {
-                System.out.print("\n ControllerGetSongs\n");
-            });
-        }
+    /**
+     *
+     * @param song song selected by android client
+     */
+    public synchronized void ControllerAddSong(String song){
 
-        /**
-         *
-         * @param song song selected by android client
-         */
-        public synchronized void ControllerAddSong(String song){
-            Platform.runLater(() -> {
-                searchSelectionForMatch(song);
-            });
-        }
-
-        /**
-         *
-         * @param DJComment The DJ comment from the android client
-         */
-        public synchronized void ControllerGetDJComments(String DJComment){
-            Platform.runLater(() -> {
-                observableDJComments.add(DJComment);
-            });
-        }
-
-
+    }
 
     /**
      * Send options selecting to client
      */
     @Override
-    public void send0(String msg) {
+    public void AvailableOptionsTx(String msg) {
         System.out.print(msg);
         sendMessageByBluetooth(msg, 0);
     }
@@ -1025,7 +1137,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Received a Music Host Client
      */
     @Override
-    public String recv0() {
+    public String AvailableOptionsRx() {
         String strings = Arrays.toString(boolArray);
         System.out.print(strings);
         return strings;
@@ -1034,7 +1146,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Send song selecting to client
      */
     @Override
-    public void send1(String msg) {
+    public void SongSelectionTx(String msg) {
         String selectionAndQueue = mainModel.songSelectionToJson() + '&' + mainModel.songQueueToJson();
         sendMessageByBluetooth(selectionAndQueue, 1);
     }
@@ -1043,7 +1155,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Received view song selection request from client
      */
     @Override
-    public String recv1() {
+    public String SongSelectionRx() {
         return procInput();
     }
 
@@ -1051,7 +1163,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Send song request ok to client
      */
     @Override
-    public void send2(String msg) {
+    public void SongSelectedTx(String msg) {
         sendMessageByBluetooth("The song " + msg + " has been added to the queue", 2);
     }
 
@@ -1059,20 +1171,22 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Received selected song from client
      */
     @Override
-    public String recv2() {
-        String msg2 = procInput();
-        if(msg2!=null) {
-            //if( ControllerAddSong(msg2))-> return msg, else return "bad"
-            ControllerAddSong(msg2);
+    public String SongSelectedRx() {
+        String song = procInput();
+        if(song!=null) {
+            Platform.runLater(() -> {
+                searchSelectionForMatch(song);
+                addSongTask(searchSelectionForMatch(song));
+            });
         }
-        return msg2;
+        return song;
     }
 
     /**
      * Send song DJ comment history to client
      */
     @Override
-    public void send3(String msg) {
+    public void DJCommentTx(String msg) {
         Platform.runLater( () -> {
             observableDJComments.add(msg);
             String selectionAndQueue = mainModel.DJCommentToJson() + '&' + mainModel.songQueueToJson();
@@ -1084,7 +1198,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Received DJ comment from client
      */
     @Override
-    public String recv3() {
+    public String DJCommentRx() {
         return procInput();
     }
 
@@ -1092,7 +1206,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Send skip ok to client
      */
     @Override
-    public void send4() {
+    public void SkipSongTX() {
             Platform.runLater( () -> {
                 String DJCommentsAndQueue = mainModel.DJCommentToJson() + '&' + mainModel.songQueueToJson();
                 sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
@@ -1103,88 +1217,17 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Received skip request from client
      */
     @Override
-    public void recv4() {
+    public void SkipSongRx() {
         Platform.runLater( () -> {
             if(SongQueueObservableList.get(0).decrementAndGetVotes()==0)
                 iSkip();
         });
     }
-
-    /**
-     * Send songs that echoed with my selection to client
-     */
-    @Override
-    public void send5() {
-
-    }
-
-    /**
-     * Received shared preferences songs from client
-     */
-    @Override
-    public void recv5() {
-
-    }
-
-    public synchronized void ControllerEchoSharedPreferencesSongs(String songs) {
-        Platform.runLater(() -> {
-            System.out.print("\n test 5");
-            iSkip();
-        });
-    }
-
-    /**
-     * Send send blob service to client
-     */
-    @Override
-    public void send6() {
-
-    }
-
-    /**
-     * Received song blob service song string from client
-     */
-    @Override
-    public void recv6() {
-
-    }
-
-    /**
-     * Send repeat song ok to client
-     */
-    @Override
-    public void send7() {
-
-    }
-
-    /**
-     * Received repeat song select from client
-     */
-    @Override
-    public void recv7() {
-
-    }
-
-    /**
-     * Send end repeat song select ok to client
-     */
-    @Override
-    public void send8() {
-
-    }
-
-    /**
-     * Received end repeat song select from client
-     */
-    @Override
-    public void recv8() {
-
-    }
 }//end connection thread class
 
     /** Boolean button for song request option*/
     @FXML
-    private void setBool1(){
+    private void setSongRequestBool(){
         if ("ON".equals(boolRequest.getText())) {
             boolRequest.setStyle("-fx-background-color:red");
             boolRequest.setText("OFF");
@@ -1198,7 +1241,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     /** Boolean button for DJ comment option*/
     @FXML
-    private void setBool2(){
+    private void setDJCommentBool(){
         if ("ON".equals(boolDJComment.getText())) {
             boolDJComment.setStyle("-fx-background-color:red");
             boolDJComment.setText("OFF");
@@ -1212,7 +1255,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     /** Boolean button for skip song option*/
     @FXML
-    private void setBool3(){
+    private void setSkipSongBool(){
         if ("ON".equals(boolSkip.getText())) {
             boolSkip.setStyle("-fx-background-color:red");
             boolSkip.setText("OFF");
@@ -1221,34 +1264,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
             boolSkip.setStyle("-fx-background-color:green");
             boolSkip.setText("ON");
             boolArray[2] = true;
-        }
-    }
-
-    /** Boolean button for shared preferences echo option*/
-    @FXML
-    private void setBool4(){
-        if ("ON".equals(boolEcho.getText())) {
-            boolEcho.setStyle("-fx-background-color:red");
-            boolEcho.setText("OFF");
-            boolArray[3] = false;
-        } else {
-            boolEcho.setStyle("-fx-background-color:green");
-            boolEcho.setText("ON");
-            boolArray[3] = true;
-        }
-    }
-
-    /** Boolean button for skip song option for remote control feature*/
-    @FXML
-    private void setBool5(){
-        if ("ON".equals(boolBlob.getText())) {
-            boolBlob.setStyle("-fx-background-color:red");
-            boolBlob.setText("OFF");
-            boolArray[4] = false;
-        } else {
-            boolBlob.setStyle("-fx-background-color:green");
-            boolBlob.setText("ON");
-            boolArray[4] = true;
         }
     }
 

@@ -52,28 +52,36 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="724.0" prefWidth="1426.0" style="-fx-background-color: deepskyblue;" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
+<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="599.0" prefWidth="1021.0" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
     <children>
+        <HBox alignment="CENTER" layoutX="250.0" layoutY="336.0" spacing="20.0">
+            <children>
+                <Label id="loginTextID" text="Login">
+                    <font>
+                        <Font size="36.0" />
+                    </font>
+                    <effect>
+                        <Glow />
+                    </effect>
+                </Label>
+                <HBox />
+                <TextField fx:id="userLogin" prefHeight="19.0" prefWidth="110.0" />
+                <PasswordField fx:id="passwordField" promptText="Password" />
+                <Button mnemonicParsing="false" onAction="#goToScreen2" text="Login" />
+            </children>
+            <effect>
+                <Glow level="0.46" />
+            </effect>
+        </HBox>
         <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="236.0" layoutY="284.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
             <font>
                 <Font size="18.0" />
             </font>
         </Label>
-        <Label id="MusicHostLabel" contentDisplay="CENTER" layoutX="474.0" layoutY="186.0" prefHeight="112.0" prefWidth="430.0" text="Music Host " textAlignment="JUSTIFY">
+        <Label id="MusicHostLabel" contentDisplay="CENTER" layoutX="471.0" layoutY="154.0" prefHeight="72.0" prefWidth="285.0" text="Music Host " textAlignment="JUSTIFY">
             <font>
-                <Font size="96.0" />
+                <Font size="48.0" />
             </font>
         </Label>
-          <Label id="loginTextID" layoutX="434.0" layoutY="377.0" text="Login">
-              <font>
-                  <Font size="36.0" />
-              </font>
-              <effect>
-                  <Glow />
-              </effect>
-          </Label>
-          <TextField fx:id="userLogin" layoutX="553.0" layoutY="383.0" prefHeight="35.0" prefWidth="136.0" />
-          <PasswordField fx:id="passwordField" layoutX="706.0" layoutY="383.0" prefHeight="35.0" prefWidth="142.0" promptText="Password" />
-          <Button layoutX="871.0" layoutY="387.0" mnemonicParsing="false" onAction="#goToScreen2" prefHeight="27.0" prefWidth="45.0" text="Login" />
     </children>
 </AnchorPane>

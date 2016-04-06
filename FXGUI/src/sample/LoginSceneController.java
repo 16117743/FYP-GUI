@@ -78,7 +78,6 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         int check = mainModel.confirmLogin(user,pw);
         if(check!=-1){
             mainModel.setUserID(check);
-            mainModel.setBoolArray(MAIN_STATE,true);
             return true;
         }
         else

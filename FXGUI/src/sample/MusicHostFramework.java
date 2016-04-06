@@ -21,13 +21,8 @@ public class MusicHostFramework extends Application {
         mainContainer.loadScreen(MusicHostFramework.screen1ID, MusicHostFramework.screen1File);
 
         mainContainer.loadScreen(MusicHostFramework.screen2ID, MusicHostFramework.screen2File);
-//        mainContainer.setBrowser(MusicHostFramework.screen2ID, MusicHostFramework.screen2File );
-
-        mainContainer.loadScreen(MusicHostFramework.screen3ID, MusicHostFramework.screen3File);
         
         mainContainer.setScreen(MusicHostFramework.screen1ID);
-
-        //mainContrainer.setBrowser(MusicHostFramework.screen2ID, myBrowser = new MyBrowser());
 
         Group root = new Group();//Constructs a group consisting of children.
         root.getChildren().addAll(mainContainer);/*Gets the list of children of this {Group}. return the list of children of this {Group}.*/

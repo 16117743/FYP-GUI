@@ -65,7 +65,7 @@ private int songSelectionIndex;
         this.artist = selectionSong.getArtist();
         this.votes.set(2);
         this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
-        this.songSelectionIndex = songSelectionIndex + 1;
+        this.songSelectionIndex = songSelectionIndex;
         this.preparedBool = false;
     }
 

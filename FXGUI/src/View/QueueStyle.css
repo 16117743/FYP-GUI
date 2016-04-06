@@ -1,0 +1,14 @@
+.list-view {
+    -fx-background-color: deepskyblue;
+    -fx-text-fill: rgb(214, 000, 214);
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: orangered;
+    -fx-text-fill: rgb(000, 000, 000);
+}
+
+.list-cell {
+    -fx-background-color: gold;
+    -fx-text-fill: rgb(214, 000, 214);
+}
