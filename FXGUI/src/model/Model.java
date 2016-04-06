@@ -6,6 +6,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /***********************
  * Author: Thomas Flynn
  * date: 25/04/16
@@ -21,17 +22,10 @@ public class Model{
     List <String> DJCommentsData = new ArrayList<>();
 
     /** Azure DB related*/
-    private String con;
+    private String connectionString;
     private Ignore ignore;
     private Connection connection;
-
-    public int userID;
-
-    private String test = new String("");
-
-
-
-
+    public int userID = -1;
     ResultSet rs = null;
     Statement state = null;
 
@@ -39,12 +33,10 @@ public class Model{
     public Model() {
         try {
             ignore = new Ignore();
-            con = ignore.getCon();
+            //get the connection String from the class that's git ignored
+            connectionString = ignore.getCon();
             String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
             Class.forName(driver);
-
-            test = "testing model";
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -59,7 +51,7 @@ public class Model{
     public int confirmLogin(String user, String pw){
         try
         {
-            connection = DriverManager.getConnection(con);
+            connection = DriverManager.getConnection(connectionString);
             final String query = "SELECT id from UserLogin " +
                 "WHERE userName = '" + user + "' " +
                 "AND password = '" + pw + "'";
@@ -102,26 +94,31 @@ public class Model{
     /**
      * Compiles a list of SongSelection objects depending on forieng keys matching primary keys in the user login table
      */
-    public void initSongs() {
+    public void initSongs()
+    {
         try
         {
-            connection = DriverManager.getConnection(con);
-
-            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " +Integer.toString(userID);
-                //+Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
-            Statement state = connection.createStatement();
-            ResultSet rs = state.executeQuery(query);
-
-            while (rs.next())
+            if (userID != -1)
             {
-                int sid = rs.getInt(1);
-                String songTitle = rs.getString(2);
-                String songArtist = rs.getString(3);
-                selection.add(new SelectionSong(songTitle,songArtist, sid));
-            }
-        } catch (Exception e) {
+                connection = DriverManager.getConnection(connectionString);
+
+                final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " + Integer.toString(userID);
+                //+Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
+                Statement state = connection.createStatement();
+                ResultSet rs = state.executeQuery(query);
+
+                while (rs.next())
+                {
+                    int sid = rs.getInt(1);
+                    String songTitle = rs.getString(2);
+                    String songArtist = rs.getString(3);
+                    selection.add(new SelectionSong(songTitle, songArtist, sid));
+                }
+            }//end if
+        }//end try
+        catch(Exception e){
             e.printStackTrace();
-        } finally {
+        }finally{
             try {
                 rs.close();
             } catch (Exception e) { /* ignored */ }
@@ -143,7 +140,7 @@ public class Model{
     {
         try
         {
-            connection = DriverManager.getConnection(con);
+            connection = DriverManager.getConnection(connectionString);
             final String query = "select data from UserSongs where S_Id = " + Integer.toString(index1);
 
             Statement state = connection.createStatement();
@@ -160,25 +157,6 @@ public class Model{
         }
         return null;
     }
-
-    /** Getters and setters*/
-    public List<QueueSong> getSongQueue() {return songQueue;}
-
-    public List<SelectionSong> getSelection() {return selection;}
-
-    public List getDJCommentsData() {return DJCommentsData;}
-
-    public void setUserID(int userID) {this.userID = userID;}
-
-
-public String getTest() {
-    return test;
-}
-
-public void setTest(String test) {
-    this.test = test;
-}
-
 
     /**
      * Returns the JSON of the song selection list
@@ -233,6 +211,23 @@ public void setTest(String test) {
         JSONArray jsonAraay = new JSONArray(beanList);
 
         return  jsonAraay.toString();
+    }
+
+    /** Getters and setters*/
+    public List<QueueSong> getSongQueue() {return songQueue;}
+
+    public List<SelectionSong> getSelection() {return selection;}
+
+    public List getDJCommentsData() {return DJCommentsData;}
+
+    public void setUserID(int userID) {this.userID = userID;}
+
+    public int getUserID() {return userID;}
+
+    public void clearValuesBeforeLoggingOut(){
+        songQueue.clear();
+        selection.clear();
+        DJCommentsData.clear();
     }
 
 }

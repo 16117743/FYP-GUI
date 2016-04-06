@@ -44,7 +44,7 @@ import javax.microedition.io.StreamConnectionNotifier;
  **********************/
 
 /**
- * MainSceneController that reacts to the user's interface control by changing the model and displaying that change in the view.
+ * MainSceneController that reacts to the UI control by changing the model and displaying that change in this controller's  view.
  *
  * Features:
  * 1- Initialise button: Sets up the application for running.
@@ -64,8 +64,8 @@ import javax.microedition.io.StreamConnectionNotifier;
  *
  * 14- Logout button- Allows the user log out.
  */
+
 public class MainSceneController implements Initializable , ControlledScreen {
-    Model mainModel;
     ScreensController myController;
     ProcessConnectionThread processThread;
     Boolean[] boolArray = new Boolean[3];
@@ -173,16 +173,31 @@ public class MainSceneController implements Initializable , ControlledScreen {
         boolRequest.setText("OFF");
         boolRequest.setStyle("-fx-background-color:red");
 
+        boolRequest.setTooltip(new Tooltip("Enable/Disable Android Song Requests"));
+
         boolDJComment.setText("OFF");
         boolDJComment.setStyle("-fx-background-color:red");
+
+        boolDJComment.setTooltip(new Tooltip("Enable/Disable Android DJ comments"));
 
         boolSkip.setText("OFF");
         boolSkip.setStyle("-fx-background-color:red");
 
-        playButton.setStyle("-fx-background-color:red");
-        serverButton.setStyle("-fx-background-color:red");
-        initbtn.setStyle("-fx-background-color:green");
+        boolSkip.setTooltip(new Tooltip("Enable/Disable Android skip song votes"));
 
+        skipButton.setStyle("-fx-background-color:deeppink");
+        skipButton.setTooltip(new Tooltip("Skip a Song"));
+
+        playButton.setStyle("-fx-background-color:darkred");
+
+        playButton.setTooltip(new Tooltip("Play/Pause Song"));
+
+        serverButton.setStyle("-fx-background-color:red");
+
+        serverButton.setTooltip(new Tooltip("Enable/Disable Bluetooth server for Android Clients"));
+
+        initbtn.setStyle("-fx-background-color:green");
+        initbtn.setTooltip(new Tooltip("Initialize the application"));
     }
 
     /**
@@ -348,10 +363,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void init(ActionEvent event)
     {
+//        System.out.println("num" + myController.getUserID());
+//        myController.setUserID(1);
+//        System.out.println("num" + myController.getUserID());
+
         //init button can only be pressed once
         if("-fx-background-color:green".equals(initbtn.getStyle())) {
             initbtn.setStyle("-fx-background-color:red");
-            //Listeners cannot be called in initialize because mainmodel throws a null pointer exception
+            //Listeners cannot be called in initialize because myController throws a null pointer exception
             addFXObservableListeners();
             addVolumeAndTimeSliderListeners();
             observableDJComments.addAll("Bob: I love this song!", "Jane: I hate this song!");
@@ -365,10 +384,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void addFXObservableListeners()
     {
-    SongQueueObservableList = FXCollections.observableList(mainModel.getSongQueue());
+    SongQueueObservableList = FXCollections.observableList(myController.getSongQueue());
     queueList.setItems(SongQueueObservableList);
 
-    observableDJComments =  FXCollections.observableList(mainModel.getDJCommentsData());
+    observableDJComments =  FXCollections.observableList(myController.getDJCommentsData());
 
     dJComments.setItems(observableDJComments);
 
@@ -459,7 +478,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
             if (queueSizeAtomic.get() == 1 )
             {
                 int index = SongQueueObservableList.get(0).getAzureForeignKey();
-                futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(0).getSong()));
+                futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(0).getSong()));
                 MediaPlayer freshPlayer = futureMediaPlayer.get();
                 Platform.runLater( () ->
                 {
@@ -478,7 +497,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
             else if (queueSizeAtomic.get() == 2)
             {
                 int index = SongQueueObservableList.get(1).getAzureForeignKey();
-                futureMediaPlayer = executorService.submit(new HandleFileIO(mainModel.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
+                futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
                 MediaPlayer nextSongPlayer = futureMediaPlayer.get();
                 Platform.runLater( () ->
                 {
@@ -500,7 +519,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         try
                         {
                             int index = SongQueueObservableList.get(2).getAzureForeignKey();
-                            nextNextPlayerBytes = mainModel.downloadSongBytes(index);
+                            nextNextPlayerBytes = myController.downloadSongBytes(index);
                             nextNextPlayerString = SongQueueObservableList.get(2).getSong();
                         }
                         catch (Exception e) {e.printStackTrace();}
@@ -578,7 +597,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         public Void call() {
                             try {
                                 int index = SongQueueObservableList.get(2).getAzureForeignKey();
-                                nextNextPlayerBytes = mainModel.downloadSongBytes(index);
+                                nextNextPlayerBytes = myController.downloadSongBytes(index);
                                 nextNextPlayerString = SongQueueObservableList.get(2).getSong();
                                 SongQueueObservableList.get(2).setPreparedBool(true);
                             } catch (Exception e) {
@@ -715,24 +734,23 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void initSongSelection()
     {
-        System.out.print("\n" + mainModel.getTest());
-//        Task task = new Task<Void>()
-//        {
-//            @Override public Void call() {
-//                try
-//                {
-//                    mainModel.initSongs();//read from database and initialize selection list with song & artist names
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//                SongSelectionObservableList = FXCollections.observableList(mainModel.getSelection());
-//                songList.setItems(SongSelectionObservableList);
-//
-//                return null;
-//            }
-//        };
-//        new Thread(task).start();
+        Task task = new Task<Void>()
+        {
+            @Override public Void call() {
+                try
+                {
+                    myController.initSongs();//read from database and initialize selection list with song & artist names
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                SongSelectionObservableList = FXCollections.observableList(myController.getSelection());
+                songList.setItems(SongSelectionObservableList);
+
+                return null;
+            }
+        };
+        new Thread(task).start();
     }
 
     /**
@@ -748,25 +766,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 System.out.println("removing everything");
                 mediaView.getMediaPlayer().stop();
                 mediaView.getMediaPlayer().dispose();
+                clearValuesBeforeLogginOut();
             });
 
-            Task task = new Task<Void>()
-            {
-                @Override public Void call() {
-                    try
-                    {
-                        deleteRemovedSongFile(SongQueueObservableList.get(0).getSong());
-                        clearValuesBeforeLogginOut();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            };
-            new Thread(task).start();
-
             Platform.runLater( () -> {
-                myController.setScreen(MusicHostFramework.screen1ID);
+                myController.setScreen(MusicHostFramework.loginScrenID);
             });
         }
     }
@@ -779,33 +783,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
        if(serverStartFlag == true)
             stopServer();
 
-        for (int i = 0; i < SongSelectionObservableList.size(); i++) {
-            Platform.runLater( () -> {
-            SongSelectionObservableList.remove(0);
-            });
-        }
-
-        for (int i = 0; i < observableDJComments.size(); i++)
-            Platform.runLater( () -> {
-            observableDJComments.remove(0);
-        });
-
-
-        for (int i = 0; i < SongQueueObservableList.size(); i++) {
-            Platform.runLater(() -> {
-                SongQueueObservableList.remove(0);
-            });
-        }
+        //prevent the removing of songs from the queue in the model from triggering the listener attached
+        SongQueueObservableList = null;
+        SongSelectionObservableList = null;
 
         Platform.runLater( () -> {
+            myController.clearValuesBeforeLoggingOut();
             timeLabel.setText("");
             setGUIOptions();
         });
-    }
-
-    @FXML
-    private void goToScreen3(ActionEvent event){
-        myController.setScreen(MusicHostFramework.screen3ID);
     }
 
     /**
@@ -817,9 +803,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
         if ("Pause".equals(playButton.getText()))
         {
             Platform.runLater( () -> {
-                mediaView.getMediaPlayer().pause();
-                playButton.setText("Play");
-                playButton.setStyle("-fx-background-color:green");
+                if(mediaView.getMediaPlayer()!=null) {
+                    mediaView.getMediaPlayer().pause();
+                    playButton.setText("Play");
+                    playButton.setStyle("-fx-background-color:green");
+                }
             });
         }
         else if (queueSizeAtomic.get()>0)
@@ -857,14 +845,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /**
-     * Interface injection of screenParent and main model for songs and DB
+     * Interface injection of screenParent which contains the main model for songs and DB
      * @param screenParent set the current screen parent
-     * @param model set the reference to the model object
      */
-    public void setScreenParent(ScreensController screenParent, Model model)
+    public void setScreenParent(ScreensController screenParent)
     {
         myController = screenParent;
-        mainModel = model;
     }
 
     /**
@@ -1153,7 +1139,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     @Override
     public void SongSelectionTx(String msg) {
-        String selectionAndQueue = mainModel.songSelectionToJson() + '&' + mainModel.songQueueToJson();
+        String selectionAndQueue = myController.songSelectionToJson() + '&' + myController.songQueueToJson();
         sendMessageByBluetooth(selectionAndQueue, 1);
     }
 
@@ -1196,7 +1182,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     public void DJCommentTx(String msg) {
         Platform.runLater( () -> {
             observableDJComments.add(msg);
-            String selectionAndQueue = mainModel.DJCommentToJson() + '&' + mainModel.songQueueToJson();
+            String selectionAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
             sendMessageByBluetooth(selectionAndQueue, DJ_COMMENT);
         });
     }
@@ -1215,7 +1201,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @Override
     public void SkipSongTX() {
             Platform.runLater( () -> {
-                String DJCommentsAndQueue = mainModel.DJCommentToJson() + '&' + mainModel.songQueueToJson();
+                String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
                 sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
             });
     }

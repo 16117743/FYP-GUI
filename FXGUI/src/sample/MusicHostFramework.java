@@ -3,28 +3,22 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import model.AzureDB;
-
 
 public class MusicHostFramework extends Application {
     
-    public static String screen1ID = "main";
-    public static String screen1File = "/View/Screen1.fxml";
-    public static String screen2ID = "screen2";
-    public static String screen2File = "/View/Screen2a.fxml";
-    public static String screen3ID = "screen3";
-    public static String screen3File = "/View/Screen3.fxml";
+    public static String loginScrenID = "main";
+    public static String loginScreenFile = "/View/Screen1.fxml";
+    public static String mainScreenID = "screen2";
+    public static String mainScreenFile = "/View/Screen2a.fxml";
 
     @Override
     public void start(Stage primaryStage) {
         ScreensController mainContainer = new ScreensController();
-        mainContainer.loadScreen(MusicHostFramework.screen1ID, MusicHostFramework.screen1File);
+        mainContainer.loadScreen(MusicHostFramework.loginScrenID, MusicHostFramework.loginScreenFile);
 
-        mainContainer.loadScreen(MusicHostFramework.screen2ID, MusicHostFramework.screen2File);
+        mainContainer.loadScreen(MusicHostFramework.mainScreenID, MusicHostFramework.mainScreenFile);
 
-        mainContainer.loadScreen(MusicHostFramework.screen3ID, MusicHostFramework.screen3File);
-        
-        mainContainer.setScreen(MusicHostFramework.screen1ID);
+        mainContainer.setScreen(MusicHostFramework.loginScrenID);
 
         Group root = new Group();//Constructs a group consisting of children.
         root.getChildren().addAll(mainContainer);/*Gets the list of children of this {Group}. return the list of children of this {Group}.*/

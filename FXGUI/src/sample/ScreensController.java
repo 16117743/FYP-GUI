@@ -1,9 +1,7 @@
 package sample;
-import java.io.IOException;
-import java.sql.Connection;
-import java.util.HashMap;
 
-import Browser.MyBrowser;
+import java.util.HashMap;
+import java.util.List;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -15,10 +13,9 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import model.AzureDB;
-import model.DB;
 import model.Model;
-import Browser.MyBrowser;
+import model.QueueSong;
+import model.SelectionSong;
 
 //keep pane so we can remove add screens on top/bottom
 public class ScreensController  extends StackPane {
@@ -27,6 +24,8 @@ public class ScreensController  extends StackPane {
     public ScreensController() {
         super();//inherit StackPane class
     }
+
+    private Model model = new Model();
 
     //Add the screen to the collection
     public void addScreen(String name, Node screen) {
@@ -42,34 +41,17 @@ public class ScreensController  extends StackPane {
     //finally injects the screenPane to the controller.
     public boolean loadScreen(String name, String resource) {
         try {                            //fxml file
-            Model mainmodel = new Model();
             FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
             Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
 
             ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
             //inject screen controllers to myscreencontroller
-            myScreenControler.setScreenParent(this,mainmodel);// inject screen controllers to each screen here
+            myScreenControler.setScreenParent(this);// inject screen controllers to each screen here
 
             addScreen(name, loadScreen);
             return true;
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean setBrowser(final String name, String resource) {
-        try {
-            FXMLLoader myLoader = new FXMLLoader(getClass().getResource(resource));
-            Parent loadScreen = (Parent) myLoader.load();//class cast to controlled screen
-
-            ControlledScreen myScreenControler = ((ControlledScreen) myLoader.getController());//Returns the controller associated with the root object.
-
-            MyBrowser myBrowser = new MyBrowser();
-            return true;
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -133,5 +115,49 @@ public class ScreensController  extends StackPane {
             return true;
         }
     }
+
+    /**Database methods*/
+    public int confirmLogin(String user, String pw){
+        return model.confirmLogin(user,pw);
+    }
+
+    public void initSongs() {
+        model.initSongs();
+    }
+
+    public byte[] downloadSongBytes(int index1) {
+        return model.downloadSongBytes(index1);
+    }
+
+    /** Getters and setters*/
+    public List<QueueSong> getSongQueue() {return model.getSongQueue();}
+
+    public List<SelectionSong> getSelection() {return model.getSelection();}
+
+    public List getDJCommentsData() {return model.getDJCommentsData();}
+
+    public void setUserID(int userID) {model.setUserID(userID);}
+
+    public String songSelectionToJson(){return model.songSelectionToJson();}
+
+    public int getUserID(){
+        return model.getUserID();
+    }
+
+    public void clearValuesBeforeLoggingOut(){
+        model.clearValuesBeforeLoggingOut();
+    }
+
+    /**
+     * Returns the JSON of the song queue list
+     * @return Returns the JSON of the song queue list
+     */
+    public String songQueueToJson(){return model.songQueueToJson();}
+
+    /**
+     * Returns the JSON of the DJ comments list
+     * @return Returns the JSON of the DJ comments list
+     */
+    public String DJCommentToJson(){return model.DJCommentToJson();}
 }
 

@@ -1,14 +1,19 @@
 .list-view {
     -fx-background-color: red;
-    -fx-text-fill: rgb(26, 255, 000);
+    -fx-text-fill: rgb(46, 230, 000);
 }
 
 .list-cell:filled:hover {
     -fx-background-color: darkred;
-    -fx-text-fill: rgb(26, 255, 000);
+    -fx-text-fill: rgb(100, 230, 100);
 }
 
 .list-cell {
      -fx-background-color: red;
-     -fx-text-fill: rgb(26, 255, 000);
+     -fx-text-fill: rgb(46, 230, 000);
  }
+
+.list-cell:filled:selected:focused, .list-cell:filled:selected {
+    -fx-background-color: linear-gradient(#000000 0%, #000000 25%, #000000 75%, #000000 100%);
+    -fx-text-fill: rgb(255, 255, 255);
+}
