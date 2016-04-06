@@ -68,7 +68,7 @@ import javax.microedition.io.StreamConnectionNotifier;
 public class MainSceneController implements Initializable , ControlledScreen {
     ScreensController myController;
     ProcessConnectionThread processThread;
-    Boolean[] boolArray = new Boolean[3];
+    Boolean[] boolOptionsArray = new Boolean[3];
     private volatile Thread volatileThread;
     ExecutorService executorService1;
     ExecutorService executorService2;
@@ -168,7 +168,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void setGUIOptions(){
         for(int i =0;i<3;i++)
-            boolArray[i] = false;
+            boolOptionsArray[i] = false;
 
         boolRequest.setText("OFF");
         boolRequest.setStyle("-fx-background-color:red");
@@ -932,7 +932,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     try {
                         executorService2.shutdown();
                         //time allocated for the android client to make a choice
-                        executorService2.awaitTermination(30, TimeUnit.SECONDS);
+                        executorService2.awaitTermination(40, TimeUnit.SECONDS);
                     } catch (InterruptedException e) {
                         System.err.println("exec 2 tasks interrupted");
                     } finally {
@@ -1130,7 +1130,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     @Override
     public String AvailableOptionsRx() {
-        String strings = Arrays.toString(boolArray);
+        String strings = Arrays.toString(boolOptionsArray);
         System.out.print(strings);
         return strings;
     }
@@ -1224,11 +1224,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
         if ("ON".equals(boolRequest.getText())) {
             boolRequest.setStyle("-fx-background-color:red");
             boolRequest.setText("OFF");
-            boolArray[0] = false;
+            boolOptionsArray[0] = false;
         } else {
             boolRequest.setStyle("-fx-background-color:green");
             boolRequest.setText("ON");
-            boolArray[0] = true;
+            boolOptionsArray[0] = true;
         }
     }
 
@@ -1238,11 +1238,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
         if ("ON".equals(boolDJComment.getText())) {
             boolDJComment.setStyle("-fx-background-color:red");
             boolDJComment.setText("OFF");
-            boolArray[1] = false;
+            boolOptionsArray[1] = false;
         } else {
             boolDJComment.setStyle("-fx-background-color:green");
             boolDJComment.setText("ON");
-            boolArray[1] = true;
+            boolOptionsArray[1] = true;
         }
     }
 
@@ -1252,11 +1252,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
         if ("ON".equals(boolSkip.getText())) {
             boolSkip.setStyle("-fx-background-color:red");
             boolSkip.setText("OFF");
-            boolArray[2] = false;
+            boolOptionsArray[2] = false;
         } else {
             boolSkip.setStyle("-fx-background-color:green");
             boolSkip.setText("ON");
-            boolArray[2] = true;
+            boolOptionsArray[2] = true;
         }
     }
 
