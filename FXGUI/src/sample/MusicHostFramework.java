@@ -21,6 +21,8 @@ public class MusicHostFramework extends Application {
         mainContainer.loadScreen(MusicHostFramework.screen1ID, MusicHostFramework.screen1File);
 
         mainContainer.loadScreen(MusicHostFramework.screen2ID, MusicHostFramework.screen2File);
+
+        mainContainer.loadScreen(MusicHostFramework.screen3ID, MusicHostFramework.screen3File);
         
         mainContainer.setScreen(MusicHostFramework.screen1ID);
 

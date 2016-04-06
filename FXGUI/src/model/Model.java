@@ -25,7 +25,12 @@ public class Model{
     private Ignore ignore;
     private Connection connection;
 
-    private int userID = -1;
+    public int userID;
+
+    private String test = new String("");
+
+
+
 
     ResultSet rs = null;
     Statement state = null;
@@ -37,6 +42,8 @@ public class Model{
             con = ignore.getCon();
             String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
             Class.forName(driver);
+
+            test = "testing model";
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -100,7 +107,7 @@ public class Model{
         {
             connection = DriverManager.getConnection(con);
 
-            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = 1";
+            final String query = "select S_Id , songname, artistname  from UserSongs  where Id = " +Integer.toString(userID);
                 //+Integer.toString(userID); // where Id ="+ Integer.toString(UserID);
             Statement state = connection.createStatement();
             ResultSet rs = state.executeQuery(query);
@@ -161,7 +168,16 @@ public class Model{
 
     public List getDJCommentsData() {return DJCommentsData;}
 
-    public void setUserID(int userID) {userID = userID;}
+    public void setUserID(int userID) {this.userID = userID;}
+
+
+public String getTest() {
+    return test;
+}
+
+public void setTest(String test) {
+    this.test = test;
+}
 
 
     /**

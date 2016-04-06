@@ -44,32 +44,34 @@ public class LoginSceneController implements Initializable, ControlledScreen {
 
     @FXML
     private void goToScreen2(ActionEvent event){
+        //myController.setScreen(MusicHostFramework.screen2ID);
+        mainModel.setTest("123");
         myController.setScreen(MusicHostFramework.screen2ID);
-       /* if(Login())
-        {
-            try {
-                response.setText("succces!");
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            Platform.runLater(() ->
-            {
-                try {
-                    Thread.sleep(2000);
-                    myController.setScreen(MusicHostFramework.screen2ID);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        else {
-            Platform.runLater(() ->
-            {
-                response.setText("Incorrect login");
-            });
-        }*/
+//        if(Login())
+//        {
+//            try {
+//                response.setText("succces!");
+//                Thread.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//            Platform.runLater(() ->
+//            {
+//                try {
+//                    Thread.sleep(2000);
+//                    myController.setScreen(MusicHostFramework.screen2ID);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            });
+//        }
+//        else {
+//            Platform.runLater(() ->
+//            {
+//                response.setText("Incorrect login");
+//            });
+//        }
     }
 
     private boolean Login(){
