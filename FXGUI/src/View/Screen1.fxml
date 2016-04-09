@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.effect.*?>
 <?import java.lang.*?>
@@ -17,21 +19,35 @@
                 <Font size="18.0" />
         </font>
         </Label>
-        <Label id="MusicHostLabel" contentDisplay="CENTER" layoutX="474.0" layoutY="186.0" prefHeight="112.0" prefWidth="430.0" text="Music Host " textAlignment="JUSTIFY">
-            <font>
-                <Font size="96.0" />
-            </font>
-        </Label>
-          <Label id="loginTextID" layoutX="434.0" layoutY="377.0" text="Login">
-              <font>
-                  <Font size="36.0" />
-              </font>
-              <effect>
-                  <Glow />
-              </effect>
-          </Label>
-          <TextField fx:id="userLogin" layoutX="553.0" layoutY="383.0" prefHeight="35.0" prefWidth="136.0" />
-          <PasswordField fx:id="passwordField" layoutX="706.0" layoutY="383.0" prefHeight="35.0" prefWidth="142.0" promptText="Password" />
-          <Button layoutX="871.0" layoutY="387.0" mnemonicParsing="false" onAction="#goToScreen2" prefHeight="27.0" prefWidth="45.0" text="Login" />
+      <HBox layoutX="434.0" layoutY="377.0" spacing="10.0">
+         <children>
+                <Label id="loginTextID" layoutX="434.0" layoutY="377.0" text="Login">
+                    <font>
+                        <Font size="36.0" />
+                    </font>
+                    <effect>
+                        <Glow />
+                    </effect>
+                </Label>
+                <TextField fx:id="userLogin" layoutX="553.0" layoutY="383.0" prefHeight="35.0" prefWidth="136.0" />
+                <PasswordField fx:id="passwordField" layoutX="706.0" layoutY="383.0" prefHeight="35.0" prefWidth="142.0" promptText="Password" />
+                <Button layoutX="871.0" layoutY="387.0" mnemonicParsing="false" onAction="#goToScreen2" prefHeight="34.0" prefWidth="47.0" text="Login" />
+         </children>
+      </HBox>
+      <Rectangle fx:id="loginRect" arcHeight="5.0" arcWidth="5.0" fill="#15106f" height="34.0" layoutX="488.0" layoutY="280.0" stroke="BLACK" strokeType="INSIDE" width="35.0" />
+      <Text fx:id="musicHostShape" layoutX="498.0" layoutY="249.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Music Host" wrappingWidth="416.0">
+         <font>
+            <Font name="Elephant" size="64.0" />
+         </font>
+      </Text>
+      <Path fx:id="path2" fill="DODGERBLUE" layoutX="209.0" layoutY="119.0" opacity="0.0" stroke="BLACK" strokeType="INSIDE">
+          <elements>
+              <MoveTo x="100.0" />
+              <LineTo x="150.0" y="50.0" />
+              <ArcTo radiusX="30.0" radiusY="25" x="200.0" y="100.0" />
+              <QuadCurveTo controlX="300.0" controlY="300.0" y="150.0" />
+              <ClosePath />
+          </elements>
+      </Path>
     </children>
 </AnchorPane>

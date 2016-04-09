@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.web.*?>
 <?import javafx.scene.effect.*?>
@@ -17,7 +18,7 @@
     <children>
         <HBox layoutX="353.0" layoutY="234.0" prefHeight="398.0" prefWidth="600.0">
             <children>
-            <ListView fx:id="queueList" prefHeight="200.0" prefWidth="200.0" stylesheets="@QueueStyle.css"/>
+            <ListView fx:id="queueList" prefHeight="200.0" prefWidth="200.0" stylesheets="@QueueStyle.css" />
                 <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" stylesheets="@SelectionStyle.css" />
                 <ListView fx:id="dJComments" prefHeight="372.0" prefWidth="205.0" stylesheets="@DJCommentStyle.css" />
             </children>
@@ -64,5 +65,6 @@
         <Slider fx:id="volumeSlider" layoutX="412.0" layoutY="7.0" orientation="VERTICAL" prefHeight="159.0" prefWidth="13.0" />
         <Label fx:id="timeLabel" layoutX="758.0" layoutY="182.0" text="Label" />
           <Button fx:id="initbtn" layoutX="1249.0" layoutY="635.0" mnemonicParsing="false" onAction="#init" prefHeight="48.0" prefWidth="104.0" text="init" />
+      <Circle fx:id="progressBall" fill="DODGERBLUE" layoutX="525.0" layoutY="666.0" radius="19.0" stroke="BLACK" strokeType="INSIDE" />
     </children>
 </AnchorPane>

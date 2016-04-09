@@ -10,6 +10,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
 import Interface.MusicHostInterface;
+import javafx.animation.AnimationTimer;
+import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -20,6 +22,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -27,6 +30,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.CubicCurveTo;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import model.*;
@@ -89,6 +97,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     AtomicInteger queueSizeAtomic = new AtomicInteger();
     volatile MediaPlayer currentPlayer,  nextPlayer, nextNextPlayer;
+
+    PathTransition pathTransition;
+    Path path;
+
+public synchronized QueueSong getEndOfAnimationQueueSong() {
+    return endOfAnimationQueueSong;
+}
+
+public synchronized void setEndOfAnimationQueueSong(QueueSong endOfAnimationQueueSong) {
+    this.endOfAnimationQueueSong = endOfAnimationQueueSong;
+}
+
+volatile QueueSong endOfAnimationQueueSong;
 
 //   @FXML
 //    ProgressBar progBar;
@@ -153,6 +174,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     Label timeLabel;
 
+    @FXML
+    Circle progressBall;
+
+    @FXML
+    Path ballPath;
+
+    private AnimationTimer timer;
+
     private ChangeListener<Duration> progressChangeListener;
 
     @Override
@@ -160,7 +189,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         setGUIOptions();
         setCellFactoryForListViews();
         addMediaViewPropertyListener();
-       // progBar.setProgress(0);
+
     }
 
     /**
@@ -168,7 +197,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void setGUIOptions(){
         for(int i =0;i<3;i++)
-            boolOptionsArray[i] = false;
+        boolOptionsArray[i] = false;
 
         boolRequest.setText("OFF");
         boolRequest.setStyle("-fx-background-color:red");
@@ -198,6 +227,36 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         initbtn.setStyle("-fx-background-color:green");
         initbtn.setTooltip(new Tooltip("Initialize the application"));
+
+//        progressBall.setArcHeight(10);
+//        rectPath.setArcWidth(10);
+    }
+
+    /**
+     * Skip button function for skipping songs in the queue
+     */
+    @FXML
+    public void iSkip()
+    {
+        //can't skip unless there is a song to follow
+        if(queueSizeAtomic.get() > 1)
+        {
+            if(mediaView.getMediaPlayer()!=null) {
+                final MediaPlayer curPlayer = mediaView.getMediaPlayer();
+                curPlayer.currentTimeProperty().removeListener(progressChangeListener);
+                curPlayer.stop();
+                curPlayer.dispose();//remove file stream
+            }
+
+            if(nextPlayer!=null)
+                mediaView.setMediaPlayer(nextPlayer);
+
+            if ("Play".equals(playButton.getText()))
+            {
+                playButton.setText("Pause");
+                playButton.setStyle("-fx-background-color:red");
+            }
+        }
     }
 
     /**
@@ -249,7 +308,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         SongQueueObservableList.remove(0);//remove case event is fired
 
                     Platform.runLater( () -> {
+                        //
+                        //acquire write lock
                         setCurrentlyPlaying(currentPlayer);
+                        //release
+                        //acquire read lock
                         currentPlayer.play();
                     });
                 }
@@ -257,14 +320,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
         });
         mediaView.getEffect();
     }
-
-    @FXML
-    private void testing(){
-
-    }
-
-    @FXML          /*********%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-    private void removeSong(){}
 
     /**
      * sets the currently playing label to the label of the new media player and updates the progress monitor.
@@ -290,10 +345,39 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * @param event user presses add song button
      */
     @FXML
-     private void addSongButtonFunc(ActionEvent event)
+     private synchronized void addSongButtonFunc(ActionEvent event)
     {
         int index = songList.getSelectionModel().getSelectedIndex();
         addSongTask(index);
+    }
+
+
+    /**
+     * Sets up the animation for adding a song
+     */
+    public synchronized void setUpAddSongAnimation(){
+        path = new Path();
+        path.getElements().add(new MoveTo(180.0,-20.0));
+
+        path.getElements().add(new CubicCurveTo(150.0, -400.0, -200, -60, -200, (-420 + (queueSizeAtomic.get()*23))));
+        pathTransition = new PathTransition();
+        pathTransition.setDuration(Duration.millis(4000));
+        pathTransition.setPath(path);
+        pathTransition.setNode(progressBall);
+        pathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
+        pathTransition.setCycleCount(1);
+        pathTransition.setAutoReverse(false);
+
+        pathTransition.setOnFinished(new EventHandler<ActionEvent>(){
+
+            @Override
+            public void handle(ActionEvent arg0) {
+                if(endOfAnimationQueueSong!=null)
+                    SongQueueObservableList.add(endOfAnimationQueueSong);
+                progressBall.setFill(Color.GOLD);
+               // progressBall.setVisible(false);
+            }
+        });
     }
 
     /**
@@ -301,17 +385,25 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * @param selectionSongIndex index of selectionSong list
      * @return if the song is already in the queue return false
      */
-    public boolean addSongTask(int selectionSongIndex)
+    public synchronized boolean addSongTask(int selectionSongIndex)
     {
-        if(selectionSongIndex != -1) {
-            // if this song is not already in the queue, then add it
-            if (searchQueueForMatch(SongSelectionObservableList.get(selectionSongIndex).getSong()) != -1) {
+        // if this song is not already in the queue, then add it
+        if(SongSelectionObservableList!=null && selectionSongIndex >-1) {
+            String songToSearch = SongSelectionObservableList.get(selectionSongIndex).getSong();
+            //if the selected song isn't already in the queue, add it
+            if (searchQueueForMatch(songToSearch) == false) {
+
                 final int index = selectionSongIndex;
 
-                QueueSong qs0 = new QueueSong(SongSelectionObservableList.get(index), index);
+                QueueSong newQueueSong = new QueueSong(SongSelectionObservableList.get(index), index);
                 Platform.runLater(() -> {
-                    SongQueueObservableList.add(qs0);
+                    endOfAnimationQueueSong = newQueueSong;
+                    progressBall.setFill(Color.DEEPSKYBLUE);
+                    progressBall.setVisible(true);
+                    setUpAddSongAnimation();
+                    pathTransition.play();
                 });
+
                 return true;
             }
         }
@@ -339,21 +431,38 @@ public class MainSceneController implements Initializable , ControlledScreen {
     /**
      * searches song queue for a match using java 8 stream API replacement of for each
      * @param songToSearch string of song to search
-     * @return the index of the matching song
+     * @return if it found a song already in the queue or not
      */
-    public synchronized int searchQueueForMatch(String songToSearch)
+    public synchronized boolean searchQueueForMatch(String songToSearch)
     {
         //java 8 stream API replacement of for each
-        int [] indices = IntStream.range(0, SongSelectionObservableList.size())
-            .filter(i -> songToSearch.equals(SongSelectionObservableList.get(i).getSong()))
+            int [] indices = IntStream.range(0, SongQueueObservableList.size())
+                .filter(i -> songToSearch.equals(SongQueueObservableList.get(i).getSong()))
+                .toArray();
+
+            //if it found a unique match
+            if(indices.length == 1){
+                //found a song in the queue
+                return true;
+            }
+
+        return false;
+    }
+
+    public synchronized int searchQueueForIndex(String songToSearch)
+    {
+        //java 8 stream API replacement of for each
+        int [] indices = IntStream.range(0, SongQueueObservableList.size())
+            .filter(i -> songToSearch.equals(SongQueueObservableList.get(i).getSong()))
             .toArray();
 
-        if(indices.length == 1)
-        {
+        //if it found a unique match
+        if(indices.length == 1){
+            //found a song in the queue
             return indices[0];
         }
-        else
-            return -1;
+
+        return -1;
     }
 
     /**
@@ -363,10 +472,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     private void init(ActionEvent event)
     {
-//        System.out.println("num" + myController.getUserID());
-//        myController.setUserID(1);
-//        System.out.println("num" + myController.getUserID());
-
         //init button can only be pressed once
         if("-fx-background-color:green".equals(initbtn.getStyle())) {
             initbtn.setStyle("-fx-background-color:red");
@@ -402,12 +507,29 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 } else {
                     for (QueueSong removedSong : change.getRemoved()) {
                         queueSizeAtomic.decrementAndGet();
-                        songRemovedfileIOFunc(removedSong);
+                        Task task = new Task<Void>()
+                        {
+                            final QueueSong removed = removedSong;
+                            @Override public Void call()
+                            {
+                                songRemovedfileIOFunc(removed);
+                                return null;
+                            }
+                        };
+                        new Thread(task).start();
                     }
 
                     for (QueueSong addedSong : change.getAddedSubList()) {
                         queueSizeAtomic.incrementAndGet();
-                        songAddedfileIOFunc();
+                        Task task = new Task<Void>()
+                        {
+                            @Override public Void call()
+                            {
+                                songAddedfileIOFunc();
+                                return null;
+                            }
+                        };
+                        new Thread(task).start();
                     }
                 }
             }
@@ -467,7 +589,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * 1- Write to the nextNextPlayer
      * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer
      */
-    public void songAddedfileIOFunc(){
+    public synchronized void songAddedfileIOFunc(){
+
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
         try
@@ -556,7 +679,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      *
      * @param removedSong the song that has just ended or has been skipped.
      */
-    public void songRemovedfileIOFunc(QueueSong removedSong){
+    public synchronized void songRemovedfileIOFunc(QueueSong removedSong){
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
         try
@@ -764,12 +887,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
             Platform.runLater( () -> {
                 initbtn.setStyle("-fx-background-color:green");
                 System.out.println("removing everything");
-                mediaView.getMediaPlayer().stop();
-                mediaView.getMediaPlayer().dispose();
-                clearValuesBeforeLogginOut();
+                if(mediaView.getMediaPlayer()!=null) {
+                    mediaView.getMediaPlayer().stop();
+                    mediaView.getMediaPlayer().dispose();
+                    clearValuesBeforeLogginOut();
+                }
             });
 
             Platform.runLater( () -> {
+                myController.restartAnimationUponLogout();
                 myController.setScreen(MusicHostFramework.loginScrenID);
             });
         }
@@ -787,11 +913,16 @@ public class MainSceneController implements Initializable , ControlledScreen {
         SongQueueObservableList = null;
         SongSelectionObservableList = null;
 
+        songList.getItems().clear();
+        queueList.getItems().clear();
+
         Platform.runLater( () -> {
             myController.clearValuesBeforeLoggingOut();
             timeLabel.setText("");
             setGUIOptions();
         });
+
+        progressBall.setVisible(false);
     }
 
     /**
@@ -819,30 +950,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         }
     }
 
-    /**
-     * Skip button function for skipping songs in the queue
-     */
-    @FXML
-    public void iSkip()
-    {
-        //can't skip unless there is a song to follow
-        if(queueSizeAtomic.get() > 1)
-        {
-            final MediaPlayer curPlayer = mediaView.getMediaPlayer();
-            curPlayer.currentTimeProperty().removeListener(progressChangeListener);
-            curPlayer.stop();
-            curPlayer.dispose();//remove file stream
 
-            if(nextPlayer!=null)
-                mediaView.setMediaPlayer(nextPlayer);
-
-            if ("Play".equals(playButton.getText()))
-            {
-                playButton.setText("Pause");
-                playButton.setStyle("-fx-background-color:red");
-            }
-        }
-    }
 
     /**
      * Interface injection of screenParent which contains the main model for songs and DB
@@ -1160,7 +1268,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     }
 
     /**
-     * Received selected song from client
+     * Receives selected song from client, if the song is already ready in the queue then +1 votes the selected song.
      */
     @Override
     public String SongSelectedRx() {
@@ -1170,9 +1278,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
             if(addSongTask(searchSelectionForMatch(song))){
                 return "The song " + song + " has been added to the queue";
             }
+            else {
+                //song selected by Android client now requires +1 votes in order to be skipped
+                addAntiSkipVoteToSongInQueue(searchQueueForIndex(song));
+                return "The song " + song + " is already in the queue, \nRemember to swipe right to check the queue before making a selection";
 
+            }
         }
         return "Sorry but that song is already in the queue";
+    }
+
+    public void addAntiSkipVoteToSongInQueue(int index){
+        //song now requires +1 more skip votes in order for it to be skipped
+        SongQueueObservableList.get(index).incrementAntiSkipVote();
     }
 
     /**

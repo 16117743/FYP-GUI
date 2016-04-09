@@ -1,5 +1,7 @@
 package model;
 
+import javafx.beans.property.IntegerProperty;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,6 +41,10 @@ public class QueueSong {
 
     public int decrementAndGetVotes() {
         return votes.decrementAndGet();
+    }
+
+    public void incrementAntiSkipVote(){
+       votes.incrementAndGet();
     }
 
     public void setPreparedBool(Boolean preparedBool) {this.preparedBool = preparedBool;}

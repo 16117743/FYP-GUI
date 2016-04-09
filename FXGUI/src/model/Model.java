@@ -25,7 +25,7 @@ public class Model{
     private String connectionString;
     private Ignore ignore;
     private Connection connection;
-    public int userID = -1;
+    public int userID = 1;
     ResultSet rs = null;
     Statement state = null;
 
