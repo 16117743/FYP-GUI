@@ -1,6 +1,4 @@
-package model;
-
-import javafx.beans.property.IntegerProperty;
+package com.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,8 +12,6 @@ public class QueueSong {
     private String songName;
     private Boolean preparedBool;
     private int azureForeignKey = 0;
-    private String myFilePath;
-    private int songSelectionIndex;
     AtomicInteger votes = new AtomicInteger();
 
     /**Constructor for nth song added to queue*/
@@ -25,8 +21,6 @@ public class QueueSong {
         this.songName = selectionSong.getSong();
         this.artist = selectionSong.getArtist();
         this.votes.set(2);
-        this.myFilePath = "file:///" + ("C:\\test\\" + "\\" + songName + ".mp3").replace("\\", "/").replaceAll(" ", "%20");
-        this.songSelectionIndex = songSelectionIndex;
         this.preparedBool = false;
     }
 

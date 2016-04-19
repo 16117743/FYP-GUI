@@ -1,4 +1,4 @@
-package Interface;
+package com.framework;
 
 /**
  * Created by user on 04/03/2016.

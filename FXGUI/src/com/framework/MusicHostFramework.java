@@ -1,4 +1,4 @@
-package sample;
+package com.framework;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -6,10 +6,10 @@ import javafx.stage.Stage;
 
 public class MusicHostFramework extends Application {
     
-    public static String loginScrenID = "main";
-    public static String loginScreenFile = "/View/Screen1.fxml";
-    public static String mainScreenID = "screen2";
-    public static String mainScreenFile = "/View/Screen2a.fxml";
+    public static String loginScrenID = "LoginView";
+    public static String loginScreenFile = "/com/View/LoginView.fxml";
+    public static String mainScreenID = "MainView";
+    public static String mainScreenFile = "/com/View/MainView.fxml";
 
     @Override
     public void start(Stage primaryStage) {
@@ -37,7 +37,7 @@ public class MusicHostFramework extends Application {
      *
      * @param args the command line arguments
      */
- //   public static void main(String[] args) {
-  //      launch(args);
- //   }
+    //   public static void main(String[] args) {
+    //      launch(args);
+    //   }
 }

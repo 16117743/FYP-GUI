@@ -1,7 +1,9 @@
-package sample;
+package com.framework;
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,8 +11,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
-import Interface.MusicHostInterface;
-import javafx.animation.AnimationTimer;
+import com.View.MusicHostInterface;
+import com.util.HandleFileIO;
+import com.util.QueueSong;
+import com.util.SelectionSong;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -37,7 +41,6 @@ import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.util.Callback;
 import javafx.util.Duration;
-import model.*;
 import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -48,29 +51,28 @@ import javax.microedition.io.StreamConnectionNotifier;
 
 /***********************
  * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
  * date: 25/04/16
  **********************/
 
 /**
- * MainSceneController that reacts to the UI control by changing the model and displaying that change in this controller's  view.
- *
- * Features:
- * 1- Initialise button: Sets up the application for running.
- * 2- Server button: Enables/disables bluetooth server connection thread using Bluecove for connecting Android application clients.
- * 3- Song request button: Enables/disables client's ability to request a song.
- * 4- DJ comment button: Enables/disables client's ability to make a comment to the DJ.
- * 5- Skip Enable button: Enables/disables client's ability to skip the current song playing.
- *
- * 6- Add button: User can select a song to add to the queue.
- * 7- Play button: Plays/pauses the current song.
- * 8- Skip button: User can skip the current song.
- * 9- Volume slider: Adjusts the volume of the song playing.
- * 10- Time slider: Adjusts the progress of the song playing.
- * 11- Song progress bar: Displays the progress of the song playing.
- * 12- Time label: Displays the time left in the song playing.
- * 13- MediaView displays audio spectrum of the song playing.
- *
- * 14- Logout button- Allows the user log out.
+ * MainSceneController that reacts to the UI control by changing the com.model and displaying that change in this controller's  view.<br>
+ *<br>
+ * Features:<br>
+ * 1- Initialise button: Sets up the application for running.<br>
+ * 2- Server button: Enables/disables bluetooth server connection thread using Bluecove for connecting Android application clients.<br>
+ * 3- Song request button: Enables/disables client's ability to request a song.<br>
+ * 4- DJ comment button: Enables/disables client's ability to make a comment to the DJ.<br>
+ * 5- Skip Enable button: Enables/disables client's ability to skip the current song playing.<br>
+ * 6- Add button: User can select a song to add to the queue.<br>
+ * 7- Play button: Plays/pauses the current song.<br>
+ * 8- Skip button: User can skip the current song.<br>
+ * 9- Volume slider: Adjusts the volume of the song playing.<br>
+ * 10- Time slider: Adjusts the progress of the song playing.<br>
+ * 11- Song progress bar: Displays the progress of the song playing.<br>
+ * 12- Time label: Displays the time left in the song playing.<br>
+ * 13- MediaView displays audio spectrum of the song playing.<br>
+ * 14- Logout button- Allows the user log out.<br>
  */
 
 public class MainSceneController implements Initializable , ControlledScreen {
@@ -96,26 +98,13 @@ public class MainSceneController implements Initializable , ControlledScreen {
     private final Lock NNPWwriteLock = nextNextPlayerByteslock.writeLock();
 
     AtomicInteger queueSizeAtomic = new AtomicInteger();
-    volatile MediaPlayer currentPlayer,  nextPlayer, nextNextPlayer;
+    volatile MediaPlayer currentPlayer,  nextPlayer;
 
-    PathTransition pathTransition;
-    Path path;
-
-public synchronized QueueSong getEndOfAnimationQueueSong() {
-    return endOfAnimationQueueSong;
-}
-
-public synchronized void setEndOfAnimationQueueSong(QueueSong endOfAnimationQueueSong) {
-    this.endOfAnimationQueueSong = endOfAnimationQueueSong;
-}
-
-volatile QueueSong endOfAnimationQueueSong;
-
-//   @FXML
-//    ProgressBar progBar;
-
-//    @FXML
-//    ProgressIndicator prog;
+    PathTransition addSongPathTransition;
+    Path addSongPath;
+    volatile boolean addAnimationFin = true;
+    volatile boolean skipOK = true;
+    List <String> failedDeletions = new ArrayList<>();
 
     @FXML
     Button playButton;
@@ -132,7 +121,7 @@ volatile QueueSong endOfAnimationQueueSong;
     ObservableList<QueueSong> SongQueueObservableList;
 
     @FXML
-    ListView songList;
+    ListView selectionView;
 
     ObservableList<SelectionSong> SongSelectionObservableList;
 
@@ -180,16 +169,16 @@ volatile QueueSong endOfAnimationQueueSong;
     @FXML
     Path ballPath;
 
-    private AnimationTimer timer;
-
     private ChangeListener<Duration> progressChangeListener;
+
+    private ChangeListener<MediaPlayer> endOfMediaListener;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setGUIOptions();
         setCellFactoryForListViews();
         addMediaViewPropertyListener();
-
+        addVolumeAndTimeSliderListeners();
     }
 
     /**
@@ -227,9 +216,6 @@ volatile QueueSong endOfAnimationQueueSong;
 
         initbtn.setStyle("-fx-background-color:green");
         initbtn.setTooltip(new Tooltip("Initialize the application"));
-
-//        progressBall.setArcHeight(10);
-//        rectPath.setArcWidth(10);
     }
 
     /**
@@ -238,23 +224,24 @@ volatile QueueSong endOfAnimationQueueSong;
     @FXML
     public void iSkip()
     {
-        //can't skip unless there is a song to follow
-        if(queueSizeAtomic.get() > 1)
+        //can't skip unless there is a song to follow and next song is ready to be played
+        if(queueSizeAtomic.get() > 1 && skipOK)
         {
-            if(mediaView.getMediaPlayer()!=null) {
-                final MediaPlayer curPlayer = mediaView.getMediaPlayer();
-                curPlayer.currentTimeProperty().removeListener(progressChangeListener);
-                curPlayer.stop();
-                curPlayer.dispose();//remove file stream
+            if(mediaView.getMediaPlayer()!=null)
+            {
+                Platform.runLater( () -> {
+                    final MediaPlayer curPlayer = mediaView.getMediaPlayer();
+                    curPlayer.stop();
+                    mediaView.setMediaPlayer(nextPlayer);
+                });
             }
-
-            if(nextPlayer!=null)
-                mediaView.setMediaPlayer(nextPlayer);
 
             if ("Play".equals(playButton.getText()))
             {
-                playButton.setText("Pause");
-                playButton.setStyle("-fx-background-color:red");
+                Platform.runLater(() -> {
+                    playButton.setText("Pause");
+                    playButton.setStyle("-fx-background-color:red");
+                });
             }
         }
     }
@@ -263,10 +250,10 @@ volatile QueueSong endOfAnimationQueueSong;
      * The listView cells have to be customized for the individual SelectionSong and QueueSong objects
      */
     private void setCellFactoryForListViews(){
-        songList.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>(){
+        selectionView.setCellFactory(new Callback<ListView<SelectionSong>, ListCell<SelectionSong>>() {
             @Override
             public ListCell<SelectionSong> call(ListView<SelectionSong> p) {
-                ListCell<SelectionSong> cell = new ListCell<SelectionSong>(){
+                ListCell<SelectionSong> cell = new ListCell<SelectionSong>() {
                     @Override
                     protected void updateItem(SelectionSong selectionSong, boolean empty) {
                         super.updateItem(selectionSong, empty);
@@ -300,20 +287,18 @@ volatile QueueSong endOfAnimationQueueSong;
         mediaView.mediaPlayerProperty().addListener(new ChangeListener<MediaPlayer>() {
             @Override public void changed(ObservableValue<? extends MediaPlayer> observableValue, MediaPlayer oldPlayer, MediaPlayer newPlayer) {
                 if(newPlayer!= null) {
-                    System.out.println("shifting media players\n");
-                    writeToCurrentPlayer(newPlayer);
-                    writeToNextPlayer(nextNextPlayer);
-
-                    if(queueSizeAtomic.get() > 1)
-                        SongQueueObservableList.remove(0);//remove case event is fired
-
+                    //writeToNextPlayer(nextNextPlayer);
                     Platform.runLater( () -> {
-                        //
-                        //acquire write lock
-                        setCurrentlyPlaying(currentPlayer);
-                        //release
-                        //acquire read lock
-                        currentPlayer.play();
+                        if(queueSizeAtomic.get() > 1) {
+                            oldPlayer.stop();
+                            oldPlayer.dispose();
+                            oldPlayer.onEndOfMediaProperty().unbind();
+                            SongQueueObservableList.remove(0);//remove case event is fired
+                        }
+                            System.out.println("MediaView Listener triggered\n");
+                            writeToCurrentPlayer(newPlayer);
+                            setCurrentlyPlaying(newPlayer);
+                            currentPlayer.play();
                     });
                 }
             }
@@ -322,7 +307,7 @@ volatile QueueSong endOfAnimationQueueSong;
     }
 
     /**
-     * sets the currently playing label to the label of the new media player and updates the progress monitor.
+     * sets the currently playing time label to the label of the new media player and updates the progress monitor.
      * @param newPlayer the new player
      */
     private void setCurrentlyPlaying(final MediaPlayer newPlayer) {
@@ -337,7 +322,7 @@ volatile QueueSong endOfAnimationQueueSong;
         };
         newPlayer.currentTimeProperty().addListener(progressChangeListener);
 
-        System.out.println("nextPlayer set to progress change listener? \n");
+        //System.out.println("nextPlayer set to progress change listener? \n");
     }
 
     /**
@@ -347,35 +332,35 @@ volatile QueueSong endOfAnimationQueueSong;
     @FXML
      private synchronized void addSongButtonFunc(ActionEvent event)
     {
-        int index = songList.getSelectionModel().getSelectedIndex();
+        int index = selectionView.getSelectionModel().getSelectedIndex();
         addSongTask(index);
     }
-
 
     /**
      * Sets up the animation for adding a song
      */
-    public synchronized void setUpAddSongAnimation(){
-        path = new Path();
-        path.getElements().add(new MoveTo(180.0,-20.0));
+    public synchronized void SongAnimationSetup(QueueSong addedSong){
+        addSongPath = new Path();
+        addSongPath.getElements().add(new MoveTo(180.0,-20.0));
 
-        path.getElements().add(new CubicCurveTo(150.0, -400.0, -200, -60, -200, (-420 + (queueSizeAtomic.get()*23))));
-        pathTransition = new PathTransition();
-        pathTransition.setDuration(Duration.millis(4000));
-        pathTransition.setPath(path);
-        pathTransition.setNode(progressBall);
-        pathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
-        pathTransition.setCycleCount(1);
-        pathTransition.setAutoReverse(false);
+        addSongPath.getElements().add(new CubicCurveTo(150.0, -400.0, -200, -60, -200, (-420 + (queueSizeAtomic.get()*23))));
+        addSongPathTransition = new PathTransition();
+        addSongPathTransition.setDuration(Duration.millis(4000));
+        addSongPathTransition.setPath(addSongPath);
+        addSongPathTransition.setNode(progressBall);
+        addSongPathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
+        addSongPathTransition.setCycleCount(1);
+        addSongPathTransition.setAutoReverse(false);
 
-        pathTransition.setOnFinished(new EventHandler<ActionEvent>(){
+        addSongPathTransition.setOnFinished(new EventHandler<ActionEvent>() {
 
             @Override
             public void handle(ActionEvent arg0) {
-                if(endOfAnimationQueueSong!=null)
-                    SongQueueObservableList.add(endOfAnimationQueueSong);
+                //add song at the end of the animation
                 progressBall.setFill(Color.GOLD);
-               // progressBall.setVisible(false);
+                addAnimationFin = true;
+                if (addedSong != null)
+                    SongQueueObservableList.add(addedSong);
             }
         });
     }
@@ -396,15 +381,17 @@ volatile QueueSong endOfAnimationQueueSong;
                 final int index = selectionSongIndex;
 
                 QueueSong newQueueSong = new QueueSong(SongSelectionObservableList.get(index), index);
-                Platform.runLater(() -> {
-                    endOfAnimationQueueSong = newQueueSong;
-                    progressBall.setFill(Color.DEEPSKYBLUE);
-                    progressBall.setVisible(true);
-                    setUpAddSongAnimation();
-                    pathTransition.play();
-                });
-
-                return true;
+                if(addAnimationFin)
+                {
+                    addAnimationFin = false;
+                    Platform.runLater(() -> {
+                        progressBall.setFill(Color.DEEPSKYBLUE);
+                        progressBall.setVisible(true);
+                        SongAnimationSetup(newQueueSong);
+                        addSongPathTransition.play();
+                    });
+                    return true;
+                }
             }
         }
         return false;
@@ -475,9 +462,9 @@ volatile QueueSong endOfAnimationQueueSong;
         //init button can only be pressed once
         if("-fx-background-color:green".equals(initbtn.getStyle())) {
             initbtn.setStyle("-fx-background-color:red");
-            //Listeners cannot be called in initialize because myController throws a null pointer exception
+            //Listeners cannot be called in initialize because myController.model throws a null pointer exception
             addFXObservableListeners();
-            addVolumeAndTimeSliderListeners();
+
             observableDJComments.addAll("Bob: I love this song!", "Jane: I hate this song!");
             // create a list of SelectionSong objects from the database
             initSongSelection();
@@ -589,27 +576,24 @@ volatile QueueSong endOfAnimationQueueSong;
      * 1- Write to the nextNextPlayer
      * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer
      */
-    public synchronized void songAddedfileIOFunc(){
+    public synchronized void songAddedfileIOFunc() {
 
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
-        try
-        {
+        try {
             /** Song added case A:
              * 1- Write to the current player
              * 2- Add a special case end of media listener for last song in the queue*/
-            if (queueSizeAtomic.get() == 1 )
-            {
+            if (queueSizeAtomic.get() == 1) {
+                skipOK = false;
                 int index = SongQueueObservableList.get(0).getAzureForeignKey();
                 futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(0).getSong()));
                 MediaPlayer freshPlayer = futureMediaPlayer.get();
-                Platform.runLater( () ->
+                Platform.runLater(() ->
                 {
-                    writeToCurrentPlayer(freshPlayer);
-                    setCurrentlyPlaying(currentPlayer);
-                    addAmITheLastSong(currentPlayer);
-                    //when set, the mediaView listener kicks of the first song
-                    mediaView.setMediaPlayer(currentPlayer);
+                    //add end of media Listener
+                    addAmITheLastSong(freshPlayer);
+                    mediaView.setMediaPlayer(freshPlayer);
                 });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
@@ -617,15 +601,16 @@ volatile QueueSong endOfAnimationQueueSong;
             /** Song added case B:
              * 1- Write to the next player
              * 2- Add normal end of media listener to the current player that links current player to the next player*/
-            else if (queueSizeAtomic.get() == 2)
-            {
+            else if (queueSizeAtomic.get() == 2) {
+                skipOK = false;
                 int index = SongQueueObservableList.get(1).getAzureForeignKey();
                 futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
                 MediaPlayer nextSongPlayer = futureMediaPlayer.get();
-                Platform.runLater( () ->
+                Platform.runLater(() ->
                 {
-                writeToNextPlayer(nextSongPlayer);
-                addEndOfMediaListener(currentPlayer, nextPlayer);
+                    writeToNextPlayer(nextSongPlayer);
+                    addEndOfMediaListener(currentPlayer, nextPlayer);
+                    skipOK = true;
                 });
                 executorService.shutdown();
                 executorService.awaitTermination(7, TimeUnit.SECONDS);
@@ -633,27 +618,14 @@ volatile QueueSong endOfAnimationQueueSong;
             /** Song added case C:
              * 1- Write to the nextNextPlayer
              * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer*/
-            else if (queueSizeAtomic.get() == 3)
-            {
-                Task task = new Task<Void>()
-                {
-                    @Override public Void call()
-                    {
-                        try
-                        {
-                            int index = SongQueueObservableList.get(2).getAzureForeignKey();
-                            nextNextPlayerBytes = myController.downloadSongBytes(index);
-                            nextNextPlayerString = SongQueueObservableList.get(2).getSong();
-                        }
-                        catch (Exception e) {e.printStackTrace();}
-                        return null;
-                    }
-                };
-                new Thread(task).start();
+            else if (queueSizeAtomic.get() == 3) {
+                skipOK = false;
+                int index = SongQueueObservableList.get(2).getAzureForeignKey();
+                nextNextPlayerBytes = myController.downloadSongBytes(index);
+                nextNextPlayerString = SongQueueObservableList.get(2).getSong();
+                skipOK = true;
             }
-        }
-        catch (InterruptedException e) {e.printStackTrace();}
-        catch (ExecutionException e) {e.printStackTrace();}
+        } catch (Exception e) {}
     }
 
     /**
@@ -681,26 +653,61 @@ volatile QueueSong endOfAnimationQueueSong;
      */
     public synchronized void songRemovedfileIOFunc(QueueSong removedSong){
         ExecutorService executorService = Executors.newFixedThreadPool(1);
-        Future<MediaPlayer> futureMediaPlayer;
+        //Future<MediaPlayer> futureMediaPlayer;
         try
         {
+            skipOK = false;
             /** Remove case A: song removed and no next song available
              * 1- Delete the file associated with the song removed*/
             if (queueSizeAtomic.get() == 0){
-                deleteRemovedSongFile(removedSong.getSong());
+                Platform.runLater( () -> {
+                    deleteFailedDeletions();
+                    deleteRemovedSongFile(removedSong.getSong());
+                    progressBall.setVisible(false);
+                });
             }
             /** Remove case B: song removed and no next song available
              * 1- Add am I the last song listener to the current player
              * 2- Delete the file associated with the song removed*/
             else if (queueSizeAtomic.get() == 1){
+                writeToCurrentPlayer(nextPlayer);
                 addAmITheLastSong(currentPlayer);
-                deleteRemovedSongFile(removedSong.getSong());
+                Platform.runLater( () -> {
+                    deleteFailedDeletions();
+                    deleteRemovedSongFile(removedSong.getSong());
+                    progressBall.setCenterY(progressBall.getCenterY() - 21);
+                });
             }
-            /** Remove case C: song removed and no next song available
+            /** Remove case C: song removed and next song available
              * 1- Delete the file associated with the song removed*/
-            else if (queueSizeAtomic.get() == 2){
-                deleteRemovedSongFile(removedSong.getSong());
-            }
+            else if (queueSizeAtomic.get() >= 2)
+            {
+                Platform.runLater( () -> {
+                    progressBall.setCenterY(progressBall.getCenterY()-21);
+                });
+
+                int index = SongQueueObservableList.get(1).getAzureForeignKey();
+                nextNextPlayerBytes = myController.downloadSongBytes(index);
+                nextNextPlayerString = SongQueueObservableList.get(1).getSong();
+                SongQueueObservableList.get(1).setPreparedBool(true);
+
+                // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
+                Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
+                //4- While future is running, delete the file associated with the song removed
+              //  deleteRemovedSongFile(removedSong.getSong());
+                Platform.runLater( () -> {
+                    deleteFailedDeletions();
+                    deleteRemovedSongFile(removedSong.getSong());
+                });
+                //get the mediaPlayer returned from future
+                MediaPlayer newNextPlayer = futureMediaPlayer.get();
+                //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
+                writeToNextPlayer(newNextPlayer);
+                //6- Link the current player to the nextPlayer using an end of media listener
+                addEndOfMediaListener(currentPlayer, newNextPlayer);
+
+                skipOK = true;
+            }//end if queueSize == 2
 
             /** Remove case D: song removed and Queue is greater than 2
              * 1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
@@ -709,41 +716,41 @@ volatile QueueSong endOfAnimationQueueSong;
              * 4- While future is running, delete the file associated with the song removed
              * 5- Get the future MediaPlayer and write to the nextPlayer
              * 6- Link the current player to the nextPlayer using an end of media listener*/
-            else if (queueSizeAtomic.get() > 2)
-            {
-                //1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
-                if(! SongQueueObservableList.get(2).getPreparedBool())
-                {
-                    // 2- FX task downloads the bytes for the next next player
-                    Task task = new Task<Void>() {
-                        @Override
-                        public Void call() {
-                            try {
-                                int index = SongQueueObservableList.get(2).getAzureForeignKey();
-                                nextNextPlayerBytes = myController.downloadSongBytes(index);
-                                nextNextPlayerString = SongQueueObservableList.get(2).getSong();
-                                SongQueueObservableList.get(2).setPreparedBool(true);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            return null;
-                        }
-                    };
-                    new Thread(task).start();
-                }
+//            else if (queueSizeAtomic.get() > 2)
+//            {
+//                //1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
+//                if(! SongQueueObservableList.get(2).getPreparedBool())
+//                {
+//                    // 2- FX task downloads the bytes for the next next player
+//                    Task task = new Task<Void>() {
+//                        @Override
+//                        public Void call() {
+//                            try {
+//                                int index = SongQueueObservableList.get(2).getAzureForeignKey();
+//                                nextNextPlayerBytes = myController.downloadSongBytes(index);
+//                                nextNextPlayerString = SongQueueObservableList.get(2).getSong();
+//                                SongQueueObservableList.get(2).setPreparedBool(true);
+//
+//                                // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
+//                                Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
+//                                //4- While future is running, delete the file associated with the song removed
+//                                deleteRemovedSongFile(removedSong.getSong());
+//                                //get the mediaPlayer returned from future
+//                                MediaPlayer newNextPlayer = futureMediaPlayer.get();
+//                                //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
+//                                writeToNextPlayer(newNextPlayer);
+//                                //6- Link the current player to the nextPlayer using an end of media listener
+//                                addEndOfMediaListener(currentPlayer, newNextPlayer);
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//                            return null;
+//                        }
+//                    };
+//                    new Thread(task).start();
+//                }
 
-                // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
-                futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
-                //4- While future is running, delete the file associated with the song removed
-                deleteRemovedSongFile(removedSong.getSong());
-                //get the mediaPlayer returned from future
-                MediaPlayer newNextPlayer = futureMediaPlayer.get();
-                //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
-                writeToNextPlayer(newNextPlayer);
-                //6- Link the current player to the nextPlayer using an end of media listener
-                addEndOfMediaListener(currentPlayer, newNextPlayer);
-
-            }//end if (queue size >2)
+     //       }//end if (queue size >2)
         }//end try
         catch (Exception e) {e.printStackTrace();}
     }
@@ -768,8 +775,37 @@ volatile QueueSong endOfAnimationQueueSong;
 
         if(file.delete())
             System.out.println(file.getName() + " is deleted!");
-        else
+        else {
             System.out.println(file.getName() + " Delete operation failed.");
+            failedDeletions.add(file.getName());
+        }
+    }
+
+    public void deleteFailedDeletions(){
+
+        for(int i= 0; i < failedDeletions.size(); i++ )
+        {
+            String filePath = "C:\\test\\" + failedDeletions.get(i) + ".mp3";
+            File file = new File(filePath);
+            try {
+                OutputStream targetFile =
+                    new FileOutputStream(
+                        "C:\\test\\" + failedDeletions.get(i) + ".mp3");
+
+                targetFile.write(0);
+                targetFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (file.delete()) {
+                System.out.println(file.getName() + " is deleted!");
+                failedDeletions.remove(i);
+            }
+            else {
+                System.out.println(file.getName() + " Delete operation failed.");
+            }
+        }
     }
 
     /**
@@ -786,7 +822,7 @@ volatile QueueSong endOfAnimationQueueSong;
         {
             link1Final.currentTimeProperty().removeListener(progressChangeListener);
             link1Final.stop();
-            link1Final.dispose();//release file stream link
+            //link1Final.dispose();//release file stream link
 
             if(queueSizeAtomic.get()>1)
             {
@@ -868,7 +904,7 @@ volatile QueueSong endOfAnimationQueueSong;
                 }
 
                 SongSelectionObservableList = FXCollections.observableList(myController.getSelection());
-                songList.setItems(SongSelectionObservableList);
+                selectionView.setItems(SongSelectionObservableList);
 
                 return null;
             }
@@ -883,38 +919,47 @@ volatile QueueSong endOfAnimationQueueSong;
     @FXML
     private void logOut(ActionEvent event)
     {
-        synchronized(this) {
-            Platform.runLater( () -> {
-                initbtn.setStyle("-fx-background-color:green");
-                System.out.println("removing everything");
-                if(mediaView.getMediaPlayer()!=null) {
-                    mediaView.getMediaPlayer().stop();
-                    mediaView.getMediaPlayer().dispose();
-                    clearValuesBeforeLogginOut();
-                }
-            });
+        //can't log out during animation or while a song is downloading
+        if(skipOK && addAnimationFin)
+        {
+            synchronized (this) {
+                Platform.runLater(() -> {
+                    //remove everything only if init button was pressed previously, else just log out
+                    if (initbtn.getStyle().equals("-fx-background-color:red")) {
+                        initbtn.setStyle("-fx-background-color:green");
+                        System.out.println("removing everything");
+                        if (mediaView.getMediaPlayer() != null) {
+                            mediaView.getMediaPlayer().stop();
+                            mediaView.getMediaPlayer().dispose();
+                            clearValuesBeforeLogginOut();
+                        }
+                    }
+                });
 
-            Platform.runLater( () -> {
-                myController.restartAnimationUponLogout();
-                myController.setScreen(MusicHostFramework.loginScrenID);
-            });
+                Platform.runLater(() -> {
+                    myController.restartAnimationUponLogout();
+                    myController.logOut(MusicHostFramework.loginScrenID);
+                });
+            }
         }
     }
 
     /**
-     * clears GUI and model values before loggin out
+     * clears GUI and com.model values before loggin out
      */
     public void clearValuesBeforeLogginOut()
     {
-       if(serverStartFlag == true)
+       if(serverStartFlag)
             stopServer();
 
-        //prevent the removing of songs from the queue in the model from triggering the listener attached
-        SongQueueObservableList = null;
+        //prevent the removing of songs from the queue in the com.model from triggering the listener attached
         SongSelectionObservableList = null;
+        selectionView.getItems().clear();
 
-        songList.getItems().clear();
-        queueList.getItems().clear();
+        if(queueSizeAtomic.get()>0) {
+            SongQueueObservableList = null;
+            queueList.getItems().clear();
+        }
 
         Platform.runLater( () -> {
             myController.clearValuesBeforeLoggingOut();
@@ -953,7 +998,7 @@ volatile QueueSong endOfAnimationQueueSong;
 
 
     /**
-     * Interface injection of screenParent which contains the main model for songs and DB
+     * com.Interface injection of screenParent which contains the main com.model for songs and DB
      * @param screenParent set the current screen parent
      */
     public void setScreenParent(ScreensController screenParent)
@@ -1055,23 +1100,15 @@ volatile QueueSong endOfAnimationQueueSong;
                     //blocking call waiting for client to connect
                     connection = notifier.acceptAndOpen();
                     System.out.println("connected!");
-                }
-
-                return;
-
+                }//end while volatile
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
-                return;
             } catch (NullPointerException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
-                return;
-            } finally {
-
             }
-            return;
         });
     }
 
@@ -1153,7 +1190,6 @@ volatile QueueSong endOfAnimationQueueSong;
                     } catch (InterruptedException e) {}
                 }
             } catch (Exception e) {e.printStackTrace();}
-            return;
         }
 
     /**
@@ -1191,8 +1227,7 @@ volatile QueueSong endOfAnimationQueueSong;
         try {
             byte[] msg = new byte[dataInputStream.available()];
             dataInputStream.read(msg, 0, dataInputStream.available());
-            String msgstring = new String(msg);
-            return msgstring;
+            return new String(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1203,7 +1238,7 @@ volatile QueueSong endOfAnimationQueueSong;
      * Communication interface for transmission through the data output stream
      * @param msg The message to send
      * @param whatToDo What the receiver should do with the message
-     * @return
+     * @return whether communication was successful or not
      */
     @Override
     public boolean sendMessageByBluetooth(String msg,int whatToDo)
@@ -1318,10 +1353,10 @@ volatile QueueSong endOfAnimationQueueSong;
      */
     @Override
     public void SkipSongTX() {
-            Platform.runLater( () -> {
-                String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
-                sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
-            });
+        Platform.runLater( () -> {
+            String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
+            sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
+        });
     }
 
     /**
@@ -1334,7 +1369,7 @@ volatile QueueSong endOfAnimationQueueSong;
                 iSkip();
         });
     }
-}//end connection thread class
+    }//end connection thread class
 
     /** Boolean button for song request option*/
     @FXML

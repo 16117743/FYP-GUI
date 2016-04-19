@@ -1,9 +1,7 @@
-package sample;
+package com.framework;
 
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -16,6 +14,15 @@ import javafx.scene.shape.*;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * date: 25/04/16
+ **********************/
+
+/**
+ * Controller for the login view<br>
+ */
 public class LoginSceneController implements Initializable, ControlledScreen {
 
     ScreensController myController;
@@ -27,9 +34,6 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     private PasswordField passwordField;
 
     @FXML
-    private Label response;
-
-    @FXML
     private Rectangle loginRect;
 
     @FXML
@@ -37,13 +41,10 @@ public class LoginSceneController implements Initializable, ControlledScreen {
 
     private FadeTransition musicHostTextFade;
 
-    private FadeTransition loginShapeFade;
-
-    private PathTransition pathTransitionEllipse;
     private PathTransition pathTransitionCircle;
 
     @FXML
-    Path path2;
+    Path loginRectPath;
 
     /**Initializes the controller class.*/
     @Override
@@ -61,11 +62,11 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         musicHostTextFade.setAutoReverse(true);
         musicHostTextFade.play();
 
-        path2 = createEllipsePath(25, 55, 40, 40, 0);
+        loginRectPath = createEllipsePathForLogin(25, 55, 40, 40, 0);
 
         pathTransitionCircle = PathTransitionBuilder.create()
             .duration(Duration.seconds(2))
-            .path(path2)
+            .path(loginRectPath)
             .node(loginRect)
             .orientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT)
             .cycleCount(Timeline.INDEFINITE)
@@ -73,12 +74,9 @@ public class LoginSceneController implements Initializable, ControlledScreen {
             .build();
 
         pathTransitionCircle.play();
-
-       // myController.getReferenceToLoginRect(loginRect, musicHostTextFade, pathTransitionCircle);
-
     }
 
-    private Path createEllipsePath(double centerX, double centerY, double radiusX, double radiusY, double rotate) {
+    private Path createEllipsePathForLogin(double centerX, double centerY, double radiusX, double radiusY, double rotate) {
         ArcTo arcTo = new ArcTo();
         arcTo.setX(centerX - radiusX + 1); // to simulate a full 360 degree celcius circle.
         arcTo.setY(centerY - radiusY);
@@ -104,46 +102,25 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     }
 
     @FXML
-    private void goToScreen2(ActionEvent event){
-        //myController.setScreen(MusicHostFramework.mainScreenID);
+    private void loginAction(ActionEvent event){
         Login();
     }
 
-    @FXML
-    private void testAnim(ActionEvent event){
-        myController.setScreen(MusicHostFramework.mainScreenID);
-    }
-
-    private void Login(){
+    private void Login() {
         myController.getReferenceToLoginRect(loginRect, musicHostTextFade, pathTransitionCircle);
         String user = userLogin.getText();
         String pw = passwordField.getText();
-        int check = -1; // = myController.confirmLogin(user,pw);
+        boolean check;
 
-        Task<Integer> task1 = new Task<Integer>() {
+        Task task = new Task<Void>()
+        {
             final String Tpw = pw;
             final String Tuser = user;
-            @Override protected Integer call() throws Exception {
-                return myController.confirmLogin(Tuser,Tpw);
-            }
-        };
-        new Thread(task1).start();
-        try {
-            check = task1.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        //if it's a valid log , run thread to display green rectangle for 2.5 secs before logging in
-        if(check!=-1){
-            myController.setUserID(check);
-            Task task = new Task<Void>()
+            @Override public Void call()
             {
-                @Override public Void call()
+                if(myController.confirmLogin(Tuser, Tpw))
                 {
-                    try
-                    {
+                    try {
                         Platform.runLater(() ->
                         {
                             loginRect.setFill(Color.GREEN);
@@ -155,22 +132,15 @@ public class LoginSceneController implements Initializable, ControlledScreen {
                             pathTransitionCircle.stop();
                             myController.setScreen(MusicHostFramework.mainScreenID);
                         });
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    catch (Exception e) {e.printStackTrace();}
-                    return null;
                 }
-            };
-            new Thread(task).start();
-        }
-        else {
-            Task task = new Task<Void>()
-            {
-                @Override public Void call()
-                {
-                    try
-                    {
+                else{
+                    try {
                         Platform.runLater(() ->
                         {
+                            //set red for incorrect login
                             loginRect.setFill(Color.RED);
                         });
                         Thread.sleep(2500);
@@ -178,13 +148,14 @@ public class LoginSceneController implements Initializable, ControlledScreen {
                         {
                             loginRect.setFill(Color.DARKBLUE);
                         });
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    catch (Exception e) {e.printStackTrace();}
-                    return null;
                 }
-            };
-            new Thread(task).start();
-        }
-    }
+                return null;
+            }
+        };
+        new Thread(task).start();
 
+    }
 }

@@ -1,8 +1,11 @@
-package sample;
+package com.framework;
 
 import java.util.HashMap;
 import java.util.List;
 
+import com.util.QueueSong;
+import com.util.SelectionSong;
+import com.model.Model;
 import javafx.animation.*;
 import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
@@ -12,28 +15,26 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import model.Model;
-import model.QueueSong;
-import model.SelectionSong;
 
-//keep pane so we can remove add screens on top/bottom
+/**
+ * Keeps the pane so we can add remove them from top/bottom.
+ * Also holds the primary reference to the model for both the controllers.
+ */
 public class ScreensController  extends StackPane {
     //Holds the screens to be displayed
     private HashMap<String, Node> screens = new HashMap<>();//id of screen, represents root of the screen graph for that scene
     public ScreensController() {
         super();//inherit StackPane class
     }
-    static int dx = 1;
-    static int dy = 1;
-    final Circle ball = new Circle(100, 100, 20);
-    Rectangle loginRectReference = new Rectangle(10,200,50, 50);
+
+    Rectangle loginRectReference;
     FadeTransition  musicHostTextFade;
     PathTransition pathTransitionCircle;
 
+    //both controllers can access the model from this.ScreensController
     private Model model = new Model();
 
     //Add the screen to the collection
@@ -63,51 +64,6 @@ public class ScreensController  extends StackPane {
             System.out.println(e.getMessage());
             return false;
         }
-    }
-
-    public KeyFrame returnKeyFrame(){
-        return new KeyFrame(Duration.seconds(2),
-            new EventHandler<ActionEvent>() {
-
-                public void handle(ActionEvent event) {
-
-                    double xMin = ball.getBoundsInParent().getMinX();
-                    double yMin = ball.getBoundsInParent().getMinY();
-                    double xMax = ball.getBoundsInParent().getMaxX();
-                    double yMax = ball.getBoundsInParent().getMaxY();
-
-                    if (xMin < 0 || xMax > getWidth()) {
-                        dx = dx * -1;
-                    }
-                    if (yMin < 0 || yMax > getHeight()) {
-                        dy = dy * -1;
-                    }
-
-                    ball.setTranslateX(ball.getTranslateX() + dx);
-                    ball.setTranslateY(ball.getTranslateY() + dy);
-                }
-        });
-    }
-
-    public KeyFrame getLoginKeyFrame(String name, DoubleProperty opacity){
-        return new KeyFrame
-            (
-                new Duration(100),// once fade out is finished, call eventhandler
-                new EventHandler<ActionEvent>()
-                {
-                    @Override
-                    public void handle(ActionEvent t)
-                    {
-                        getChildren().remove(0);                    //remove the displayed screen
-                        getChildren().add(0, screens.get(name));     //add the screen, returns node
-
-                        Timeline fadeIn = new Timeline(
-                            new KeyFrame(Duration.ZERO, new KeyValue(opacity, 0.0)),
-                            new KeyFrame(new Duration(500), new KeyValue(opacity, 1.0)));
-                        fadeIn.play();
-                    }
-                }, new KeyValue(opacity, 0.0)
-            );//end new keyframe
     }
 
     //This method tries to display the screen with a predefined name.
@@ -218,6 +174,12 @@ public class ScreensController  extends StackPane {
         getChildren().add(path);
     }
 
+    /**
+     * References used for the mainSceneController to restart animation upon loggin out for the log in screen
+     * @param rect2 login rectangle
+     * @param musicHostTextFade login MusicHost text
+     * @param pathTransitionCircle path of the rectangle
+     */
     public void getReferenceToLoginRect(Rectangle rect2, FadeTransition  musicHostTextFade, PathTransition pathTransitionCircle){
         this.loginRectReference = rect2;
         this.musicHostTextFade = musicHostTextFade;
@@ -225,6 +187,7 @@ public class ScreensController  extends StackPane {
     }
 
     public void restartAnimationUponLogout(){
+        loginRectReference.setFill(Color.BLUE);
         pathTransitionCircle.play();
         musicHostTextFade.play();
     }
@@ -240,7 +203,7 @@ public class ScreensController  extends StackPane {
     }
 
     /**Database methods*/
-    public int confirmLogin(String user, String pw){
+    public Boolean confirmLogin(String user, String pw){
         return model.confirmLogin(user,pw);
     }
 

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane azureForeignKey="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+<AnchorPane azureForeignKey="AnchorPane" prefHeight="509.0" prefWidth="638.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.framework.MainSceneController">
   <children>
       <AnchorPane prefHeight="509.0" prefWidth="638.0">
          <children>

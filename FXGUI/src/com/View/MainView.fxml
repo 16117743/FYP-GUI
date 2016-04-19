@@ -14,12 +14,12 @@
 <?import javafx.scene.layout.*?>
 <?import Browser.*?>
 
-<AnchorPane id="AnchorPane" fx:id="theRoot" prefHeight="715.0" prefWidth="1377.0" style="-fx-background-color: cornflowerblue;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainSceneController">
+<AnchorPane id="AnchorPane" fx:id="theRoot" prefHeight="715.0" prefWidth="1377.0" style="-fx-background-color: cornflowerblue;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.framework.MainSceneController">
     <children>
         <HBox layoutX="353.0" layoutY="234.0" prefHeight="398.0" prefWidth="600.0">
             <children>
             <ListView fx:id="queueList" prefHeight="200.0" prefWidth="200.0" stylesheets="@QueueStyle.css" />
-                <ListView fx:id="songList" prefHeight="400.0" prefWidth="207.0" stylesheets="@SelectionStyle.css" />
+                <ListView fx:id="selectionView" prefHeight="400.0" prefWidth="207.0" stylesheets="@SelectionStyle.css" />
                 <ListView fx:id="dJComments" prefHeight="372.0" prefWidth="205.0" stylesheets="@DJCommentStyle.css" />
             </children>
         </HBox>

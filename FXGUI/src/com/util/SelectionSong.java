@@ -1,4 +1,4 @@
-package model;
+package com.util;
 
 public class SelectionSong {
     /**data*/

@@ -1,4 +1,4 @@
-package Interface;
+package com.View;
 
 /**
  * Created by user on 27/03/2016.

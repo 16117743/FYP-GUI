@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="724.0" prefWidth="1426.0" style="-fx-background-color: deepskyblue;" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.LoginSceneController">
+<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="724.0" prefWidth="1426.0" style="-fx-background-color: deepskyblue;" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.framework.LoginSceneController">
     <children>
         <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="580.0" layoutY="320.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
             <font>
@@ -31,7 +31,7 @@
                 </Label>
                 <TextField fx:id="userLogin" layoutX="553.0" layoutY="383.0" prefHeight="35.0" prefWidth="136.0" />
                 <PasswordField fx:id="passwordField" layoutX="706.0" layoutY="383.0" prefHeight="35.0" prefWidth="142.0" promptText="Password" />
-                <Button layoutX="871.0" layoutY="387.0" mnemonicParsing="false" onAction="#goToScreen2" prefHeight="34.0" prefWidth="47.0" text="Login" />
+                <Button layoutX="871.0" layoutY="387.0" mnemonicParsing="false" onAction="#loginAction" prefHeight="34.0" prefWidth="47.0" text="Login" />
          </children>
       </HBox>
       <Rectangle fx:id="loginRect" arcHeight="5.0" arcWidth="5.0" fill="#15106f" height="34.0" layoutX="488.0" layoutY="280.0" stroke="BLACK" strokeType="INSIDE" width="35.0" />
@@ -40,7 +40,7 @@
             <Font name="Elephant" size="64.0" />
          </font>
       </Text>
-      <Path fx:id="path2" fill="DODGERBLUE" layoutX="209.0" layoutY="119.0" opacity="0.0" stroke="BLACK" strokeType="INSIDE">
+      <Path fx:id="loginRectPath" fill="DODGERBLUE" layoutX="209.0" layoutY="119.0" opacity="0.0" stroke="BLACK" strokeType="INSIDE">
           <elements>
               <MoveTo x="100.0" />
               <LineTo x="150.0" y="50.0" />

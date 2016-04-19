@@ -44,16 +44,16 @@
     -fx-text-fill: orangered;
 }
 
-#songList.list-cell:filled:selected:focused, .list-cell:filled:selected {
+#selectionView.list-cell:filled:selected:focused, .list-cell:filled:selected {
     -fx-background-color: linear-gradient(#328BDB 0%, #207BCF 25%, #1973C9 75%, #0A65BF 100%);
     -fx-text-fill: darkblue;
 }
 
-#songList {
+#selectionView {
     -fx-background-color: deepskyblue;
 }
 
-#songList.list-cell:filled:hover {
+#selectionView.list-cell:filled:hover {
     -fx-background-color: #328BDB;
     -fx-text-fill: darkblue;
 }

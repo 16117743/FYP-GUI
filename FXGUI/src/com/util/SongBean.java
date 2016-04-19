@@ -1,4 +1,4 @@
-package model;
+package com.util;
 
 /**
  * Created by user on 06/03/2016.

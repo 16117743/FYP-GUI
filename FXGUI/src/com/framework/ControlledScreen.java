@@ -1,6 +1,6 @@
-package sample;
+package com.framework;
 
-import model.Model;
+import com.framework.ScreensController;
 
 public interface ControlledScreen {
     //This method will allow the injection of the Parent ScreenPane
