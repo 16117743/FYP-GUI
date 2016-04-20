@@ -536,29 +536,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 } else {
                     for (QueueSong removedSong : change.getRemoved()) {
                         queueSizeAtomic.decrementAndGet();
-                        Task task = new Task<Void>()
-                        {
-                            final QueueSong removed = removedSong;
-                            @Override public Void call()
-                            {
-                                songRemovedfileIOFunc(removed);
-                                return null;
-                            }
-                        };
-                        new Thread(task).start();
+                        songRemovedfileIOFunc(removedSong);
                     }
 
                     for (QueueSong addedSong : change.getAddedSubList()) {
                         queueSizeAtomic.incrementAndGet();
-                        Task task = new Task<Void>()
-                        {
-                            @Override public Void call()
-                            {
-                                songAddedfileIOFunc();
-                                return null;
-                            }
-                        };
-                        new Thread(task).start();
+                        songAddedfileIOFunc();
+//                        Task task = new Task<Void>()
+//                        {
+//                            @Override public Void call()
+//                            {
+//                                songAddedfileIOFunc();
+//                                return null;
+//                            }
+//                        };
+//                        new Thread(task).start();
                     }
                 }
             }
@@ -622,53 +614,80 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         Future<MediaPlayer> futureMediaPlayer;
-        try {
-            /** Song added case A:
-             * 1- Write to the current player
-             * 2- Add a special case end of media listener for last song in the queue*/
-            if (queueSizeAtomic.get() == 1) {
-                skipOK = false;
-                int index = SongQueueObservableList.get(0).getAzureForeignKey();
-                futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(0).getSong()));
-                MediaPlayer freshPlayer = futureMediaPlayer.get();
-                Platform.runLater(() ->
-                {
-                    //add end of media Listener
-                    addAmITheLastSong(freshPlayer);
-                    mediaView.setMediaPlayer(freshPlayer);
-                });
-                executorService.shutdown();
-                executorService.awaitTermination(7, TimeUnit.SECONDS);
-            }
-            /** Song added case B:
-             * 1- Write to the next player
-             * 2- Add normal end of media listener to the current player that links current player to the next player*/
-            else if (queueSizeAtomic.get() == 2) {
-                skipOK = false;
-                int index = SongQueueObservableList.get(1).getAzureForeignKey();
-                futureMediaPlayer = executorService.submit(new HandleFileIO(myController.downloadSongBytes(index), SongQueueObservableList.get(1).getSong()));
-                MediaPlayer nextSongPlayer = futureMediaPlayer.get();
-                Platform.runLater(() ->
-                {
-                    writeToNextPlayer(nextSongPlayer);
-                    addEndOfMediaListener(currentPlayer, nextPlayer);
-                    skipOK = true;
-                });
-                executorService.shutdown();
-                executorService.awaitTermination(7, TimeUnit.SECONDS);
-            }
-            /** Song added case C:
-             * 1- Write to the nextNextPlayer
-             * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer*/
-            else if (queueSizeAtomic.get() == 3) {
-                skipOK = false;
-                int index = SongQueueObservableList.get(2).getAzureForeignKey();
-                nextNextPlayerBytes = myController.downloadSongBytes(index);
-                nextNextPlayerString = SongQueueObservableList.get(2).getSong();
-                skipOK = true;
-            }
-        } catch (Exception e) {}
+
+        Task task = new Task<Void>() {
+            @Override
+            public Void call() {
+                updateProgress(0, 5);
+                /** Song added case A:
+                 * 1- Write to the current player
+                 * 2- Add a special case end of media listener for last song in the queue*/
+                try {
+                    if (queueSizeAtomic.get() == 1) {
+                        updateProgress(1, 5);
+                        skipOK = false;
+                        int index = SongQueueObservableList.get(0).getAzureForeignKey();
+                        nextNextPlayerBytes = myController.downloadSongBytes(index);
+                        updateProgress(2, 5);
+                        final Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, SongQueueObservableList.get(0).getSong()));
+                        MediaPlayer freshPlayer = futureMediaPlayer.get();
+                        updateProgress(3, 5);
+                        Platform.runLater(() ->
+                        {
+                            updateProgress(4, 5);
+                            //add end of media Listener
+                            addAmITheLastSong(freshPlayer);
+                            mediaView.setMediaPlayer(freshPlayer);
+                            updateProgress(5, 5);
+                        });
+                        executorService.shutdown();
+                        executorService.awaitTermination(7, TimeUnit.SECONDS);
+                    }
+                    /** Song added case B:
+                     * 1- Write to the next player
+                     * 2- Add normal end of media listener to the current player that links current player to the next player*/
+                    else if (queueSizeAtomic.get() == 2) {
+                        updateProgress(1, 5);
+                        skipOK = false;
+                        int index = SongQueueObservableList.get(1).getAzureForeignKey();
+
+                        nextNextPlayerBytes = myController.downloadSongBytes(index);
+                        updateProgress(2, 5);
+
+                        Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, SongQueueObservableList.get(1).getSong()));
+
+                        MediaPlayer nextSongPlayer = futureMediaPlayer.get();
+                        updateProgress(3, 5);
+                        Platform.runLater(() ->
+                        {
+                            writeToNextPlayer(nextSongPlayer);
+                            updateProgress(4, 5);
+                            addEndOfMediaListener(currentPlayer, nextPlayer);
+                            updateProgress(5, 5);
+                            skipOK = true;
+                        });
+                        executorService.shutdown();
+                        executorService.awaitTermination(7, TimeUnit.SECONDS);
+                    }
+                    else if (queueSizeAtomic.get() > 2) {
+                        updateProgress(5, 5);
+                    }
+                    /** Song added case C:
+                     * 1- Write to the nextNextPlayer
+                     * 2- Add normal end of media listener that links the next player to the nextNextPlayer that links to the nextNextPlayer*/
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                return null;
+                }
+            };
+        ProgressBar bar = new ProgressBar();
+        songProgBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
     }
+
 
     /**
      * Called any time a song is removed from the queue. It's operation depends on the state of the song queue.
@@ -693,63 +712,96 @@ public class MainSceneController implements Initializable , ControlledScreen {
      *
      * @param removedSong the song that has just ended or has been skipped.
      */
-    public synchronized void songRemovedfileIOFunc(QueueSong removedSong){
+    public synchronized void songRemovedfileIOFunc(QueueSong removedSong) {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         //Future<MediaPlayer> futureMediaPlayer;
-        try
-        {
-            skipOK = false;
-            /** Remove case A: song removed and no next song available
-             * 1- Delete the file associated with the song removed*/
-            if (queueSizeAtomic.get() == 0){
-                Platform.runLater( () -> {
-                    cleanUpUnusedFiles(removedSong.getSong());
-                    //deleteRemovedSongFile(removedSong.getSong());
-                    progressBall.setVisible(false);
-                    pathTransitionCircle.stop();
-                });
+
+        /********************/
+        Task task = new Task<Void>() {
+            @Override
+            public Void call() {
+                try {
+                    skipOK = false;
+                    /** Remove case A: song removed and no next song available
+                     * 1- Delete the file associated with the song removed*/
+                    if (queueSizeAtomic.get() == 0) {
+                        Platform.runLater(() -> {
+                            updateProgress(0, 4);
+                            cleanUpUnusedFiles(removedSong.getSong());
+                            //deleteRemovedSongFile(removedSong.getSong());
+                            progressBall.setVisible(false);
+                            pathTransitionCircle.stop();
+                            updateProgress(4, 4);
+                        });
+                    }
+                    /** Remove case B: song removed and no next song available
+                     * 1- Add am I the last song listener to the current player
+                     * 2- Delete the file associated with the song removed*/
+                    else if (queueSizeAtomic.get() == 1) {
+                        //final int max = 4;
+                        updateProgress(0, 4);
+                        writeToCurrentPlayer(nextPlayer);
+                        updateProgress(1, 4);
+                        addAmITheLastSong(currentPlayer);
+                        updateProgress(2, 4);
+                        Platform.runLater(() -> {
+                            cleanUpUnusedFiles(removedSong.getSong());
+                            updateProgress(3, 4);
+                            progressBall.setCenterY(progressBall.getCenterY() - 21);
+                            updateProgress(4, 4);
+                        });
+                    }
+                    /** Remove case C: song removed and next song available
+                     * 1- Delete the file associated with the song removed*/
+                    else if (queueSizeAtomic.get() >= 2) {
+                        Platform.runLater(() -> {
+                            updateProgress(0, 6);
+                            progressBall.setCenterY(progressBall.getCenterY() - 21);
+                        });
+
+                        updateProgress(1, 6);
+
+                        int index = SongQueueObservableList.get(1).getAzureForeignKey();
+                        nextNextPlayerBytes = myController.downloadSongBytes(index);
+                        updateProgress(2, 6);
+                        nextNextPlayerString = SongQueueObservableList.get(1).getSong();
+                        SongQueueObservableList.get(1).setPreparedBool(true);
+
+                        // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
+                        Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
+                        //4- While future is running, delete the file associated with the song removed
+                        updateProgress(3, 6);
+
+                        //get the mediaPlayer returned from future
+                        MediaPlayer newNextPlayer = futureMediaPlayer.get();
+
+                        updateProgress(4, 6);
+                        //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
+                        writeToNextPlayer(newNextPlayer);
+                        //6- Link the current player to the nextPlayer using an end of media listener
+                        addEndOfMediaListener(currentPlayer, newNextPlayer);
+
+                        updateProgress(5, 6);
+
+                        Platform.runLater(() -> {
+                            cleanUpUnusedFiles(removedSong.getSong());
+                            skipOK = true;
+                            updateProgress(6, 6);
+                        });
+
+                    }//end if queueSize == 2
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
-            /** Remove case B: song removed and no next song available
-             * 1- Add am I the last song listener to the current player
-             * 2- Delete the file associated with the song removed*/
-            else if (queueSizeAtomic.get() == 1){
-                writeToCurrentPlayer(nextPlayer);
-                addAmITheLastSong(currentPlayer);
-                Platform.runLater( () -> {
-                    cleanUpUnusedFiles(removedSong.getSong());
-                    progressBall.setCenterY(progressBall.getCenterY() - 21);
-                });
-            }
-            /** Remove case C: song removed and next song available
-             * 1- Delete the file associated with the song removed*/
-            else if (queueSizeAtomic.get() >= 2)
-            {
-                Platform.runLater( () -> {
-                    progressBall.setCenterY(progressBall.getCenterY()-21);
-                });
+        };
+        ProgressBar bar = new ProgressBar();
+        songProgBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
+    }
+            /*****************/
 
-                int index = SongQueueObservableList.get(1).getAzureForeignKey();
-                nextNextPlayerBytes = myController.downloadSongBytes(index);
-                nextNextPlayerString = SongQueueObservableList.get(1).getSong();
-                SongQueueObservableList.get(1).setPreparedBool(true);
-
-                // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
-                Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
-                //4- While future is running, delete the file associated with the song removed
-
-                //get the mediaPlayer returned from future
-                MediaPlayer newNextPlayer = futureMediaPlayer.get();
-                //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
-                writeToNextPlayer(newNextPlayer);
-                //6- Link the current player to the nextPlayer using an end of media listener
-                addEndOfMediaListener(currentPlayer, newNextPlayer);
-
-                Platform.runLater( () -> {
-                    cleanUpUnusedFiles(removedSong.getSong());
-                    skipOK = true;
-                });
-
-            }//end if queueSize == 2
 
             /** Remove case D: song removed and Queue is greater than 2
              * 1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
@@ -758,9 +810,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
              * 4- While future is running, delete the file associated with the song removed
              * 5- Get the future MediaPlayer and write to the nextPlayer
              * 6- Link the current player to the nextPlayer using an end of media listener*/
-        }//end try
-        catch (Exception e) {e.printStackTrace();}
-    }
 
     /**
      * Deletes unused files
