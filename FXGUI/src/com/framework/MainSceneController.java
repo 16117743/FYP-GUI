@@ -16,6 +16,8 @@ import com.util.HandleFileIO;
 import com.util.QueueSong;
 import com.util.SelectionSong;
 import javafx.animation.PathTransition;
+import javafx.animation.PathTransitionBuilder;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -35,12 +37,10 @@ import javafx.scene.control.Label;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.CubicCurveTo;
-import javafx.scene.shape.MoveTo;
-import javafx.scene.shape.Path;
+import javafx.scene.shape.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
+
 import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
@@ -167,7 +167,14 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Circle progressBall;
 
     @FXML
-    Path ballPath;
+    Circle playBall;
+
+    @FXML
+    ProgressBar songProgBar;
+
+    private PathTransition pathTransitionCircle;
+
+    private Path playPath;
 
     private ChangeListener<Duration> progressChangeListener;
 
@@ -179,6 +186,41 @@ public class MainSceneController implements Initializable , ControlledScreen {
         setCellFactoryForListViews();
         addMediaViewPropertyListener();
         addVolumeAndTimeSliderListeners();
+        buildSongPlayAnimation();
+    }
+
+    private void buildSongPlayAnimation(){
+        playPath = createEllipsePathForPlayBall(25, 55, 40, 40, 0);
+
+        pathTransitionCircle = PathTransitionBuilder.create()
+            .duration(Duration.seconds(1))
+            .path(playPath)
+            .node(playBall)
+            .orientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT)
+            .cycleCount(Timeline.INDEFINITE)
+            .autoReverse(false)
+            .build();
+    }
+
+    private Path createEllipsePathForPlayBall(double centerX, double centerY, double radiusX, double radiusY, double rotate) {
+        ArcTo arcTo = new ArcTo();
+        arcTo.setX(centerX - radiusX + 1); // to simulate a full 360 degree celcius circle.
+        arcTo.setY(centerY - radiusY);
+        arcTo.setSweepFlag(true);
+        arcTo.setLargeArcFlag(true);
+        arcTo.setRadiusX(radiusX);
+        arcTo.setRadiusY(radiusY);
+        arcTo.setXAxisRotation(rotate);
+
+        Path path = PathBuilder.create()
+            .elements(
+                new MoveTo(centerX - radiusX, centerY - radiusY),
+                arcTo,
+                new ClosePath()) // close 1 px gap.
+            .build();
+        path.setStroke(Color.DODGERBLUE);
+        path.getStrokeDashArray().setAll(5d, 5d);
+        return path;
     }
 
     /**
@@ -277,7 +319,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 return cell;
             }
         });
-
     }
 
     /**
@@ -299,6 +340,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                             writeToCurrentPlayer(newPlayer);
                             setCurrentlyPlaying(newPlayer);
                             currentPlayer.play();
+                            pathTransitionCircle.play();
                     });
                 }
             }
@@ -641,7 +683,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Remove case C: song removed and no next song available.
      * 1- Delete the file associated with the song removed.
      *
-     * Remove case D: song removed and Queue is greater than 2
+     * Remove case C: song removed and Queue is >= 2
      * 1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
      * 2- FX task downloads the bytes for the next next player
      * 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
@@ -661,9 +703,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
              * 1- Delete the file associated with the song removed*/
             if (queueSizeAtomic.get() == 0){
                 Platform.runLater( () -> {
-                    deleteFailedDeletions();
-                    deleteRemovedSongFile(removedSong.getSong());
+                    cleanUpUnusedFiles(removedSong.getSong());
+                    //deleteRemovedSongFile(removedSong.getSong());
                     progressBall.setVisible(false);
+                    pathTransitionCircle.stop();
                 });
             }
             /** Remove case B: song removed and no next song available
@@ -673,8 +716,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 writeToCurrentPlayer(nextPlayer);
                 addAmITheLastSong(currentPlayer);
                 Platform.runLater( () -> {
-                    deleteFailedDeletions();
-                    deleteRemovedSongFile(removedSong.getSong());
+                    cleanUpUnusedFiles(removedSong.getSong());
                     progressBall.setCenterY(progressBall.getCenterY() - 21);
                 });
             }
@@ -694,11 +736,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
                 Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
                 //4- While future is running, delete the file associated with the song removed
-              //  deleteRemovedSongFile(removedSong.getSong());
-                Platform.runLater( () -> {
-                    deleteFailedDeletions();
-                    deleteRemovedSongFile(removedSong.getSong());
-                });
+
                 //get the mediaPlayer returned from future
                 MediaPlayer newNextPlayer = futureMediaPlayer.get();
                 //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
@@ -706,7 +744,11 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 //6- Link the current player to the nextPlayer using an end of media listener
                 addEndOfMediaListener(currentPlayer, newNextPlayer);
 
-                skipOK = true;
+                Platform.runLater( () -> {
+                    cleanUpUnusedFiles(removedSong.getSong());
+                    skipOK = true;
+                });
+
             }//end if queueSize == 2
 
             /** Remove case D: song removed and Queue is greater than 2
@@ -716,95 +758,69 @@ public class MainSceneController implements Initializable , ControlledScreen {
              * 4- While future is running, delete the file associated with the song removed
              * 5- Get the future MediaPlayer and write to the nextPlayer
              * 6- Link the current player to the nextPlayer using an end of media listener*/
-//            else if (queueSizeAtomic.get() > 2)
-//            {
-//                //1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
-//                if(! SongQueueObservableList.get(2).getPreparedBool())
-//                {
-//                    // 2- FX task downloads the bytes for the next next player
-//                    Task task = new Task<Void>() {
-//                        @Override
-//                        public Void call() {
-//                            try {
-//                                int index = SongQueueObservableList.get(2).getAzureForeignKey();
-//                                nextNextPlayerBytes = myController.downloadSongBytes(index);
-//                                nextNextPlayerString = SongQueueObservableList.get(2).getSong();
-//                                SongQueueObservableList.get(2).setPreparedBool(true);
-//
-//                                // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
-//                                Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
-//                                //4- While future is running, delete the file associated with the song removed
-//                                deleteRemovedSongFile(removedSong.getSong());
-//                                //get the mediaPlayer returned from future
-//                                MediaPlayer newNextPlayer = futureMediaPlayer.get();
-//                                //5- Write the future MediaPlayer to the nextNextPlayer by obtaining lock for writing to next player
-//                                writeToNextPlayer(newNextPlayer);
-//                                //6- Link the current player to the nextPlayer using an end of media listener
-//                                addEndOfMediaListener(currentPlayer, newNextPlayer);
-//                            } catch (Exception e) {
-//                                e.printStackTrace();
-//                            }
-//                            return null;
-//                        }
-//                    };
-//                    new Thread(task).start();
-//                }
-
-     //       }//end if (queue size >2)
         }//end try
         catch (Exception e) {e.printStackTrace();}
     }
 
     /**
-     * Deletes the file associated with the last song played
-     * @param songName name of the file
+     * Deletes unused files
+     * @param removedSong
      */
-    public void deleteRemovedSongFile(String songName) {
-        String filePath = "C:\\test\\"+songName+".mp3";
-        File file = new File(filePath);
+    public void cleanUpUnusedFiles(String removedSong){
+
+        String filePath = "C:\\test\\";
+        File dir = new File(filePath);
+
         try
         {
-            OutputStream targetFile=
-                new FileOutputStream(
-                    "C:\\test\\"+songName+".mp3");
+            for (File file : dir.listFiles())
+            {
+                if (file.delete())
+                    System.out.println(file.getName() + " is deleted!");
+                else if (queueSizeAtomic.get() > 1)
+                {
+                    System.out.println(file.getName() + " Delete operation failed.");
+                    String currentSong = SongQueueObservableList.get(0).getSong() + ".mp3";
+                    String filename = file.getName();
+                    String nextSong = SongQueueObservableList.get(1).getSong() + ".mp3";
+                    //if the file delete operation failed and the file isn't the current or next song
+                    if ((!filename.equals(currentSong)) && (!filename.equals(nextSong)))
+                    {
+                        OutputStream targetFile =
+                            new FileOutputStream(
+                                "C:\\test\\" + file.getName());
 
-            targetFile.write(0);
-            targetFile.close();
-        }
-        catch (IOException e) {e.printStackTrace();}
+                        targetFile.write(0);
+                        targetFile.close();
+                    }
+                }
+                else if (queueSizeAtomic.get() == 1)
+                {
+                    System.out.println(file.getName() + " Delete operation failed.");
+                    String currentSong = SongQueueObservableList.get(0).getSong() + ".mp3";
+                    String filename = file.getName();
+                    //if the file delete operation failed and the file isn't the current or next song
+                    if (!filename.equals(currentSong))
+                    {
+                        OutputStream targetFile =
+                            new FileOutputStream(
+                                "C:\\test\\" + file.getName());
 
-        if(file.delete())
-            System.out.println(file.getName() + " is deleted!");
-        else {
-            System.out.println(file.getName() + " Delete operation failed.");
-            failedDeletions.add(file.getName());
-        }
-    }
+                        targetFile.write(0);
+                        targetFile.close();
+                    }
+                }
+                else if (queueSizeAtomic.get() == 0){
+                    OutputStream targetFile =
+                        new FileOutputStream(
+                            "C:\\test\\" + removedSong + ".mp3");
 
-    public void deleteFailedDeletions(){
-
-        for(int i= 0; i < failedDeletions.size(); i++ )
-        {
-            String filePath = "C:\\test\\" + failedDeletions.get(i) + ".mp3";
-            File file = new File(filePath);
-            try {
-                OutputStream targetFile =
-                    new FileOutputStream(
-                        "C:\\test\\" + failedDeletions.get(i) + ".mp3");
-
-                targetFile.write(0);
-                targetFile.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                    targetFile.write(0);
+                    targetFile.close();
+                }
             }
-
-            if (file.delete()) {
-                System.out.println(file.getName() + " is deleted!");
-                failedDeletions.remove(i);
-            }
-            else {
-                System.out.println(file.getName() + " Delete operation failed.");
-            }
+        }catch (IOException e) {
+        e.printStackTrace();
         }
     }
 
@@ -976,13 +992,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
     @FXML
     public void iPlay()
     {
-        if ("Pause".equals(playButton.getText()))
+        if ("Pause".equals(playButton.getText()) && queueSizeAtomic.get()>0)
         {
             Platform.runLater( () -> {
                 if(mediaView.getMediaPlayer()!=null) {
                     mediaView.getMediaPlayer().pause();
                     playButton.setText("Play");
                     playButton.setStyle("-fx-background-color:green");
+                    playBall.setFill(Color.RED);
+                    pathTransitionCircle.pause();
                 }
             });
         }
@@ -992,6 +1010,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
             mediaView.getMediaPlayer().play();
             playButton.setText("Pause");
             playButton.setStyle("-fx-background-color:red");
+            playBall.setFill(Color.GREEN);
+            pathTransitionCircle.play();
         }
     }
 
@@ -1116,36 +1136,37 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Server Connection Thread Class
      * */
     public class ProcessConnectionThread implements Runnable, MusicHostInterface {
-    private volatile StreamConnection mConnection;
-    private volatile Thread volatileThread;
-    DataInputStream dataInputStream;
-    DataOutputStream dataOutputStream;
+        private volatile StreamConnection mConnection;
+        private volatile Thread volatileThread;
+        DataInputStream dataInputStream;
+        DataOutputStream dataOutputStream;
 
-    /**
-     * Communication protocol CONSTANTS
-     * */
-    final int OPTIONS = 0;
-    final int SONG_SELECT = 1;
-    final int SONG_SELECTED = 2;
-    final int DJ_COMMENT = 3;
-    final int SKIP_SONG  = 4;
+        /**
+         * Communication protocol CONSTANTS
+         */
+        final int OPTIONS = 0;
+        final int SONG_SELECT = 1;
+        final int SONG_SELECTED = 2;
+        final int DJ_COMMENT = 3;
+        final int SKIP_SONG = 4;
 
-    /** Constructor */
-    public ProcessConnectionThread(StreamConnection connection)
-    {
-        mConnection = connection;
-    }
+        /**
+         * Constructor
+         */
+        public ProcessConnectionThread(StreamConnection connection) {
+            mConnection = connection;
+        }
 
-        /** Runnable*/
+        /**
+         * Runnable
+         */
         @Override
-        public void run()
-        {
+        public void run() {
             volatileThread = Thread.currentThread();
             Thread thisThread = Thread.currentThread();
             boolean endCom = false;
 
-            try
-            {
+            try {
                 dataInputStream = new DataInputStream(mConnection.openInputStream());
                 dataOutputStream = new DataOutputStream(mConnection.openOutputStream());
                 int whatToDo = dataInputStream.readInt();
@@ -1154,25 +1175,20 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 if (dataInputStream.available() > 0)
                     WhatToDoFunc(whatToDo);
 
-                while (volatileThread == thisThread)
-                {
-                    try
-                    {
+                while (volatileThread == thisThread) {
+                    try {
                         //prevent EOF exceptions
                         thisThread.sleep(300);
-                        if (dataInputStream.available() > 0)
-                        {
+                        if (dataInputStream.available() > 0) {
                             whatToDo = dataInputStream.readInt();
                             // if readint is outside of com protocol
                             if (whatToDo > 4)
                                 whatToDo = -1;
                         }
                         thisThread.sleep(100);
-                        if (dataInputStream.available() > 0)
-                        {
+                        if (dataInputStream.available() > 0) {
                             //in case readint read number outside of communication protocol
-                            if (whatToDo > 0 && whatToDo < 5)
-                            {
+                            if (whatToDo > 0 && whatToDo < 5) {
                                 WhatToDoFunc(whatToDo);
                                 // "SONG_SELECT" is a special case in com protocol where client requests to see song selection
                                 // and needs com to stay open to pick a song
@@ -1181,195 +1197,202 @@ public class MainSceneController implements Initializable , ControlledScreen {
                                 whatToDo = -1;
                             }
                         }
-                        if (endCom)
-                        {
+                        if (endCom) {
                             volatileThread = null;
                             return;
                         }
 
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException e) {
+                    }
                 }
-            } catch (Exception e) {e.printStackTrace();}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-    /**
-     * Determines what functions should execute depending on the read int value from the connection thread
-     * @param whatToDo the read int value for the switch statement
-     */
-    public synchronized void WhatToDoFunc(int whatToDo)
-    {
-        switch(whatToDo)
-        {
-            case OPTIONS:
-                AvailableOptionsTx(AvailableOptionsRx());
-                break;
-            case SONG_SELECT:
-                SongSelectionTx(SongSelectionRx());
-                break;
-            case SONG_SELECTED:
-                SongSelectedTx(SongSelectedRx());
-                break;
-            case DJ_COMMENT:
-                DJCommentTx(DJCommentRx());
-                break;
-            case SKIP_SONG:
-                SkipSongRx();
-                SkipSongTX();
-                break;
+        /**
+         * Determines what functions should execute depending on the read int value from the connection thread
+         *
+         * @param whatToDo the read int value for the switch statement
+         */
+        public synchronized void WhatToDoFunc(int whatToDo) {
+            try {
+                System.out.print("\n got something ");
+                switch (whatToDo) {
+                    case OPTIONS:
+                        System.out.print("\n got 0 ");
+                        AvailableOptionsTx(AvailableOptionsRx());
+                        break;
+                    case SONG_SELECT:
+                        SongSelectionTx(SongSelectionRx());
+                        break;
+                    case SONG_SELECTED:
+                        SongSelectedTx(SongSelectedRx());
+                        break;
+                    case DJ_COMMENT:
+                        DJCommentTx(DJCommentRx());
+                        break;
+                    case SKIP_SONG:
+                        SkipSongRx();
+                        //prevents android app from crashing when FX thread has to process skipping a song
+                        //Thread.sleep(100);
+                        SkipSongTX();
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-    }
 
-    /**
-     * Reads data input stream
-     * @return Returns information read from the data input stream
-     */
-    public synchronized String procInput(){
-        try {
-            byte[] msg = new byte[dataInputStream.available()];
-            dataInputStream.read(msg, 0, dataInputStream.available());
-            return new String(msg);
-        } catch (IOException e) {
-            e.printStackTrace();
+        /**
+         * Reads data input stream
+         *
+         * @return Returns information read from the data input stream
+         */
+        public synchronized String procInput() {
+            try {
+                byte[] msg = new byte[dataInputStream.available()];
+                dataInputStream.read(msg, 0, dataInputStream.available());
+                return new String(msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
-        return null;
-    }
 
-    /**
-     * Communication interface for transmission through the data output stream
-     * @param msg The message to send
-     * @param whatToDo What the receiver should do with the message
-     * @return whether communication was successful or not
-     */
-    @Override
-    public boolean sendMessageByBluetooth(String msg,int whatToDo)
-    {
-        try
-        {
-            if(dataOutputStream != null){
-                dataOutputStream.writeInt(whatToDo);
-                dataOutputStream.flush();
-                dataOutputStream.write(msg.getBytes());
-                dataOutputStream.flush();
-                return true;
-            }else{
+        /**
+         * Communication interface for transmission through the data output stream
+         *
+         * @param msg      The message to send
+         * @param whatToDo What the receiver should do with the message
+         * @return whether communication was successful or not
+         */
+        @Override
+        public boolean sendMessageByBluetooth(String msg, int whatToDo) {
+            try {
+                if (dataOutputStream != null) {
+                    dataOutputStream.writeInt(whatToDo);
+                    dataOutputStream.flush();
+                    dataOutputStream.write(msg.getBytes());
+                    dataOutputStream.flush();
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (IOException e) {
                 return false;
             }
-        } catch (IOException e) {
-            return false;
         }
-    }
 
-    /**
-     * Send options selecting to client
-     */
-    @Override
-    public void AvailableOptionsTx(String msg) {
-        System.out.print(msg);
-        sendMessageByBluetooth(msg, 0);
-    }
-
-    /**
-     * Received a Music Host Client
-     */
-    @Override
-    public String AvailableOptionsRx() {
-        String strings = Arrays.toString(boolOptionsArray);
-        System.out.print(strings);
-        return strings;
-    }
-    /**
-     * Send song selecting to client
-     */
-    @Override
-    public void SongSelectionTx(String msg) {
-        String selectionAndQueue = myController.songSelectionToJson() + '&' + myController.songQueueToJson();
-        sendMessageByBluetooth(selectionAndQueue, 1);
-    }
-
-    /**
-     * Received view song selection request from client
-     */
-    @Override
-    public String SongSelectionRx() {
-        return procInput();
-    }
-
-    /**
-     * Send song request ok to client
-     */
-    @Override
-    public void SongSelectedTx(String msg) {
-        sendMessageByBluetooth(msg, 2);
-    }
-
-    /**
-     * Receives selected song from client, if the song is already ready in the queue then +1 votes the selected song.
-     */
-    @Override
-    public String SongSelectedRx() {
-        String song = procInput();
-        if(song!=null) {
-
-            if(addSongTask(searchSelectionForMatch(song))){
-                return "The song " + song + " has been added to the queue";
-            }
-            else {
-                //song selected by Android client now requires +1 votes in order to be skipped
-                addAntiSkipVoteToSongInQueue(searchQueueForIndex(song));
-                return "The song " + song + " is already in the queue, \nRemember to swipe right to check the queue before making a selection";
-
-            }
+        /**
+         * Send options selecting to client
+         */
+        @Override
+        public void AvailableOptionsTx(String msg) {
+            System.out.print(msg);
+            sendMessageByBluetooth(msg, 0);
         }
-        return "Sorry but that song is already in the queue";
-    }
 
-    public void addAntiSkipVoteToSongInQueue(int index){
-        //song now requires +1 more skip votes in order for it to be skipped
-        SongQueueObservableList.get(index).incrementAntiSkipVote();
-    }
+        /**
+         * Received a Music Host Client
+         */
+        @Override
+        public String AvailableOptionsRx() {
+            String strings = Arrays.toString(boolOptionsArray);
+            System.out.print(strings);
+            return strings;
+        }
 
-    /**
-     * Send song DJ comment history and song queue to client
-     */
-    @Override
-    public void DJCommentTx(String msg) {
-        Platform.runLater( () -> {
-            observableDJComments.add(msg);
-            String selectionAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
-            sendMessageByBluetooth(selectionAndQueue, DJ_COMMENT);
-        });
-    }
+        /**
+         * Send song selecting to client
+         */
+        @Override
+        public void SongSelectionTx(String msg) {
+            String selectionAndQueue = myController.songSelectionToJson() + '&' + myController.songQueueToJson();
+            sendMessageByBluetooth(selectionAndQueue, 1);
+        }
 
-    /**
-     * Received DJ comment from client
-     */
-    @Override
-    public String DJCommentRx() {
-        return procInput();
-    }
+        /**
+         * Received view song selection request from client
+         */
+        @Override
+        public String SongSelectionRx() {
+            return procInput();
+        }
 
-    /**
-     * Send skip ok to client
-     */
-    @Override
-    public void SkipSongTX() {
-        Platform.runLater( () -> {
-            String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
-            sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
-        });
-    }
+        /**
+         * Send song request ok to client
+         */
+        @Override
+        public void SongSelectedTx(String msg) {
+            sendMessageByBluetooth(msg, 2);
+        }
 
-    /**
-     * Received skip request from client
-     */
-    @Override
-    public void SkipSongRx() {
-        Platform.runLater( () -> {
-            if(SongQueueObservableList.get(0).decrementAndGetVotes()==0)
+        /**
+         * Receives selected song from client, if the song is already ready in the queue then +1 votes the selected song.
+         */
+        @Override
+        public String SongSelectedRx() {
+            String song = procInput();
+            if (song != null) {
+
+                if (addSongTask(searchSelectionForMatch(song))) {
+                    return "The song " + song + " has been added to the queue";
+                } else {
+                    //song selected by Android client now requires +1 votes in order to be skipped
+                    addAntiSkipVoteToSongInQueue(searchQueueForIndex(song));
+                    return "The song " + song + " is already in the queue, \nRemember to swipe right to check the queue before making a selection";
+
+                }
+            }
+            return "Sorry but that song is already in the queue";
+        }
+
+        public void addAntiSkipVoteToSongInQueue(int index) {
+            //song now requires +1 more skip votes in order for it to be skipped
+            SongQueueObservableList.get(index).incrementAntiSkipVote();
+        }
+
+        /**
+         * Send song DJ comment history and song queue to client
+         */
+        @Override
+        public void DJCommentTx(String msg) {
+            Platform.runLater(() -> {
+                observableDJComments.add(msg);
+                String selectionAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
+                sendMessageByBluetooth(selectionAndQueue, DJ_COMMENT);
+            });
+        }
+
+        /**
+         * Received DJ comment from client
+         */
+        @Override
+        public String DJCommentRx() {
+            return procInput();
+        }
+
+        /**
+         * Send skip ok to client
+         */
+        @Override
+        public void SkipSongTX() {
+            Platform.runLater(() -> {
+                String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
+                sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
+            });
+        }
+
+        /**
+         * Received skip request from client
+         */
+        @Override
+        public void SkipSongRx() {
+            if (SongQueueObservableList.get(0).decrementAndGetVotes() == 0)
                 iSkip();
-        });
+        }//end connection thread class
     }
-    }//end connection thread class
 
     /** Boolean button for song request option*/
     @FXML

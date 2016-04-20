@@ -63,8 +63,8 @@
         </MediaView>
         <Slider fx:id="timeSlider" layoutX="556.0" layoutY="212.0" prefHeight="17.0" prefWidth="187.0" />
         <ProgressBar fx:id="songProgressBar" layoutX="557.0" layoutY="180.0" prefHeight="17.0" prefWidth="187.0" progress="0.0" />
-        <Slider fx:id="volumeSlider" layoutX="811.0" layoutY="120.0" orientation="VERTICAL" prefHeight="107.0" prefWidth="14.0" />
-        <Label fx:id="timeLabel" layoutX="746.0" layoutY="203.0" prefHeight="45.0" prefWidth="75.0" />
+        <Slider fx:id="volumeSlider" layoutX="820.0" layoutY="120.0" orientation="VERTICAL" prefHeight="107.0" prefWidth="14.0" />
+        <Label fx:id="timeLabel" layoutX="746.0" layoutY="203.0" prefHeight="26.0" prefWidth="50.0" />
           <Button fx:id="initbtn" layoutX="1249.0" layoutY="635.0" mnemonicParsing="false" onAction="#init" prefHeight="48.0" prefWidth="104.0" text="init" />
       <Circle fx:id="progressBall" fill="DODGERBLUE" layoutX="525.0" layoutY="666.0" radius="19.0" stroke="BLACK" strokeType="INSIDE" visible="false" />
       <VBox layoutX="113.0" layoutY="34.0" prefHeight="125.0" prefWidth="241.0" spacing="11.0">
@@ -88,7 +88,7 @@
       </VBox>
       <Circle fx:id="playBall" fill="#1ecd27" layoutX="650.0" layoutY="96.0" radius="19.0" stroke="BLACK" strokeType="INSIDE" />
       <ProgressBar fx:id="songProgBar" layoutX="372.0" layoutY="212.0" prefHeight="18.0" prefWidth="161.0" progress="0.0" />
-      <Text layoutX="831.0" layoutY="226.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Volume" wrappingWidth="57.0">
+      <Text layoutX="816.0" layoutY="226.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Volume" wrappingWidth="57.0">
          <font>
             <Font name="System Bold" size="14.0" />
          </font>
