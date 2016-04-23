@@ -3,7 +3,7 @@ package com.util;
 /**
  * Created by user on 06/03/2016.
  */
-public class SongBean {
+public class ComBean {
 
     public String song;
     public String artist;

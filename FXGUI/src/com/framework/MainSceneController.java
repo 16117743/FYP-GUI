@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
-import com.View.MusicHostInterface;
+import com.Interface.MusicHostCommunication;
 import com.util.HandleFileIO;
 import com.util.QueueSong;
 import com.util.SelectionSong;
@@ -104,7 +104,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Path addSongPath;
     volatile boolean addAnimationFin = true;
     volatile boolean skipOK = true;
+    volatile boolean loggingOut = false;
     List <String> failedDeletions = new ArrayList<>();
+
+    ListChangeListener queueListener;
 
     @FXML
     Button playButton;
@@ -264,7 +267,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Skip button function for skipping songs in the queue
      */
     @FXML
-    public void iSkip()
+    public synchronized void iSkip()
     {
         //can't skip unless there is a song to follow and next song is ready to be played
         if(queueSizeAtomic.get() > 1 && skipOK)
@@ -334,7 +337,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                             oldPlayer.stop();
                             oldPlayer.dispose();
                             oldPlayer.onEndOfMediaProperty().unbind();
-                            SongQueueObservableList.remove(0);//remove case event is fired
+                            if(!loggingOut)
+                                SongQueueObservableList.remove(0);//remove case event is fired
                         }
                             System.out.println("MediaView Listener triggered\n");
                             writeToCurrentPlayer(newPlayer);
@@ -430,6 +434,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         progressBall.setFill(Color.DEEPSKYBLUE);
                         progressBall.setVisible(true);
                         SongAnimationSetup(newQueueSong);
+                        skipOK = false;
                         addSongPathTransition.play();
                     });
                     return true;
@@ -525,37 +530,30 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
     dJComments.setItems(observableDJComments);
 
-    SongQueueObservableList.addListener(new ListChangeListener<QueueSong>() {
-        public void onChanged(ListChangeListener.Change<? extends QueueSong> change)
-        {
-            while (change.next()) {
-                if (change.wasUpdated()) {
-                    for (QueueSong qs : change.getList()) {
-                        System.out.println(qs.getSong() + " updated");
-                    }
-                } else {
-                    for (QueueSong removedSong : change.getRemoved()) {
-                        queueSizeAtomic.decrementAndGet();
-                        songRemovedfileIOFunc(removedSong);
-                    }
+        queueListener = new ListChangeListener<QueueSong>() {
+            public void onChanged(ListChangeListener.Change<? extends QueueSong> change)
+            {
+                while (change.next()) {
+                    if (change.wasUpdated()) {
+                        for (QueueSong qs : change.getList()) {
+                            System.out.println(qs.getSong() + " updated");
+                        }
+                    } else {
+                        for (QueueSong removedSong : change.getRemoved()) {
+                            queueSizeAtomic.decrementAndGet();
+                            songRemovedfileIOFunc(removedSong);
+                        }
 
-                    for (QueueSong addedSong : change.getAddedSubList()) {
-                        queueSizeAtomic.incrementAndGet();
-                        songAddedfileIOFunc();
-//                        Task task = new Task<Void>()
-//                        {
-//                            @Override public Void call()
-//                            {
-//                                songAddedfileIOFunc();
-//                                return null;
-//                            }
-//                        };
-//                        new Thread(task).start();
+                        for (QueueSong addedSong : change.getAddedSubList()) {
+                            queueSizeAtomic.incrementAndGet();
+                            songAddedfileIOFunc();
+                        }
                     }
                 }
             }
-        }
-    });
+        };
+
+    SongQueueObservableList.addListener(queueListener);
 
     observableDJComments.addListener(new ListChangeListener<String>() {
         public void onChanged(ListChangeListener.Change<? extends String> change)
@@ -639,6 +637,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                             addAmITheLastSong(freshPlayer);
                             mediaView.setMediaPlayer(freshPlayer);
                             updateProgress(5, 5);
+                            skipOK = true;
                         });
                         executorService.shutdown();
                         executorService.awaitTermination(7, TimeUnit.SECONDS);
@@ -671,6 +670,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     }
                     else if (queueSizeAtomic.get() > 2) {
                         updateProgress(5, 5);
+                        skipOK = true;
                     }
                     /** Song added case C:
                      * 1- Write to the nextNextPlayer
@@ -698,9 +698,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Remove case B: song removed and no next song available.
      * 1- Add am I the last song listener to the current player.
      * 2- Delete the file associated with the song removed.
-     *
-     * Remove case C: song removed and no next song available.
-     * 1- Delete the file associated with the song removed.
      *
      * Remove case C: song removed and Queue is >= 2
      * 1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
@@ -753,7 +750,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     }
                     /** Remove case C: song removed and next song available
                      * 1- Delete the file associated with the song removed*/
-                    else if (queueSizeAtomic.get() >= 2) {
+                    else if (queueSizeAtomic.get() >= 2)
+                    {
                         Platform.runLater(() -> {
                             updateProgress(0, 6);
                             progressBall.setCenterY(progressBall.getCenterY() - 21);
@@ -800,16 +798,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
         songProgBar.progressProperty().bind(task.progressProperty());
         new Thread(task).start();
     }
-            /*****************/
-
-
-            /** Remove case D: song removed and Queue is greater than 2
-             * 1- Check the next next song in the queue to see if it has downloaded the bytes necessary for creating mp3
-             * 2- FX task downloads the bytes for the next next player
-             * 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
-             * 4- While future is running, delete the file associated with the song removed
-             * 5- Get the future MediaPlayer and write to the nextPlayer
-             * 6- Link the current player to the nextPlayer using an end of media listener*/
 
     /**
      * Deletes unused files
@@ -989,21 +977,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
         {
             synchronized (this) {
                 Platform.runLater(() -> {
+                    loggingOut = true;
                     //remove everything only if init button was pressed previously, else just log out
                     if (initbtn.getStyle().equals("-fx-background-color:red")) {
                         initbtn.setStyle("-fx-background-color:green");
                         System.out.println("removing everything");
-                        if (mediaView.getMediaPlayer() != null) {
+                        if (queueSizeAtomic.get() > 0) {
                             mediaView.getMediaPlayer().stop();
                             mediaView.getMediaPlayer().dispose();
-                            clearValuesBeforeLogginOut();
                         }
+                        clearValuesBeforeLogginOut();
+                        myController.restartAnimationUponLogout();
+                        myController.logOut(MusicHostFramework.loginScreenID);
                     }
-                });
-
-                Platform.runLater(() -> {
-                    myController.restartAnimationUponLogout();
-                    myController.logOut(MusicHostFramework.loginScrenID);
                 });
             }
         }
@@ -1014,12 +1000,15 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void clearValuesBeforeLogginOut()
     {
-       if(serverStartFlag)
+        if(serverStartFlag)
             stopServer();
 
         //prevent the removing of songs from the queue in the com.model from triggering the listener attached
+        SongQueueObservableList.removeListener(queueListener);
         SongSelectionObservableList = null;
         selectionView.getItems().clear();
+        observableDJComments = null;
+        dJComments.getItems().clear();
 
         if(queueSizeAtomic.get()>0) {
             SongQueueObservableList = null;
@@ -1030,6 +1019,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
             myController.clearValuesBeforeLoggingOut();
             timeLabel.setText("");
             setGUIOptions();
+            queueSizeAtomic.set(0);
         });
 
         progressBall.setVisible(false);
@@ -1184,7 +1174,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     /**
      * Server Connection Thread Class
      * */
-    public class ProcessConnectionThread implements Runnable, MusicHostInterface {
+    public class ProcessConnectionThread implements Runnable, MusicHostCommunication {
         private volatile StreamConnection mConnection;
         private volatile Thread volatileThread;
         DataInputStream dataInputStream;
@@ -1284,7 +1274,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                     case SKIP_SONG:
                         SkipSongRx();
                         //prevents android app from crashing when FX thread has to process skipping a song
-                        //Thread.sleep(100);
+                        Thread.sleep(100);
                         SkipSongTX();
                         break;
                 }
@@ -1438,8 +1428,22 @@ public class MainSceneController implements Initializable , ControlledScreen {
          */
         @Override
         public void SkipSongRx() {
-            if (SongQueueObservableList.get(0).decrementAndGetVotes() == 0)
-                iSkip();
+            if(queueSizeAtomic.get() > 0)
+            {
+                if (SongQueueObservableList.get(0).decrementAndGetVotes() <= 0)
+                {
+                    Task task = new Task<Void>()
+                    {
+                        @Override public Void call() {
+                            iSkip();
+//                            String DJCommentsAndQueue = myController.DJCommentToJson() + '&' + myController.songQueueToJson();
+//                            sendMessageByBluetooth(DJCommentsAndQueue, SKIP_SONG);
+                            return null;
+                        }
+                    };
+                    new Thread(task).start();
+                }
+            }
         }//end connection thread class
     }
 

@@ -6,7 +6,7 @@ import javafx.stage.Stage;
 
 public class MusicHostFramework extends Application {
     
-    public static String loginScrenID = "LoginView";
+    public static String loginScreenID = "LoginView";
     public static String loginScreenFile = "/com/View/LoginView.fxml";
     public static String mainScreenID = "MainView";
     public static String mainScreenFile = "/com/View/MainView.fxml";
@@ -14,11 +14,11 @@ public class MusicHostFramework extends Application {
     @Override
     public void start(Stage primaryStage) {
         ScreensController mainContainer = new ScreensController();
-        mainContainer.loadScreen(MusicHostFramework.loginScrenID, MusicHostFramework.loginScreenFile);
+        mainContainer.loadScreen(MusicHostFramework.loginScreenID, MusicHostFramework.loginScreenFile);
 
         mainContainer.loadScreen(MusicHostFramework.mainScreenID, MusicHostFramework.mainScreenFile);
 
-        mainContainer.setScreen(MusicHostFramework.loginScrenID);
+        mainContainer.setScreen(MusicHostFramework.loginScreenID);
 
         Group root = new Group();//Constructs a group consisting of children.
         root.getChildren().addAll(mainContainer);/*Gets the list of children of this {Group}. return the list of children of this {Group}.*/

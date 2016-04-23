@@ -1,9 +1,9 @@
-package com.View;
+package com.Interface;
 
 /**
  * Created by user on 27/03/2016.
  */
-public interface MusicHostInterface {
+public interface MusicHostCommunication {
     void AvailableOptionsTx(String msg);
     String AvailableOptionsRx();
 

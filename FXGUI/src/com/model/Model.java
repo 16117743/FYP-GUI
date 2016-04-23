@@ -2,7 +2,7 @@ package com.model;
 
 import com.util.QueueSong;
 import com.util.SelectionSong;
-import com.util.SongBean;
+import com.util.ComBean;
 import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,9 +93,9 @@ public class Model{
      * @return Returns the JSON of the song selection list
      */
     public String songSelectionToJson(){
-        ArrayList<SongBean> beanList = new ArrayList();
+        ArrayList<ComBean> beanList = new ArrayList();
         for(int i =0; i<selection.size();i++){
-            SongBean sb = new SongBean();
+            ComBean sb = new ComBean();
             sb.setSong(selection.get(i).getSong());
             sb.setArtist(selection.get(i).getArtist());
             sb.setVotes(0);
@@ -112,9 +112,9 @@ public class Model{
      * @return Returns the JSON of the song queue list
      */
     public String songQueueToJson(){
-        ArrayList<SongBean> beanList = new ArrayList();
+        ArrayList<ComBean> beanList = new ArrayList();
         for(int i =0; i<songQueue.size();i++){
-            SongBean sb = new SongBean();
+            ComBean sb = new ComBean();
             sb.setSong(songQueue.get(i).getSong());
             sb.setArtist(songQueue.get(i).getArtist());
             sb.setVotes(songQueue.get(i).getVotes());
@@ -131,9 +131,9 @@ public class Model{
      * @return Returns the JSON of the DJ comments list
      */
     public String DJCommentToJson(){
-        ArrayList<SongBean> beanList = new ArrayList();
+        ArrayList<ComBean> beanList = new ArrayList();
         for(int i =0; i<DJCommentsData.size();i++){
-            SongBean sb = new SongBean();
+            ComBean sb = new ComBean();
             sb.setDJComment(DJCommentsData.get(i));
             sb.setVotes(0);
             beanList.add(sb);
