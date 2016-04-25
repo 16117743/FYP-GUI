@@ -8,8 +8,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 
-/**
- * Created by user on 02/04/2016.
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * Date: 25/04/16
+ * Description: Accepts a byte array and a string for making an mp3 file. <br>
+ *  Creates a future MediaPlayer from the created mp3 file and returns it to the caller.
  */
 public class HandleFileIO implements Callable<MediaPlayer> {
     byte[] songData;

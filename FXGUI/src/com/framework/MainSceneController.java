@@ -11,6 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
+import com.Interface.ControlledScreen;
 import com.Interface.MusicHostCommunication;
 import com.util.HandleFileIO;
 import com.util.QueueSong;
@@ -81,7 +82,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
     Boolean[] boolOptionsArray = new Boolean[3];
     private volatile Thread volatileThread;
     ExecutorService executorService1;
-    ExecutorService executorService2;
+    ExecutorService clientExecutor;
     boolean serverStartFlag = false;
     byte[] nextNextPlayerBytes;
     String nextNextPlayerString;
@@ -711,9 +712,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public synchronized void songRemovedfileIOFunc(QueueSong removedSong) {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
-        //Future<MediaPlayer> futureMediaPlayer;
 
-        /********************/
         Task task = new Task<Void>() {
             @Override
             public Void call() {
@@ -749,7 +748,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
                         });
                     }
                     /** Remove case C: song removed and next song available
-                     * 1- Delete the file associated with the song removed*/
+                     **/
                     else if (queueSizeAtomic.get() >= 2)
                     {
                         Platform.runLater(() -> {
@@ -767,7 +766,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
                         // 3- Executor service future creates the file required for the nextPlayer and returns a mediaPlayer object
                         Future<MediaPlayer> futureMediaPlayer = executorService.submit(new HandleFileIO(nextNextPlayerBytes, nextNextPlayerString));
-                        //4- While future is running, delete the file associated with the song removed
+
                         updateProgress(3, 6);
 
                         //get the mediaPlayer returned from future
@@ -1003,7 +1002,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
         if(serverStartFlag)
             stopServer();
 
-        //prevent the removing of songs from the queue in the com.model from triggering the listener attached
+        //prevent the removing of songs from the queue in the model from triggering the listener attached
         SongQueueObservableList.removeListener(queueListener);
         SongSelectionObservableList = null;
         selectionView.getItems().clear();
@@ -1084,19 +1083,10 @@ public class MainSceneController implements Initializable , ControlledScreen {
             serverButton.setText("ON");
             startServer();
         }
-        else if("OFF".equals(serverButton.getText()))
-        {
-            try
-            {
-                LocalDevice local = LocalDevice.getLocalDevice();
-                local.setDiscoverable(DiscoveryAgent.GIAC);
-            }
-            catch (BluetoothStateException e) {e.printStackTrace();}
-        }
     }
 
     /**
-     * Sets local bluetooth device not_discoverable
+     * Shuts down server thread
      */
     public void stopServer()
     {
@@ -1104,6 +1094,21 @@ public class MainSceneController implements Initializable , ControlledScreen {
         {
             LocalDevice local = LocalDevice.getLocalDevice();
             local.setDiscoverable(DiscoveryAgent.NOT_DISCOVERABLE);
+
+            try {
+                executorService1.shutdown();
+                //time allocated for the android client to make a choice
+                executorService1.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                System.err.println("server task interrupted");
+            } finally {
+                if (!executorService1.isTerminated()) {
+                    System.err.println("cancel non-finished server task");
+                }
+                if(clientExecutor !=null)
+                    clientExecutor.shutdownNow();
+                System.out.println("\nserver shutdown finished ");
+            }
         }
         catch (BluetoothStateException e) {e.printStackTrace();}
     }
@@ -1112,6 +1117,7 @@ public class MainSceneController implements Initializable , ControlledScreen {
      * Function called from the start server button
      */
     public void startServer() {
+        serverStartFlag= true;
         executorService1 = Executors.newSingleThreadExecutor();
         executorService1.submit(() ->
         {
@@ -1133,32 +1139,32 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 thisThread.sleep(1000);
                 System.out.println("waiting for connections...");
                 connection = notifier.acceptAndOpen();
-                System.out.println("connected!");
+                System.out.println("\nconnected!");
 
                 while (volatileThread == thisThread)
                 {
-                    executorService2 = Executors.newSingleThreadExecutor();
+                    clientExecutor = Executors.newSingleThreadExecutor();
                     processThread = new ProcessConnectionThread(connection);
-                    executorService2.execute(processThread);
+                    clientExecutor.execute(processThread);
 
                     try {
-                        executorService2.shutdown();
+                        clientExecutor.shutdown();
                         //time allocated for the android client to make a choice
-                        executorService2.awaitTermination(40, TimeUnit.SECONDS);
+                        clientExecutor.awaitTermination(20, TimeUnit.SECONDS);
                     } catch (InterruptedException e) {
-                        System.err.println("exec 2 tasks interrupted");
+                        System.err.println("Client task interrupted");
                     } finally {
-                        if (!executorService2.isTerminated()) {
-                            System.err.println("cancel non-finished tasks exec 2");
+                        if (!clientExecutor.isTerminated()) {
+                            System.err.println("cancel non-finished Client task");
                         }
-                        executorService2.shutdownNow();
-                        System.out.println("\nshutdown finished ");
+                        clientExecutor.shutdownNow();
+                        System.out.println("\nClient shutdown finished ");
                     }
 
                     System.out.println("waiting for connections...");
                     //blocking call waiting for client to connect
                     connection = notifier.acceptAndOpen();
-                    System.out.println("connected!");
+                    System.out.println("\nconnected!");
                 }//end while volatile
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -1167,6 +1173,13 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            finally {
+                try {
+                    connection.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -1214,7 +1227,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 if (dataInputStream.available() > 0)
                     WhatToDoFunc(whatToDo);
 
-                while (volatileThread == thisThread) {
+                while (volatileThread == thisThread && !endCom)
+                {
                     try {
                         //prevent EOF exceptions
                         thisThread.sleep(300);
@@ -1243,9 +1257,16 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
                     } catch (InterruptedException e) {
                     }
-                }
+                }//end while (volatileThread == thisThread && !endCom)
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+            finally {
+                try {
+                    mConnection.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -1259,16 +1280,19 @@ public class MainSceneController implements Initializable , ControlledScreen {
                 System.out.print("\n got something ");
                 switch (whatToDo) {
                     case OPTIONS:
-                        System.out.print("\n got 0 ");
+                        System.out.print("\n got OPTIONS ");
                         AvailableOptionsTx(AvailableOptionsRx());
                         break;
                     case SONG_SELECT:
+                        System.out.print("\n got SONG_SELECT ");
                         SongSelectionTx(SongSelectionRx());
                         break;
                     case SONG_SELECTED:
+                        System.out.print("\n got SONG_SELECTED ");
                         SongSelectedTx(SongSelectedRx());
                         break;
                     case DJ_COMMENT:
+                        System.out.print("\n got DJ_COMMENT ");
                         DJCommentTx(DJCommentRx());
                         break;
                     case SKIP_SONG:
@@ -1328,7 +1352,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
          */
         @Override
         public void AvailableOptionsTx(String msg) {
-            System.out.print(msg);
             sendMessageByBluetooth(msg, 0);
         }
 

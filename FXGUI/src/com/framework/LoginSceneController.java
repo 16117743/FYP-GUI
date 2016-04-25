@@ -2,6 +2,8 @@ package com.framework;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import com.Interface.ControlledScreen;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -17,11 +19,8 @@ import javafx.util.Duration;
 /***********************
  * Author: Thomas Flynn
  * Final Year Project: Music Host Interface
- * date: 25/04/16
- **********************/
-
-/**
- * Controller for the login view<br>
+ * Date: 25/04/16
+ * Description: Controller for the login view<br>
  */
 public class LoginSceneController implements Initializable, ControlledScreen {
 
@@ -76,6 +75,15 @@ public class LoginSceneController implements Initializable, ControlledScreen {
         pathTransitionCircle.play();
     }
 
+    /**
+     * Creates elipse path for login
+     * @param centerX
+     * @param centerY
+     * @param radiusX
+     * @param radiusY
+     * @param rotate
+     * @return
+     */
     private Path createEllipsePathForLogin(double centerX, double centerY, double radiusX, double radiusY, double rotate) {
         ArcTo arcTo = new ArcTo();
         arcTo.setX(centerX - radiusX + 1); // to simulate a full 360 degree celcius circle.
@@ -107,10 +115,10 @@ public class LoginSceneController implements Initializable, ControlledScreen {
     }
 
     private void Login() {
+        // give reference to ScreensController so it can start animation when loggin out
         myController.getReferenceToLoginRect(loginRect, musicHostTextFade, pathTransitionCircle);
         String user = userLogin.getText();
         String pw = passwordField.getText();
-        boolean check;
 
         Task task = new Task<Void>()
         {
@@ -118,6 +126,7 @@ public class LoginSceneController implements Initializable, ControlledScreen {
             final String Tuser = user;
             @Override public Void call()
             {
+                //myController calls model which calls DB to check credentials against Azure DB
                 if(myController.confirmLogin(Tuser, Tpw))
                 {
                     try {
@@ -156,6 +165,5 @@ public class LoginSceneController implements Initializable, ControlledScreen {
             }
         };
         new Thread(task).start();
-
     }
 }

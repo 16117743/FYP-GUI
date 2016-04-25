@@ -4,6 +4,13 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * Date: 25/04/16
+ * Description: Creates stack pane, Loads the loginView & mainView FXML files onto the stackpane.
+ * Launches the application.
+ */
 public class MusicHostFramework extends Application {
     
     public static String loginScreenID = "LoginView";
@@ -28,16 +35,4 @@ public class MusicHostFramework extends Application {
         primaryStage.setScene(scene);//Specify the scene to be used on this stage.
         primaryStage.show();
     }
-
-    /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
-     *
-     * @param args the command line arguments
-     */
-    //   public static void main(String[] args) {
-    //      launch(args);
-    //   }
 }

@@ -2,8 +2,12 @@ package com.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by user on 29/03/2016.
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * Date: 25/04/16
+ * Description: Created when the user hits the 'add' button. It differs from a SelectionSong because it <br>
+ * holds the number of skip votes it has.
  */
 public class QueueSong {
 

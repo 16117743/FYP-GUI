@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communicates to the Azure SQL database
+ * Author: Thomas Flynn
+ * date: 25/04/16
+ * Description: Communicates with the Azure DB.
  */
 public class DB {
     /** Azure DB related*/

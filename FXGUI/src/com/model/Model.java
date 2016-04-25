@@ -7,13 +7,10 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.List;
 
-/***********************
+/**
  * Author: Thomas Flynn
  * date: 25/04/16
- **********************/
-
-/**
- * Holds songQueue,songSelection,DJComments and userLogin ID for the Application and communicates to the Azure SQL database.
+ * Description: Holds songQueue,songSelection,DJComments and userLogin ID for the Application and communicates to the Azure SQL database.
  */
 public class Model{
     /**GUI related*/

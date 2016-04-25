@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="724.0" prefWidth="1426.0" style="-fx-background-color: deepskyblue;" stylesheets="@login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.framework.LoginSceneController">
+<AnchorPane id="AnchorPane" minHeight="122.0" prefHeight="724.0" prefWidth="1426.0" style="-fx-background-color: deepskyblue;" stylesheets="@../css/login.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.framework.LoginSceneController">
     <children>
         <Label fx:id="response" alignment="CENTER" contentDisplay="CENTER" layoutX="580.0" layoutY="320.0" prefHeight="25.0" prefWidth="181.0" textAlignment="JUSTIFY" textFill="RED">
             <font>

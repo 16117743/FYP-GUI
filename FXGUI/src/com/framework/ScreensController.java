@@ -3,6 +3,7 @@ package com.framework;
 import java.util.HashMap;
 import java.util.List;
 
+import com.Interface.ControlledScreen;
 import com.util.QueueSong;
 import com.util.SelectionSong;
 import com.model.Model;
@@ -19,8 +20,11 @@ import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
-/**
- * Keeps the pane so we can add remove them from top/bottom.
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * Date: 25/04/16
+ * Description: Extends StackPane. Act's as container for the LoginView and MainView. <br>
  * Also holds the primary reference to the model for both the controllers.
  */
 public class ScreensController  extends StackPane {

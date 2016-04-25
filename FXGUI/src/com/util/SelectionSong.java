@@ -1,5 +1,13 @@
 package com.util;
 
+
+/***********************
+ * Author: Thomas Flynn
+ * Final Year Project: Music Host Interface
+ * Date: 25/04/16
+ * Description: Created when the user hits the initialize button. For each song that a Music Host has on his/her account, <br>
+ * a selection song is created. It holds, artist (String), song (String), id (int)
+ */
 public class SelectionSong {
     /**data*/
     private String artist;
