@@ -106,8 +106,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
     volatile boolean addAnimationFin = true;
     volatile boolean skipOK = true;
     volatile boolean loggingOut = false;
-    List <String> failedDeletions = new ArrayList<>();
-
     ListChangeListener queueListener;
 
     @FXML
@@ -256,7 +254,8 @@ public class MainSceneController implements Initializable , ControlledScreen {
 
         playButton.setTooltip(new Tooltip("Play/Pause Song"));
 
-        serverButton.setStyle("-fx-background-color:red");
+        if(!serverStartFlag)
+            serverButton.setStyle("-fx-background-color:red");
 
         serverButton.setTooltip(new Tooltip("Enable/Disable Bluetooth server for Android Clients"));
 
@@ -986,6 +985,12 @@ public class MainSceneController implements Initializable , ControlledScreen {
                             mediaView.getMediaPlayer().dispose();
                         }
                         clearValuesBeforeLogginOut();
+                        if(pathTransitionCircle!=null)
+                            pathTransitionCircle.stop();
+                        myController.restartAnimationUponLogout();
+                        myController.logOut(MusicHostFramework.loginScreenID);
+                    }
+                    else{
                         myController.restartAnimationUponLogout();
                         myController.logOut(MusicHostFramework.loginScreenID);
                     }
@@ -999,9 +1004,6 @@ public class MainSceneController implements Initializable , ControlledScreen {
      */
     public void clearValuesBeforeLogginOut()
     {
-        if(serverStartFlag)
-            stopServer();
-
         //prevent the removing of songs from the queue in the model from triggering the listener attached
         SongQueueObservableList.removeListener(queueListener);
         SongSelectionObservableList = null;
